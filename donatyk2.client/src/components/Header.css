@@ -1,0 +1,95 @@
+.header {
+  display: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 50px;
+  background-color: rgb(231, 250, 255);
+}
+
+.header .register-button {
+  margin-right: 20px;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  height: 50px;
+}
+
+.header-icon {
+  position: relative;
+}
+
+.hamburger-menu-icon {
+  width: 40px;
+}
+
+.category-menu {
+  display: flex;
+  background-color: white;
+  border-radius: 10px;
+  position: absolute;
+  border: 1px solid rgb(231, 250, 255);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.header-icon:hover .category-menu {
+  z-index: 1;
+  opacity: 1;
+}
+
+.category-main-container {
+  padding: 10px;
+  max-width: 200px;
+  text-align: start;
+  border-right: 1px solid rgb(233, 233, 233);
+}
+
+.category-submenu-container {
+  text-align: start;
+  padding: 10px;
+  width: 200px;
+}
+
+.category-submenu-subcatecories {
+  font-size: 12px;
+}
+
+.category-submenu-subcatecories a {
+  color: grey;
+  display: block;
+}
+
+.category-submenu-subcatecories a:hover {
+  color: #646cff;
+  transition: color 0.25s;
+}
+
+.subcategories-list {
+  margin: 0;
+  padding: 0;
+  padding-left: 1rem;
+}
+
+.header-searchbar {
+  position: relative;
+}
+
+.search-input {
+  padding-right: 80px;
+  min-width: 400px;
+}
+
+.search-button {
+  position: absolute;
+  right: 0;
+}
+
+.header-menu {
+}
