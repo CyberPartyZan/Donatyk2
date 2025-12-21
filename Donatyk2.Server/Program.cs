@@ -1,11 +1,14 @@
 
+using Donatyk2.Server.Controllers;
 using Donatyk2.Server.Data;
+using Donatyk2.Server.Services;
+using Donatyk2.Server.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using Donatyk2.Server.Controllers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Text;
 
 namespace Donatyk2.Server
@@ -25,7 +28,22 @@ namespace Donatyk2.Server
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            builder.Services
+                .AddIdentityCore<ApplicationUser>(options =>
+                {
+                    options.Password.RequiredLength = 8;
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.User.RequireUniqueEmail = true;
+                })
+                .AddRoles<IdentityRole<Guid>>()
+                .AddEntityFrameworkStores<DonatykDbContext>()
+                .AddDefaultTokenProviders();
+
+            // TODO: Use options pattern to bind JWT settings
+            var jwt = builder.Configuration.GetSection("Jwt");
+
+            builder.Services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -34,15 +52,15 @@ namespace Donatyk2.Server
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-
-                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        ValidIssuer = jwt["Issuer"],
+                        ValidAudience = jwt["Audience"],
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-                        ),
-                        ClockSkew = TimeSpan.Zero
+                            Encoding.UTF8.GetBytes(jwt["Key"]!)
+                        )
                     };
                 });
+
+            builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
             var app = builder.Build();
 
@@ -58,6 +76,7 @@ namespace Donatyk2.Server
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 
