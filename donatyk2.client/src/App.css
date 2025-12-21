@@ -16,8 +16,12 @@ select {
   padding: 0.3em 0.6em;
 }
 
+.main main {
+  min-height: calc(100vh - 50px - 50px - 5px);
+}
+
 .main > main,
 .main > header,
 .main > footer {
-  padding: 0 300px;
+  padding: 0 200px;
 }

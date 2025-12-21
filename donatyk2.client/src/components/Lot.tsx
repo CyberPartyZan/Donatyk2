@@ -5,7 +5,7 @@ import './Lot.css';
 export const Lot = () => {
   return (
     <div className='lot-card'>
-      <Link className='lot-href' to='/product'>
+      <Link className='lot-href' to='/lot'>
         <img className='lot-image' src={lotImage} alt='' />
         <div className='lot-description-container'>
           <p className='lot-name'>

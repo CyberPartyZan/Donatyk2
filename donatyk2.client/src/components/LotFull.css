@@ -1,0 +1,58 @@
+.lot-full {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2em;
+}
+
+.lot-full-image-container {
+  border-radius: 10px;
+
+  background-color: white;
+}
+
+.lot-full-image-container img {
+  object-fit: cover;
+  width: 100%;
+  border-radius: 10px;
+}
+
+.lot-full .details-container {
+  text-align: start;
+}
+
+.lot-full .details-container > div {
+  padding: 5px;
+}
+
+.lot-full .details-container .name {
+  font-weight: bold;
+  text-align: center;
+}
+
+.lot-full .details-container .description {
+  /* font-size: 12px; */
+  min-height: 200px;
+  color: grey;
+}
+
+.lot-full .details-container .seller-info {
+  /* display: flex; */
+  align-items: center;
+}
+
+.lot-full .details-container .seller-name {
+  margin-right: 20px;
+  border-bottom: 1px solid rgb(231, 231, 231);
+  margin-bottom: 5px;
+}
+
+.lot-full .details-container .price {
+  margin-right: 10px;
+}
+
+.card {
+  border-radius: 10px;
+
+  background-color: white;
+  margin: 5px;
+}
