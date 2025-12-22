@@ -8,7 +8,7 @@ namespace Donatyk2.Server.Services.Interfaces
         Task<AuthResponse> CreateTokensAsync(ApplicationUser user);
         Task<AuthResponse> LoginAsync(LoginRequest request);
         Task<AuthResponse> RegisterAsync(RegisterUserRequest request);
-        Task<AuthResponse> RefreshTokenAsync(RefreshRequest request);
+        Task<AuthResponse> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync();
     }
 }

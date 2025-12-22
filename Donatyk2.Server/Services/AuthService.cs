@@ -96,23 +96,23 @@ namespace Donatyk2.Server.Services
             return await CreateTokensAsync(user);
         }
 
-        public async Task<AuthResponse?> RefreshTokenAsync(RefreshRequest request)
+        public async Task<AuthResponse?> RefreshTokenAsync(string refreshToken)
         {
-            var refreshToken = await _db.RefreshTokens
+            var dbRefreshToken = await _db.RefreshTokens
                 .Include(r => r.User)
                 .FirstOrDefaultAsync(r =>
-                    r.Token == request.RefreshToken &&
+                    r.Token == refreshToken &&
                     !r.IsRevoked &&
                     r.ExpiresAt > DateTime.UtcNow);
 
-            if (refreshToken == null)
+            if (dbRefreshToken == null)
                 return null;
 
             // 🔥 Rotation
-            refreshToken.IsRevoked = true;
-            _db.RefreshTokens.Update(refreshToken);
+            dbRefreshToken.IsRevoked = true;
+            _db.RefreshTokens.Update(dbRefreshToken);
 
-            return await CreateTokensAsync(refreshToken.User);
+            return await CreateTokensAsync(dbRefreshToken.User);
         }
 
         public async Task LogoutAsync()

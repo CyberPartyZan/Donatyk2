@@ -1,4 +1,3 @@
-
 using Donatyk2.Server.Controllers;
 using Donatyk2.Server.Data;
 using Donatyk2.Server.Services;
@@ -20,6 +19,39 @@ namespace Donatyk2.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // read allowed origins from configuration (Spa:AllowedOrigins)
+            var allowedOrigins = builder.Configuration
+                .GetSection("Spa:AllowedOrigins")
+                .Get<string[]>() ?? Array.Empty<string>();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("spa", policy =>
+                {
+                    // if configured as ["*"] then allow any origin (cannot use AllowCredentials with AllowAnyOrigin)
+                    if (allowedOrigins.Length == 1 && allowedOrigins[0] == "*")
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    }
+                    else if (allowedOrigins.Length > 0)
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowCredentials()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    }
+                    else
+                    {
+                        // fallback: conservative default (no origins) — change as appropriate
+                        policy.DisallowCredentials()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    }
+                });
+            });
 
             // Add services to the container.
             builder.Services.AddDbContext<DonatykDbContext>(options =>
@@ -80,6 +112,8 @@ namespace Donatyk2.Server
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("spa");
 
             app.UseAuthentication();
             app.UseAuthorization();
