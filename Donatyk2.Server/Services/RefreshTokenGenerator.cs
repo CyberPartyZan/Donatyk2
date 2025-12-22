@@ -12,19 +12,11 @@ namespace Donatyk2.Server.Services
             _db = db;
         }
 
-        public string Generate(Guid userId)
+        public string Generate()
         {
             var bytes = RandomNumberGenerator.GetBytes(64);
 
-            var refreshToken = new RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                Token = Convert.ToBase64String(bytes),
-                UserId = userId,
-                ExpiresAt = DateTime.UtcNow.AddDays(14)
-            };
-
-            return refreshToken.Token;
+            return Convert.ToBase64String(bytes);
         }
     }
 }

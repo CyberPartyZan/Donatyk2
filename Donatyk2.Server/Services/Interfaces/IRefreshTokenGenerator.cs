@@ -2,6 +2,6 @@
 {
     public interface IRefreshTokenGenerator
     {
-        string Generate(Guid userId);
+        string Generate();
     }
 }

@@ -32,6 +32,7 @@ namespace Donatyk2.Server.Services
             _db = db;
             _jwt = jwt;
             _refreshTokenGenerator = refreshTokenGenerator;
+            _user = user;
         }
 
         public async Task<AuthResponse> CreateTokensAsync(ApplicationUser user)
@@ -41,7 +42,7 @@ namespace Donatyk2.Server.Services
             var refreshToken = new RefreshToken
             {
                 Id = Guid.NewGuid(),
-                Token = _refreshTokenGenerator.Generate(user.Id),
+                Token = _refreshTokenGenerator.Generate(),
                 UserId = user.Id,
                 ExpiresAt = DateTime.UtcNow.AddDays(14)
             };
