@@ -6,6 +6,7 @@
         public string Name { get; set; }
         public string AvatarImageUrl { get; set; }
         public string Description { get; set; }
+        public Guid UserId { get; set; }
 
         public Seller(Data.SellerEntity entity)
         {
@@ -13,6 +14,7 @@
             Name = entity.Name;
             AvatarImageUrl = entity.AvatarImageUrl;
             Description = entity.Description;
+            UserId = entity.UserId;
         }
     }
 }

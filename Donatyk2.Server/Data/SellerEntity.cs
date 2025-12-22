@@ -6,5 +6,6 @@
         public string Name { get; set; }
         public string Description { get; set; }
         public string AvatarImageUrl { get; set; }
+        public Guid UserId { get; set; }
     }
 }
