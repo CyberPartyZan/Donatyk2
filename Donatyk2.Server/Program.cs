@@ -3,10 +3,12 @@ using Donatyk2.Server.Controllers;
 using Donatyk2.Server.Data;
 using Donatyk2.Server.Services;
 using Donatyk2.Server.Services.Interfaces;
+using Donatyk2.Server.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
@@ -40,25 +42,28 @@ namespace Donatyk2.Server
                 .AddDefaultTokenProviders();
 
             // TODO: Use options pattern to bind JWT settings
-            var jwt = builder.Configuration.GetSection("Jwt");
-
-            builder.Services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+            builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>>(sp =>
+                new ConfigureNamedOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
+                    var jwt = sp.GetRequiredService<IOptions<JwtSettings>>().Value;
+
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        ValidIssuer = jwt["Issuer"],
-                        ValidAudience = jwt["Audience"],
+                        ValidIssuer = jwt.Issuer,
+                        ValidAudience = jwt.Audience,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(jwt["Key"]!)
+                            Encoding.UTF8.GetBytes(jwt.Key ?? string.Empty)
                         )
                     };
-                });
+                }));
+
+            builder.Services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer();
 
             builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
