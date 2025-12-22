@@ -110,9 +110,12 @@ namespace Donatyk2.Server.Services
 
             // 🔥 Rotation
             dbRefreshToken.IsRevoked = true;
-            _db.RefreshTokens.Update(dbRefreshToken);
 
-            return await CreateTokensAsync(dbRefreshToken.User);
+            var tokens = await CreateTokensAsync(dbRefreshToken.User);
+
+            await _db.SaveChangesAsync();
+
+            return tokens;
         }
 
         public async Task LogoutAsync()
