@@ -16,6 +16,7 @@ namespace Donatyk2.Server.Data
         public SellerEntity Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
+        public DateTime CreatedAt { get; set; }
         public DateTime? EndOfAuction { get; set; }
         public int? AuctionStepPercent { get; set; }
         public double? TicketPrice { get; set; }

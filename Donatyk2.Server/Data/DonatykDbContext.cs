@@ -10,8 +10,8 @@ namespace Donatyk2.Server.Data
         public DonatykDbContext(DbContextOptions<DonatykDbContext> options)
             : base(options) { }
 
-        DbSet<LotEntity> Lots { get; set; }
-        DbSet<SellerEntity> Sellers { get; set; }
+        public DbSet<LotEntity> Lots { get; set; }
+        public DbSet<SellerEntity> Sellers { get; set; }
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     }
 }
