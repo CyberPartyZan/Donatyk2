@@ -6,9 +6,9 @@ namespace Donatyk2.Server.Services.Interfaces
     public interface IAuthService
     {
         Task<AuthResponse> CreateTokensAsync(ApplicationUser user);
-        Task<AuthResponse> LoginAsync(LoginRequest request);
-        Task<AuthResponse> RegisterAsync(RegisterUserRequest request);
-        Task<AuthResponse> RefreshTokenAsync(string refreshToken);
+        Task<AuthResponse?> LoginAsync(LoginRequest request);
+        Task<AuthResponse?> RegisterAsync(RegisterUserRequest request);
+        Task<AuthResponse?> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync();
     }
 }

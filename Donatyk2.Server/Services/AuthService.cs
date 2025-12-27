@@ -27,12 +27,12 @@ namespace Donatyk2.Server.Services
             IJwtTokenGenerator jwt,
             IRefreshTokenGenerator refreshTokenGenerator)
         {
+            _user = user;
             _userManager = userManager;
             _signInManager = signInManager;
             _db = db;
             _jwt = jwt;
             _refreshTokenGenerator = refreshTokenGenerator;
-            _user = user;
         }
 
         public async Task<AuthResponse> CreateTokensAsync(ApplicationUser user)
