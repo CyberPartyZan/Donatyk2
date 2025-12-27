@@ -8,7 +8,7 @@ namespace Donatyk2.Server.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class LotController : ControllerBase
+    public class LotsController : ControllerBase
     {
         // GET: api/<LotController>
         [HttpGet]

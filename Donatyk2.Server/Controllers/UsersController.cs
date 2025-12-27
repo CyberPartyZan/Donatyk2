@@ -9,7 +9,7 @@ namespace Donatyk2.Server.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase
     {
     }
 }
