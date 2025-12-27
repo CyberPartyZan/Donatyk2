@@ -21,7 +21,7 @@ namespace Donatyk2.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string search, [FromQuery] int page, [FromQuery] int pageSize)
+        public async Task<IActionResult> GetAll([FromQuery] string search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var sellers = await _sellersService.GetAll(search, page, pageSize);
 
@@ -54,7 +54,7 @@ namespace Donatyk2.Server.Controllers
         {
             await _sellersService.Update(id, seller);
 
-            return Ok();
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
@@ -62,7 +62,7 @@ namespace Donatyk2.Server.Controllers
         {
             await _sellersService.Delete(id);
 
-            return Ok();
+            return NoContent();
         }
     }
 }
