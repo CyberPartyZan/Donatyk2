@@ -3,7 +3,7 @@ using Donatyk2.Server.Models;
 
 namespace Donatyk2.Server.Services
 {
-    public interface ILotService
+    public interface ILotsService
     {
         IEnumerable<Lot> SearchLots(LotSearchQuery query);
         Lot GetLotById(Guid id);

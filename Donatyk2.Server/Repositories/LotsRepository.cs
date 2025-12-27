@@ -1,6 +1,6 @@
 ﻿namespace Donatyk2.Server.Repositories
 {
-    public class LotRepository
+    public class LotsRepository
     {
     }
 }

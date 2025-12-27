@@ -4,7 +4,7 @@ using Donatyk2.Server.Models;
 
 namespace Donatyk2.Server.Repositories.Interfaces
 {
-    public interface ILotRepository
+    public interface ILotsRepository
     {
         IEnumerable<Lot> SearchLots(LotSearchQuery query);
         LotEntity GetLotById(Guid id);
