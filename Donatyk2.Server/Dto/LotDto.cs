@@ -1,9 +1,9 @@
 ﻿using Donatyk2.Server.Enums;
 using Donatyk2.Server.ValueObjects;
 
-namespace Donatyk2.Server.Data
+namespace Donatyk2.Server.Dto
 {
-    public class LotEntity
+    public class LotDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -14,12 +14,12 @@ namespace Donatyk2.Server.Data
         public double Discount { get; set; }
         public LotType Type { get; set; }
         public LotStage Stage { get; set; }
-        public SellerEntity Seller { get; set; }
+        public SellerDto Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? EndOfAuction { get; set; }
         public int? AuctionStepPercent { get; set; }
-        public Money? TicketPrice { get; set; }
+        public double? TicketPrice { get; set; }
     }
 }

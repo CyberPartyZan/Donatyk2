@@ -10,38 +10,5 @@ namespace Donatyk2.Server.Controllers
     [Route("api/[controller]")]
     public class LotsController : ControllerBase
     {
-        // GET: api/<LotController>
-        [HttpGet]
-        [AllowAnonymous]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/<LotController>/5
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/<LotController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/<LotController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<LotController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }

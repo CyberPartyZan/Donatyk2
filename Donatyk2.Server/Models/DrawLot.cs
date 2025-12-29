@@ -1,12 +1,20 @@
-﻿namespace Donatyk2.Server.Models
+﻿using Donatyk2.Server.Data;
+using Donatyk2.Server.ValueObjects;
+
+namespace Donatyk2.Server.Models
 {
     public class DrawLot : Lot
     {
-        public double TicketPrice { get; set; }
+        public Money TicketPrice { get; set; }
 
-        public DrawLot(Data.LotEntity entity) : base(entity)
+        public DrawLot(LotEntity entity) : base(entity)
         {
-            TicketPrice = entity.TicketPrice ?? 0;
+            if (entity.TicketPrice is null || entity.TicketPrice.Amount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(entity.TicketPrice), "Ticket price should be more that zero.");
+            }
+
+            TicketPrice = entity.TicketPrice;
         }
     }
 }

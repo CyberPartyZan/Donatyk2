@@ -9,6 +9,7 @@ namespace Donatyk2.Server.Dto
         public int? MaxPrice { get; set; }
         public Guid? SellerId { get; set; }
         public LotType? Type { get; set; }
-        public bool? IsDiscount { get; set; }
+        public int? MinDiscount { get; set; }
+        public int? MaxDiscount { get; set; }
     }
 }
