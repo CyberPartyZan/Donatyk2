@@ -15,7 +15,7 @@ namespace Donatyk2.Server.Repositories
 
         public async Task<IEnumerable<ApplicationUser>> GetAll(string? search, int page, int pageSize)
         {
-            var usersQuery = _db.Users.AsQueryable();
+            var usersQuery = _db.Users.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {

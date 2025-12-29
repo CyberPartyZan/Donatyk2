@@ -100,6 +100,7 @@ namespace Donatyk2.Server.Services
         public async Task<AuthResponse?> RefreshTokenAsync(string refreshToken)
         {
             var dbRefreshToken = await _db.RefreshTokens
+                .AsNoTracking()
                 .Include(r => r.User)
                 .FirstOrDefaultAsync(r =>
                     r.Token == refreshToken &&
