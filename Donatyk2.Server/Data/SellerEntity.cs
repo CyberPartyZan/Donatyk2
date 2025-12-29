@@ -9,6 +9,7 @@
         public string PhoneNumber { get; set; }
         public string AvatarImageUrl { get; set; }
         public Guid UserId { get; set; }
+        public ApplicationUser User { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

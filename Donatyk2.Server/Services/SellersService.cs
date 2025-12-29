@@ -61,17 +61,14 @@ namespace Donatyk2.Server.Services
             var userId = Guid.Parse(
                 _user.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
 
-            // TODO: Use Seller model?
-            var newSeller = new SellerEntity
-            {
-                Id = Guid.NewGuid(),
-                Name = seller.Name,
-                Description = seller.Description,
-                Email = seller.Email,
-                PhoneNumber = seller.PhoneNumber,
-                AvatarImageUrl = seller.AvatarImageUrl,
-                UserId = userId
-            };
+            var newSeller = new Seller(
+                id: Guid.NewGuid(),
+                name: seller.Name,
+                description: seller.Description,
+                email: seller.Email,
+                phoneNumber: seller.PhoneNumber,
+                avatarImageUrl: seller.AvatarImageUrl ?? string.Empty,
+                userId: userId);
 
             await _sellersRepository.Create(newSeller);
 
@@ -80,16 +77,22 @@ namespace Donatyk2.Server.Services
 
         public async Task Update(Guid id, SellerDto seller)
         {
-            // TODO: Use Seller model?
-            await _sellersRepository.Update(new SellerEntity
+            var existing = await _sellersRepository.GetById(id);
+            if (existing is null)
             {
-                Id = id,
-                Name = seller.Name,
-                Description = seller.Description,
-                Email = seller.Email,
-                PhoneNumber = seller.PhoneNumber,
-                AvatarImageUrl = seller.AvatarImageUrl
-            });
+                throw new KeyNotFoundException($"Seller with id '{id}' not found.");
+            }
+
+            var updatedSeller = new Seller(
+                id: id,
+                name: seller.Name,
+                description: seller.Description,
+                email: seller.Email,
+                phoneNumber: seller.PhoneNumber,
+                avatarImageUrl: seller.AvatarImageUrl ?? existing.AvatarImageUrl,
+                userId: existing.UserId);
+
+            await _sellersRepository.Update(updatedSeller);
         }
 
         public async Task Delete(Guid id)

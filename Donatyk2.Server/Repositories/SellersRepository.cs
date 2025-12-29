@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Donatyk2.Server.Data;
+using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,17 +13,17 @@ namespace Donatyk2.Server.Repositories
     {
         private readonly DonatykDbContext _db;
 
-        public SellersRepository(DonatykDbContext db) 
+        public SellersRepository(DonatykDbContext db)
         {
             _db = db;
         }
 
         // TODO: Implement keyset pagination
-        public async Task<IEnumerable<SellerEntity>> GetAll(string search, int page, int pageSize)
+        public async Task<IEnumerable<Seller>> GetAll(string? search, int page, int pageSize)
         {
-            var sellersQuery = _db.Sellers.AsQueryable();
+            var sellersQuery = _db.Sellers.AsNoTracking().AsQueryable();
 
-            if (search is not null)
+            if (!string.IsNullOrWhiteSpace(search))
             {
                 sellersQuery = sellersQuery.Where(s => s.Name.Contains(search) || s.Description.Contains(search));
             }
@@ -31,35 +33,60 @@ namespace Donatyk2.Server.Repositories
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize);
 
-            return await _db.Sellers.ToListAsync();
+            var entities = await sellersQuery.ToListAsync();
+
+            return entities.Select(e => new Seller(e));
         }
 
-        public async Task<SellerEntity?> GetById(Guid id)
+        public async Task<Seller?> GetById(Guid id)
         {
-            var seller = await _db.Sellers.FindAsync(id);
-
-            return seller;
+            var entity = await _db.Sellers.FindAsync(id);
+            return entity is null ? null : new Seller(entity);
         }
 
-        public async Task<Guid> Create(SellerEntity seller)
+        public async Task<Guid> Create(Seller seller)
         {
             var existingSeller = await _db.Sellers.FirstOrDefaultAsync(s => s.UserId == seller.UserId);
-
+            // TODO: Move to separate method and validate in service layer?
             if (existingSeller is not null)
             {
                 throw new InvalidOperationException("Seller for this user already exists.");
             }
 
-            _db.Sellers.Add(seller);
+            var entity = new SellerEntity
+            {
+                Id = seller.Id == Guid.Empty ? Guid.NewGuid() : seller.Id,
+                Name = seller.Name,
+                Description = seller.Description,
+                Email = seller.Email,
+                PhoneNumber = seller.PhoneNumber,
+                AvatarImageUrl = seller.AvatarImageUrl,
+                UserId = seller.UserId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Sellers.Add(entity);
 
             await _db.SaveChangesAsync();
 
-            return seller.Id;
+            return entity.Id;
         }
 
-        public async Task Update(SellerEntity seller)
+        public async Task Update(Seller seller)
         {
-            _db.Sellers.Update(seller);
+            var entity = new SellerEntity
+            {
+                Id = seller.Id,
+                Name = seller.Name,
+                Description = seller.Description,
+                Email = seller.Email,
+                PhoneNumber = seller.PhoneNumber,
+                AvatarImageUrl = seller.AvatarImageUrl,
+                UserId = seller.UserId,
+                // Do not overwrite CreatedAt here; EF will track the existing entity if attached.
+            };
+
+            _db.Sellers.Update(entity);
 
             await _db.SaveChangesAsync();
         }

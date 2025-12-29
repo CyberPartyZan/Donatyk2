@@ -1,6 +1,6 @@
 ﻿namespace Donatyk2.Server.Dto
 {
-    public record RefreshRequest(
+    public record RefreshTokenRequest(
         string RefreshToken
     );
 }
