@@ -1,9 +1,7 @@
 ﻿using System.Security.Claims;
 using Donatyk2.Server.Dto;
-using Donatyk2.Server.Enums;
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.ValueObjects;
 using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Donatyk2.Server.Services
@@ -38,7 +36,14 @@ namespace Donatyk2.Server.Services
 
             var userId = GetCurrentUserIdOrThrow();
 
-            var seller = new Seller(dto.Seller, userId);
+            var seller = new Seller(
+                dto.Seller.Id == Guid.Empty ? Guid.NewGuid() : dto.Seller.Id,
+                dto.Seller.Name,
+                dto.Seller.Description,
+                dto.Seller.Email,
+                dto.Seller.PhoneNumber,
+                dto.Seller.AvatarImageUrl,
+                userId);
 
             var lot = new Lot(
                 id: dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id,
@@ -66,7 +71,14 @@ namespace Donatyk2.Server.Services
             if (existing is null) throw new KeyNotFoundException($"Lot with id '{id}' not found.");
 
             var sellerUserId = existing.Seller?.UserId ?? GetCurrentUserIdOrThrow();
-            var seller = new Seller(dto.Seller, sellerUserId);
+            var seller = new Seller(
+                dto.Seller.Id == Guid.Empty ? Guid.NewGuid() : dto.Seller.Id,
+                dto.Seller.Name,
+                dto.Seller.Description,
+                dto.Seller.Email,
+                dto.Seller.PhoneNumber,
+                dto.Seller.AvatarImageUrl,
+                sellerUserId);
 
             var updated = new Lot(
                 id: id,
@@ -117,7 +129,7 @@ namespace Donatyk2.Server.Services
                     Description = lot.Seller.Description,
                     Email = lot.Seller.Email,
                     PhoneNumber = lot.Seller.PhoneNumber,
-                    AvatarImageUrl = lot.Seller.AvatarImageUrl
+                    AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty
                 },
                 IsActive = lot.IsActive,
                 IsCompensationPaid = lot.IsCompensationPaid,

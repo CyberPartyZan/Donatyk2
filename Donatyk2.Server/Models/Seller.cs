@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text.RegularExpressions;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
+﻿using System.Text.RegularExpressions;
 
 namespace Donatyk2.Server.Models
 {
@@ -12,10 +9,10 @@ namespace Donatyk2.Server.Models
         public string Description { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public string AvatarImageUrl { get; set; }
+        public string? AvatarImageUrl { get; set; }
         public Guid UserId { get; set; }
 
-        public Seller(Guid id, string name, string description, string email, string phoneNumber, string avatarImageUrl, Guid userId)
+        public Seller(Guid id, string name, string description, string email, string phoneNumber, string? avatarImageUrl, Guid userId)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Seller name cannot be null or whitespace.", nameof(name));
@@ -48,31 +45,6 @@ namespace Donatyk2.Server.Models
             PhoneNumber = phoneNumber;
             AvatarImageUrl = avatarImageUrl;
             UserId = userId;
-        }
-
-        // New: construct Seller from SellerDto + userId
-        public Seller(SellerDto dto, Guid userId)
-            : this(
-                  dto.Id,
-                  dto.Name ?? throw new ArgumentException("Name is required in SellerDto.", nameof(dto)),
-                  dto.Description ?? throw new ArgumentException("Description is required in SellerDto.", nameof(dto)),
-                  dto.Email ?? throw new ArgumentException("Email is required in SellerDto.", nameof(dto)),
-                  dto.PhoneNumber ?? throw new ArgumentException("PhoneNumber is required in SellerDto.", nameof(dto)),
-                  dto.AvatarImageUrl ?? string.Empty,
-                  userId)
-        {
-        }
-
-        public Seller(SellerEntity entity)
-            : this(
-                  entity.Id,
-                  entity.Name,
-                  entity.Description,
-                  entity.Email,
-                  entity.PhoneNumber,
-                  entity.AvatarImageUrl,
-                  entity.UserId)
-        {
         }
     }
 }

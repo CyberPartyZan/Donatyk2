@@ -1,5 +1,5 @@
-﻿using Donatyk2.Server.Enums;
-using Donatyk2.Server.ValueObjects;
+﻿using Donatyk2.Server.ValueObjects;
+using Donatyk2.Server.Enums;
 
 namespace Donatyk2.Server.Models
 {
@@ -22,21 +22,17 @@ namespace Donatyk2.Server.Models
             bool isActive,
             bool isCompensationPaid,
             DateTime endOfAuction,
-            int auctionStepPercentage)
+            int auctionStepPercent)
             : base(id, name, description, price, compensation, stockCount, discount, type, stage, seller, isActive, isCompensationPaid)
         {
-            if (endOfAuction <= DateTime.Now)
-            {
-                throw new ArgumentNullException(nameof(endOfAuction), "End of auction date should be in the future.");
-            }
+            if (endOfAuction <= DateTime.UtcNow)
+                throw new ArgumentException("End of auction date should be in the future.", nameof(endOfAuction));
 
-            if (auctionStepPercentage <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(auctionStepPercentage), "Auction step percent should be more that zero.");
-            }
+            if (auctionStepPercent <= 0)
+                throw new ArgumentOutOfRangeException(nameof(auctionStepPercent), "Auction step percent should be greater than zero.");
 
             EndOfAuction = endOfAuction;
-            AuctionStepPercent = auctionStepPercentage;
+            AuctionStepPercent = auctionStepPercent;
         }
     }
 }

@@ -35,13 +35,27 @@ namespace Donatyk2.Server.Repositories
 
             var entities = await sellersQuery.ToListAsync();
 
-            return entities.Select(e => new Seller(e));
+            return entities.Select(e => new Seller(
+                e.Id,
+                e.Name,
+                e.Description,
+                e.Email,
+                e.PhoneNumber,
+                e.AvatarImageUrl,
+                e.UserId));
         }
 
         public async Task<Seller?> GetById(Guid id)
         {
             var entity = await _db.Sellers.FindAsync(id);
-            return entity is null ? null : new Seller(entity);
+            return entity is null ? null : new Seller(
+                entity.Id,
+                entity.Name,
+                entity.Description,
+                entity.Email,
+                entity.PhoneNumber,
+                entity.AvatarImageUrl,
+                entity.UserId);
         }
 
         public async Task<Guid> Create(Seller seller)
@@ -60,7 +74,7 @@ namespace Donatyk2.Server.Repositories
                 Description = seller.Description,
                 Email = seller.Email,
                 PhoneNumber = seller.PhoneNumber,
-                AvatarImageUrl = seller.AvatarImageUrl,
+                AvatarImageUrl = seller.AvatarImageUrl ?? string.Empty,
                 UserId = seller.UserId,
                 CreatedAt = DateTime.UtcNow
             };
@@ -81,7 +95,7 @@ namespace Donatyk2.Server.Repositories
                 Description = seller.Description,
                 Email = seller.Email,
                 PhoneNumber = seller.PhoneNumber,
-                AvatarImageUrl = seller.AvatarImageUrl,
+                AvatarImageUrl = seller.AvatarImageUrl ?? string.Empty,
                 UserId = seller.UserId,
                 // Do not overwrite CreatedAt here; EF will track the existing entity if attached.
             };

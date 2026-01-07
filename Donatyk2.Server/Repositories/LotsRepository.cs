@@ -4,10 +4,6 @@ using Donatyk2.Server.Enums;
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Donatyk2.Server.Repositories
 {
@@ -100,7 +96,7 @@ namespace Donatyk2.Server.Repositories
                     Description = lot.Seller.Description,
                     Email = lot.Seller.Email,
                     PhoneNumber = lot.Seller.PhoneNumber,
-                    AvatarImageUrl = lot.Seller.AvatarImageUrl,
+                    AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty,
                     UserId = lot.Seller.UserId,
                     CreatedAt = DateTime.UtcNow
                 },
@@ -153,7 +149,7 @@ namespace Donatyk2.Server.Repositories
                     Description = lot.Seller.Description,
                     Email = lot.Seller.Email,
                     PhoneNumber = lot.Seller.PhoneNumber,
-                    AvatarImageUrl = lot.Seller.AvatarImageUrl,
+                    AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty,
                     UserId = lot.Seller.UserId,
                     CreatedAt = existing.Seller?.CreatedAt ?? DateTime.UtcNow
                 };
@@ -184,6 +180,8 @@ namespace Donatyk2.Server.Repositories
         {
             if (entity is null) throw new ArgumentNullException(nameof(entity));
 
+            var sellerEntity = entity.Seller ?? throw new InvalidOperationException("Lot entity must have a Seller.");
+
             return entity.Type switch
             {
                 LotType.Simple => new Lot(
@@ -196,7 +194,14 @@ namespace Donatyk2.Server.Repositories
                     entity.Discount,
                     entity.Type,
                     entity.Stage,
-                    new Seller(entity.Seller),
+                    new Seller(
+                        sellerEntity.Id,
+                        sellerEntity.Name,
+                        sellerEntity.Description,
+                        sellerEntity.Email,
+                        sellerEntity.PhoneNumber,
+                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid),
 
@@ -210,7 +215,14 @@ namespace Donatyk2.Server.Repositories
                     entity.Discount,
                     entity.Type,
                     entity.Stage,
-                    new Seller(entity.Seller),
+                    new Seller(
+                        sellerEntity.Id,
+                        sellerEntity.Name,
+                        sellerEntity.Description,
+                        sellerEntity.Email,
+                        sellerEntity.PhoneNumber,
+                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
                     entity.EndOfAuction ?? throw new ArgumentNullException(nameof(entity.EndOfAuction)),
@@ -226,7 +238,14 @@ namespace Donatyk2.Server.Repositories
                     entity.Discount,
                     entity.Type,
                     entity.Stage,
-                    new Seller(entity.Seller),
+                    new Seller(
+                        sellerEntity.Id,
+                        sellerEntity.Name,
+                        sellerEntity.Description,
+                        sellerEntity.Email,
+                        sellerEntity.PhoneNumber,
+                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
                     entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice))),
