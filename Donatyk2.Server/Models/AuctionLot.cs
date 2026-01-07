@@ -1,4 +1,5 @@
-﻿using Donatyk2.Server.Data;
+﻿using Donatyk2.Server.Enums;
+using Donatyk2.Server.ValueObjects;
 
 namespace Donatyk2.Server.Models
 {
@@ -7,20 +8,35 @@ namespace Donatyk2.Server.Models
         public DateTime EndOfAuction { get; set; }
         public int AuctionStepPercent { get; set; }
 
-        public AuctionLot(LotEntity entity) : base(entity)
+        public AuctionLot(
+            Guid id,
+            string name,
+            string description,
+            Money price,
+            Money compensation,
+            int stockCount,
+            double discount,
+            LotType type,
+            LotStage stage,
+            Seller seller,
+            bool isActive,
+            bool isCompensationPaid,
+            DateTime endOfAuction,
+            int auctionStepPercentage)
+            : base(id, name, description, price, compensation, stockCount, discount, type, stage, seller, isActive, isCompensationPaid)
         {
-            if (entity.EndOfAuction is null || entity.EndOfAuction <= DateTime.Now)
+            if (endOfAuction <= DateTime.Now)
             {
-                throw new ArgumentNullException(nameof(entity.EndOfAuction), "End of auction date should be in the future.");
+                throw new ArgumentNullException(nameof(endOfAuction), "End of auction date should be in the future.");
             }
 
-            if (entity.AuctionStepPercent is null || entity.AuctionStepPercent <= 0)
+            if (auctionStepPercentage <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(entity.AuctionStepPercent), "Auction step percent should be more that zero.");
+                throw new ArgumentOutOfRangeException(nameof(auctionStepPercentage), "Auction step percent should be more that zero.");
             }
 
-            EndOfAuction = entity.EndOfAuction.Value;
-            AuctionStepPercent = entity.AuctionStepPercent.Value;
+            EndOfAuction = endOfAuction;
+            AuctionStepPercent = auctionStepPercentage;
         }
     }
 }

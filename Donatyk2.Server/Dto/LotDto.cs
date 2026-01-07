@@ -20,6 +20,6 @@ namespace Donatyk2.Server.Dto
         public DateTime CreatedAt { get; set; }
         public DateTime? EndOfAuction { get; set; }
         public int? AuctionStepPercent { get; set; }
-        public double? TicketPrice { get; set; }
+        public Money? TicketPrice { get; set; }
     }
 }

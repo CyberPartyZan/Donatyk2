@@ -1,15 +1,14 @@
-﻿using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
+﻿using Donatyk2.Server.Dto;
 using Donatyk2.Server.Models;
 
 namespace Donatyk2.Server.Repositories.Interfaces
 {
     public interface ILotsRepository
     {
-        IEnumerable<Lot> SearchLots(LotSearchQuery query);
-        LotEntity GetLotById(Guid id);
-        Guid CreateLot(LotEntity lot);
-        void UpdateLot(Guid id, LotEntity lot);
-        void DeleteLot(Guid id);
+        Task<IEnumerable<Lot>> GetAll(LotSearchQuery query);
+        Task<Lot?> GetLotById(Guid id);
+        Task<Guid> CreateLot(Lot lot);
+        Task UpdateLot(Guid id, Lot lot);
+        Task DeleteLot(Guid id);
     }
 }

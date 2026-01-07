@@ -1,6 +1,4 @@
-﻿using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
-using Donatyk2.Server.Enums;
+﻿using Donatyk2.Server.Enums;
 using Donatyk2.Server.ValueObjects;
 
 namespace Donatyk2.Server.Models
@@ -93,40 +91,6 @@ namespace Donatyk2.Server.Models
             Seller = seller;
             IsActive = isActive;
             IsCompensationPaid = isCompensationPaid;
-        }
-
-        public Lot(LotEntity entity)
-            : this(
-                entity.Id,
-                entity.Name,
-                entity.Description,
-                entity.Price,
-                entity.Compensation,
-                entity.StockCount,
-                entity.Discount,
-                entity.Type,
-                entity.Stage,
-                new Seller(entity.Seller),
-                entity.IsActive,
-                entity.IsCompensationPaid)
-        {
-        }
-
-        public Lot(LotDto dto, Guid userId)
-            : this(
-                dto.Id,
-                dto.Name,
-                dto.Description,
-                dto.Price,
-                dto.Compensation,
-                dto.StockCount,
-                dto.Discount,
-                dto.Type,
-                dto.Stage,
-                new Seller(dto.Seller, userId),
-                dto.IsActive,
-                dto.IsCompensationPaid)
-        {
         }
     }
 }

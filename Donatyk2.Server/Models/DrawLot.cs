@@ -1,4 +1,4 @@
-﻿using Donatyk2.Server.Data;
+﻿using Donatyk2.Server.Enums;
 using Donatyk2.Server.ValueObjects;
 
 namespace Donatyk2.Server.Models
@@ -7,14 +7,28 @@ namespace Donatyk2.Server.Models
     {
         public Money TicketPrice { get; set; }
 
-        public DrawLot(LotEntity entity) : base(entity)
+        public DrawLot(
+            Guid id,
+            string name,
+            string description,
+            Money price,
+            Money compensation,
+            int stockCount,
+            double discount,
+            LotType type,
+            LotStage stage,
+            Seller seller,
+            bool isActive,
+            bool isCompensationPaid,
+            Money ticketPrice)
+            : base(id, name, description, price, compensation, stockCount, discount, type, stage, seller, isActive, isCompensationPaid)
         {
-            if (entity.TicketPrice is null || entity.TicketPrice.Amount <= 0)
+            if (ticketPrice is null || ticketPrice.Amount <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(entity.TicketPrice), "Ticket price should be more that zero.");
+                throw new ArgumentOutOfRangeException(nameof(ticketPrice), "Ticket price should be more than zero.");
             }
 
-            TicketPrice = entity.TicketPrice;
+            TicketPrice = ticketPrice;
         }
     }
 }
