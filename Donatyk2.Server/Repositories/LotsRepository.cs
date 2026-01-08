@@ -58,9 +58,18 @@ namespace Donatyk2.Server.Repositories
                 q = q.Where(e => e.Discount <= query.MaxDiscount.Value);
             }
 
-            var entities = await q
-                .OrderByDescending(e => e.CreatedAt)
-                .ToListAsync();
+            if (query?.GetDeleted is not null)
+            {
+                q = q.Where(e => e.IsDeleted == query.GetDeleted.Value);
+            } 
+            else
+            {
+                q = q.Where(e => !e.IsDeleted && !e.Seller.IsDeleted);
+            }
+
+                var entities = await q
+                    .OrderByDescending(e => e.CreatedAt)
+                    .ToListAsync();
 
             return entities.Select(e => CreateFromEntity(e));
         }

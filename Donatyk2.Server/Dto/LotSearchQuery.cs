@@ -11,5 +11,6 @@ namespace Donatyk2.Server.Dto
         public LotType? Type { get; set; }
         public int? MinDiscount { get; set; }
         public int? MaxDiscount { get; set; }
+        public bool? GetDeleted { get; set; }
     }
 }
