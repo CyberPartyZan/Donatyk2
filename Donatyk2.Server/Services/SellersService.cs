@@ -1,13 +1,9 @@
-﻿using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
+﻿using Donatyk2.Server.Dto;
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
 using Donatyk2.Server.Services.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Donatyk2.Server.Services
 {
@@ -98,6 +94,15 @@ namespace Donatyk2.Server.Services
         public async Task Delete(Guid id)
         {
             await _sellersRepository.Delete(id);
+        }
+
+        public async Task DeleteByUserId(Guid userId)
+        {
+            var seller = await _sellersRepository.GetByUserId(userId);
+            if (seller is not null)
+            {
+                await Delete(seller.Id);
+            }
         }
     }
 }

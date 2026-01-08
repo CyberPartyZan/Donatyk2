@@ -9,5 +9,6 @@ namespace Donatyk2.Server.Services.Interfaces
         Task<Guid> Create(SellerDto seller);
         Task Update(Guid id, SellerDto seller);
         Task Delete(Guid id);
+        Task DeleteByUserId(Guid id);
     }
 }

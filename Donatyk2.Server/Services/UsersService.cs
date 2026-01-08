@@ -2,19 +2,18 @@ using Donatyk2.Server.Data;
 using Donatyk2.Server.Dto;
 using Donatyk2.Server.Repositories.Interfaces;
 using Donatyk2.Server.Services.Interfaces;
-using System.Security.Claims;
 
 namespace Donatyk2.Server.Services
 {
     public class UsersService : IUsersService
     {
         private readonly IUsersRepository _usersRepository;
-        private readonly ClaimsPrincipal _user;
+        private readonly ISellersService _sellersService;
 
-        public UsersService(ClaimsPrincipal user, IUsersRepository usersRepository)
+        public UsersService(IUsersRepository usersRepository, ISellersService sellersService)
         {
             _usersRepository = usersRepository;
-            _user = user;
+            _sellersService = sellersService;
         }
 
         public async Task<IEnumerable<UserDto>> GetAll(string? search, int page, int pageSize)
@@ -56,6 +55,7 @@ namespace Donatyk2.Server.Services
         public async Task Delete(Guid id)
         {
             await _usersRepository.Delete(id);
+            await _sellersService.DeleteByUserId(id);
         }
 
         private static UserDto ToDto(ApplicationUser u)

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Donatyk2.Server.Data;
+﻿using Donatyk2.Server.Data;
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +52,22 @@ namespace Donatyk2.Server.Repositories
                 entity.PhoneNumber,
                 entity.AvatarImageUrl,
                 entity.UserId);
+        }
+
+        public Task<Seller?> GetByUserId(Guid userId)
+        {
+            return _db.Sellers
+                .AsNoTracking()
+                .Where(s => s.UserId == userId)
+                .Select(entity => new Seller(
+                    entity.Id,
+                    entity.Name,
+                    entity.Description,
+                    entity.Email,
+                    entity.PhoneNumber,
+                    entity.AvatarImageUrl,
+                    entity.UserId))
+                .FirstOrDefaultAsync();
         }
 
         public async Task<Guid> Create(Seller seller)
