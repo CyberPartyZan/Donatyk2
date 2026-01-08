@@ -34,7 +34,6 @@ namespace Donatyk2.Server.Repositories.Configurations
             builder.OwnsOne(x => x.Price, moneyBuilder => 
             {
                 moneyBuilder.Property(m => m.Amount)
-                            .HasConversion<string>()
                             .IsRequired();
                 moneyBuilder.Property(m => m.Currency)
                             .HasConversion<string>()
@@ -44,7 +43,15 @@ namespace Donatyk2.Server.Repositories.Configurations
             builder.OwnsOne(x => x.Compensation, moneyBuilder => 
             {
                 moneyBuilder.Property(m => m.Amount)
+                            .IsRequired();
+                moneyBuilder.Property(m => m.Currency)
                             .HasConversion<string>()
+                            .IsRequired();
+            });
+
+            builder.OwnsOne(x => x.TicketPrice, moneyBuilder =>
+            {
+                moneyBuilder.Property(m => m.Amount)
                             .IsRequired();
                 moneyBuilder.Property(m => m.Currency)
                             .HasConversion<string>()
