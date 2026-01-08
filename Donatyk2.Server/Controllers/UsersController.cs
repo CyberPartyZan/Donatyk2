@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Donatyk2.Server.Controllers
 {
@@ -20,47 +21,79 @@ namespace Donatyk2.Server.Controllers
             _usersService = usersService;
         }
 
-        // GET: api/users
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var users = await _usersService.GetAll(search, page, pageSize);
             return Ok(users);
         }
 
-        // GET: api/users/{id}
         [HttpGet("{id}", Name = "GetUserById")]
         public async Task<IActionResult> Get(Guid id)
         {
+            // TODO: Or I should use JwtRegisteredClaimNames.Sub to get UserId from claims?
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdClaim is null || (!User.IsInRole("Admin") && userIdClaim != id.ToString()))
+            {
+                // Don't return Forbid() to avoid information leakage
+                return NotFound();
+            }
+
             var user = await _usersService.GetById(id);
-            if (user is null) return NotFound();
+            if (user is null) 
+                return NotFound();
+
             return Ok(user);
         }
 
-        // GET: api/users/by-email?email=...
         [HttpGet("by-email")]
         public async Task<IActionResult> GetByEmail([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email)) return BadRequest("Email is required.");
             var user = await _usersService.GetByEmail(email);
-            if (user is null) return NotFound();
+
+            if (user is null) 
+                return NotFound();
+
+            // TODO: Or I should use JwtRegisteredClaimNames.Sub to get UserId from claims?
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.IsInRole("Admin") && user.Id.ToString() != userIdClaim)
+            {
+                // Don't return Forbid() to avoid information leakage
+                return NotFound();
+            }
             return Ok(user);
         }
 
-        // PUT: api/users/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(Guid id, [FromBody] UserDto user)
         {
-            if (user is null) return BadRequest();
+            // TODO: Or I should use JwtRegisteredClaimNames.Sub to get UserId from claims?
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.IsInRole("Admin") && id.ToString() != userIdClaim)
+            {
+                return BadRequest();
+            }
+
+            if (user is null) 
+                return BadRequest();
+
             user.Id = id;
             await _usersService.Update(user);
             return NoContent();
         }
 
-        // DELETE: api/users/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
+            // TODO: Or I should use JwtRegisteredClaimNames.Sub to get UserId from claims?
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.IsInRole("Admin") && id.ToString() != userIdClaim)
+            {
+                return BadRequest();
+            }
+
             await _usersService.Delete(id);
             return NoContent();
         }
