@@ -20,6 +20,7 @@ namespace Donatyk2.Server.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll([FromQuery] LotSearchQuery query)
         {
             var results = await _lotsService.GetAll(query);
@@ -27,6 +28,7 @@ namespace Donatyk2.Server.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Get(Guid id)
         {
             var dto = await _lotsService.GetLotById(id);

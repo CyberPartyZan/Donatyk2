@@ -21,6 +21,7 @@ namespace Donatyk2.Server.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll([FromQuery] string search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var sellers = await _sellersService.GetAll(search, page, pageSize);
@@ -29,6 +30,7 @@ namespace Donatyk2.Server.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Get(Guid id)
         {
             var seller = await _sellersService.GetById(id);
