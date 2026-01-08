@@ -1,4 +1,8 @@
-﻿using Donatyk2.Server.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Donatyk2.Server.Data;
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +21,10 @@ namespace Donatyk2.Server.Repositories
         // TODO: Implement keyset pagination
         public async Task<IEnumerable<Seller>> GetAll(string? search, int page, int pageSize)
         {
-            var sellersQuery = _db.Sellers.AsNoTracking().AsQueryable();
+            var sellersQuery = _db.Sellers
+                .AsNoTracking()
+                .Where(s => !s.IsDeleted)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -43,7 +50,10 @@ namespace Donatyk2.Server.Repositories
 
         public async Task<Seller?> GetById(Guid id)
         {
-            var entity = await _db.Sellers.FindAsync(id);
+            var entity = await _db.Sellers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+
             return entity is null ? null : new Seller(
                 entity.Id,
                 entity.Name,
@@ -88,7 +98,8 @@ namespace Donatyk2.Server.Repositories
                 PhoneNumber = seller.PhoneNumber,
                 AvatarImageUrl = seller.AvatarImageUrl ?? string.Empty,
                 UserId = seller.UserId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false
             };
 
             _db.Sellers.Add(entity);
@@ -100,28 +111,42 @@ namespace Donatyk2.Server.Repositories
 
         public async Task Update(Seller seller)
         {
-            var entity = new SellerEntity
-            {
-                Id = seller.Id,
-                Name = seller.Name,
-                Description = seller.Description,
-                Email = seller.Email,
-                PhoneNumber = seller.PhoneNumber,
-                AvatarImageUrl = seller.AvatarImageUrl ?? string.Empty,
-                UserId = seller.UserId,
-                // Do not overwrite CreatedAt here; EF will track the existing entity if attached.
-            };
+            var existing = await _db.Sellers.FirstOrDefaultAsync(e => e.Id == seller.Id);
 
-            _db.Sellers.Update(entity);
+            if (existing is null || existing.IsDeleted)
+            {
+                throw new KeyNotFoundException($"Seller with id '{seller.Id}' not found.");
+            }
+
+            // Update mutable fields only
+            existing.Name = seller.Name;
+            existing.Description = seller.Description;
+            existing.Email = seller.Email;
+            existing.PhoneNumber = seller.PhoneNumber;
+            existing.AvatarImageUrl = seller.AvatarImageUrl ?? existing.AvatarImageUrl;
+            // preserve existing.UserId and CreatedAt
+
+            _db.Sellers.Update(existing);
 
             await _db.SaveChangesAsync();
         }
 
         public async Task Delete(Guid id)
         {
-            _db.Sellers.Remove(new SellerEntity { Id = id });
+            var existing = await _db.Sellers.FirstOrDefaultAsync(e => e.Id == id);
 
-            await _db.SaveChangesAsync();
+            if (existing is null)
+            {
+                // nothing to do
+                return;
+            }
+
+            if (!existing.IsDeleted)
+            {
+                existing.IsDeleted = true;
+                _db.Sellers.Update(existing);
+                await _db.SaveChangesAsync();
+            }
         }
     }
 }

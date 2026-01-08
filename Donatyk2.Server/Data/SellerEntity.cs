@@ -11,5 +11,6 @@
         public Guid UserId { get; set; }
         public ApplicationUser User { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }
