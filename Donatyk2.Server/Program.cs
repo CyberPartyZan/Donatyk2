@@ -5,6 +5,7 @@ using Donatyk2.Server.Services.Interfaces;
 using Donatyk2.Server.Settings;
 using Donatyk2.Server.Repositories;
 using Donatyk2.Server.Repositories.Interfaces;
+using Donatyk2.Server.Services.Payments;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -110,6 +111,7 @@ namespace Donatyk2.Server
             builder.Services.AddScoped<ISellersRepository, SellersRepository>();
             builder.Services.AddScoped<IUsersRepository, UsersRepository>();
             builder.Services.AddScoped<ICartRepository, CartRepository>();
+            builder.Services.AddScoped<IOrdersRepository, OrdersRepository>();
 
             // services
             builder.Services.AddScoped<ILotsService, LotsService>();
@@ -117,6 +119,9 @@ namespace Donatyk2.Server
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICartService, CartService>();
+            builder.Services.AddScoped<IOrdersService, OrdersService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 
             // Ensure HttpContext is available to services that depend on ClaimsPrincipal
             builder.Services.AddHttpContextAccessor();

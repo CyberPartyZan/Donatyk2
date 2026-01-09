@@ -1,8 +1,8 @@
 using Donatyk2.Server.Data;
+using Donatyk2.Server.Enums;
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Donatyk2.Server.Enums;
 
 namespace Donatyk2.Server.Repositories
 {
@@ -24,20 +24,23 @@ namespace Donatyk2.Server.Repositories
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
 
-            var items = entities.Select(e => new CartItem(
-                lot: CreateLotFromEntity(e.Lot),
-                quantity: e.Quantity,
-                userId: e.UserId));
+            var items = entities
+                .Select(e => new CartItem(
+                    lot: CreateLotFromEntity(e.Lot),
+                    quantity: e.Quantity,
+                    userId: e.UserId))
+                .ToList();
 
             return new Cart(items);
         }
 
         public async Task<Guid> AddItem(CartItem item)
         {
-            if (item is null) 
+            if (item is null)
+            {
                 throw new ArgumentNullException(nameof(item));
+            }
 
-            // Try to find existing cart item for same user & lot
             var existing = await _db.CartItems
                 .FirstOrDefaultAsync(c => c.UserId == item.UserId && c.LotId == item.Lot.Id);
 
@@ -46,16 +49,13 @@ namespace Donatyk2.Server.Repositories
                 existing.Quantity += item.Quantity;
                 _db.CartItems.Update(existing);
                 await _db.SaveChangesAsync();
-                // Return lot id as identifier (composite key is LotId+UserId)
                 return existing.LotId;
             }
 
-            // Validate lot exists
-            var lotEntity = await _db.Lots
-                .Include(l => l.Seller)
-                .FirstOrDefaultAsync(l => l.Id == item.Lot.Id && !l.IsDeleted);
+            var lotExists = await _db.Lots
+                .AnyAsync(l => l.Id == item.Lot.Id && !l.IsDeleted);
 
-            if (lotEntity is null)
+            if (!lotExists)
             {
                 throw new KeyNotFoundException($"Lot with id '{item.Lot.Id}' not found.");
             }
@@ -70,14 +70,15 @@ namespace Donatyk2.Server.Repositories
             _db.CartItems.Add(entity);
             await _db.SaveChangesAsync();
 
-            // Return lot id as identifier (composite key is LotId+UserId)
             return entity.LotId;
         }
 
         public async Task ChangeQuantity(Guid lotId, int quantity, Guid userId)
         {
-            if (quantity <= 0) 
+            if (quantity <= 0)
+            {
                 throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
+            }
 
             var existing = await _db.CartItems
                 .FirstOrDefaultAsync(c => c.LotId == lotId && c.UserId == userId);
@@ -106,9 +107,20 @@ namespace Donatyk2.Server.Repositories
             await _db.SaveChangesAsync();
         }
 
+        public async Task ClearCart(Guid userId)
+        {
+            var items = _db.CartItems.Where(c => c.UserId == userId);
+            _db.CartItems.RemoveRange(items);
+            await _db.SaveChangesAsync();
+        }
+
         private static Lot CreateLotFromEntity(LotEntity entity)
         {
-            if (entity is null) throw new ArgumentNullException(nameof(entity));
+            if (entity is null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
             var sellerEntity = entity.Seller ?? throw new InvalidOperationException("Lot entity must have a Seller.");
 
             return entity.Type switch

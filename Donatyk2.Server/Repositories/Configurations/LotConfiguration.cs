@@ -37,7 +37,8 @@ namespace Donatyk2.Server.Repositories.Configurations
                             .IsRequired();
                 moneyBuilder.Property(m => m.Currency)
                             .HasConversion<string>()
-                            .IsRequired();
+                            .IsRequired()
+                            .HasMaxLength(3);
             });
 
             builder.OwnsOne(x => x.Compensation, moneyBuilder => 
@@ -46,7 +47,8 @@ namespace Donatyk2.Server.Repositories.Configurations
                             .IsRequired();
                 moneyBuilder.Property(m => m.Currency)
                             .HasConversion<string>()
-                            .IsRequired();
+                            .IsRequired()
+                            .HasMaxLength(3);
             });
 
             builder.OwnsOne(x => x.TicketPrice, moneyBuilder =>
@@ -55,7 +57,8 @@ namespace Donatyk2.Server.Repositories.Configurations
                             .IsRequired();
                 moneyBuilder.Property(m => m.Currency)
                             .HasConversion<string>()
-                            .IsRequired();
+                            .IsRequired()
+                            .HasMaxLength(3);
             });
         }
     }

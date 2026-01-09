@@ -2,7 +2,7 @@
 {
     public class Cart
     {
-        public IEnumerable<CartItem> Items { get; private set; }
+        public IReadOnlyCollection<CartItem> Items { get; }
 
         public Cart(IEnumerable<CartItem> items)
         {
@@ -11,12 +11,15 @@
                 throw new ArgumentNullException(nameof(items));
             }
 
-            if (items.DistinctBy(i => i.UserId).Count() != 1)
+            var materializedItems = items.ToList();
+
+            if (materializedItems.Count > 0 &&
+                materializedItems.DistinctBy(i => i.UserId).Count() != 1)
             {
                 throw new ArgumentException("All cart items must belong to the same user.", nameof(items));
             }
 
-            Items = items;
+            Items = materializedItems;
         }
     }
 }
