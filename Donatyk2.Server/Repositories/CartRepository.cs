@@ -62,7 +62,6 @@ namespace Donatyk2.Server.Repositories
 
             var entity = new CartItemEntity
             {
-                Id = Guid.NewGuid(),
                 LotId = item.Lot.Id,
                 Quantity = item.Quantity,
                 UserId = item.UserId
