@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using System;
+using Donatyk2.Server.Repositories.Configurations;
 
 namespace Donatyk2.Server.Data
 {
@@ -12,6 +13,19 @@ namespace Donatyk2.Server.Data
 
         public DbSet<LotEntity> Lots { get; set; }
         public DbSet<SellerEntity> Sellers { get; set; }
+        public DbSet<CartItemEntity> CartItems { get; set; }
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Register entity configurations
+            modelBuilder.ApplyConfiguration(new LotConfiguration());
+            modelBuilder.ApplyConfiguration(new SellerConfiguration());
+            modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
+            modelBuilder.ApplyConfiguration(new CartItemConfiguration());
+            modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
+        }
     }
 }

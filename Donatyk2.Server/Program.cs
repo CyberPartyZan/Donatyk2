@@ -3,14 +3,18 @@ using Donatyk2.Server.Data;
 using Donatyk2.Server.Services;
 using Donatyk2.Server.Services.Interfaces;
 using Donatyk2.Server.Settings;
+using Donatyk2.Server.Repositories;
+using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Text;
+using System.Security.Claims;
 
 namespace Donatyk2.Server
 {
@@ -97,7 +101,28 @@ namespace Donatyk2.Server
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer();
 
+            // core helpers
             builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+            builder.Services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+
+            // repositories
+            builder.Services.AddScoped<ILotsRepository, LotsRepository>();
+            builder.Services.AddScoped<ISellersRepository, SellersRepository>();
+            builder.Services.AddScoped<IUsersRepository, UsersRepository>();
+            builder.Services.AddScoped<ICartRepository, CartRepository>();
+
+            // services
+            builder.Services.AddScoped<ILotsService, LotsService>();
+            builder.Services.AddScoped<ISellersService, SellersService>();
+            builder.Services.AddScoped<IUsersService, UsersService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ICartService, CartService>();
+
+            // Ensure HttpContext is available to services that depend on ClaimsPrincipal
+            builder.Services.AddHttpContextAccessor();
+            // Provide ClaimsPrincipal via DI (scoped) so services can accept it in constructors
+            builder.Services.AddScoped<ClaimsPrincipal>(sp =>
+                sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.User ?? new ClaimsPrincipal());
 
             var app = builder.Build();
 
