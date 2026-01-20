@@ -38,6 +38,22 @@ namespace Donatyk2.Server.Repositories
                     throw new InvalidOperationException($"Lot '{lot.Name}' does not have enough stock to fulfill the order.");
                 }
 
+                if (lot.Type == LotType.Auction)
+                {
+                    lot.Price = item.UnitPrice;
+
+                    var bid = new Bid
+                    {
+                        Id = Guid.NewGuid(),
+                        AuctionId = lot.Id,
+                        BidderId = order.CustomerId,
+                        Amount = item.UnitPrice,
+                        PlacedAt = DateTime.UtcNow
+                    };
+
+                    _db.BidHistory.Add(bid);
+                }
+
                 lot.StockCount -= item.Quantity;
                 _db.Lots.Update(lot);
             }

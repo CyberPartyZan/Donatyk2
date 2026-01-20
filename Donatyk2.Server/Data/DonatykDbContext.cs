@@ -17,6 +17,8 @@ namespace Donatyk2.Server.Data
         public DbSet<OrderEntity> Orders { get; set; }
         public DbSet<OrderItemEntity> OrderItems { get; set; }
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
+        public DbSet<Bid> BidHistory => Set<Bid>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
