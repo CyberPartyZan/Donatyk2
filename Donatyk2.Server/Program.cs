@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Text;
 using System.Security.Claims;
+using Marketplace;
 
 namespace Donatyk2.Server
 {
@@ -114,15 +115,7 @@ namespace Donatyk2.Server
             builder.Services.AddScoped<ICartRepository, CartRepository>();
             builder.Services.AddScoped<IOrdersRepository, OrdersRepository>();
 
-            // services
-            builder.Services.AddScoped<ILotsService, LotsService>();
-            builder.Services.AddScoped<ISellersService, SellersService>();
-            builder.Services.AddScoped<IUsersService, UsersService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<ICartService, CartService>();
-            builder.Services.AddScoped<IOrdersService, OrdersService>();
-            builder.Services.AddScoped<INotificationService, NotificationService>();
-            builder.Services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
+            builder.Services.AddMarketplaceServices();
 
             // Ensure HttpContext is available to services that depend on ClaimsPrincipal
             builder.Services.AddHttpContextAccessor();
