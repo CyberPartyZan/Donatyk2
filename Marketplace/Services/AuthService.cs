@@ -35,7 +35,7 @@ namespace Donatyk2.Server.Services
             _refreshTokenGenerator = refreshTokenGenerator;
         }
 
-        public async Task<AuthResponse> CreateTokensAsync(ApplicationUser user)
+        private async Task<AuthResponse> CreateTokensAsync(ApplicationUser user)
         {
             var accessToken = await _jwt.GenerateAsync(user);
 

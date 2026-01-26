@@ -11,15 +11,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.*" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
       <Version>10.*</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.*" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.*">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.*" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
@@ -29,6 +23,8 @@
     <ProjectReference Include="..\donatyk2.client\donatyk2.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
+    <ProjectReference Include="..\Marketplace\Marketplace.csproj" />
   </ItemGroup>
 
 </Project>

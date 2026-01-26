@@ -1,9 +1,6 @@
-﻿using Azure;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
+﻿using Donatyk2.Server.Dto;
 using Donatyk2.Server.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 

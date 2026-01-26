@@ -2,7 +2,7 @@
 
 namespace Donatyk2.Server.Data
 {
-    public class Bid
+    public class BidEntity
     {
         public Guid Id { get; set; }
         public Guid AuctionId { get; set; }
