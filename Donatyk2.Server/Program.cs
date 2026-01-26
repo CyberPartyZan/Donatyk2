@@ -76,6 +76,7 @@ namespace Donatyk2.Server
                 })
                 .AddRoles<IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<DonatykDbContext>()
+                .AddSignInManager()
                 .AddDefaultTokenProviders();
 
             // TODO: Use options pattern to bind JWT settings

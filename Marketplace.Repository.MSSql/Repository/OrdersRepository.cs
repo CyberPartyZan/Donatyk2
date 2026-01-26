@@ -42,7 +42,7 @@ namespace Donatyk2.Server.Repositories
                 {
                     lot.Price = item.UnitPrice;
 
-                    var bid = new Bid
+                    var bid = new BidEntity
                     {
                         Id = Guid.NewGuid(),
                         AuctionId = lot.Id,

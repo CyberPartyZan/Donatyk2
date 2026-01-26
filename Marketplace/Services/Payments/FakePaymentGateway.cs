@@ -1,6 +1,8 @@
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Services.Interfaces;
 using Donatyk2.Server.ValueObjects;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Donatyk2.Server.Services.Payments
 {
