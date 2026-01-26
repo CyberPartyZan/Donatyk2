@@ -17,6 +17,7 @@ using System;
 using System.Text;
 using System.Security.Claims;
 using Marketplace;
+using Marketplace.Repository.MSSql;
 
 namespace Donatyk2.Server
 {
@@ -59,26 +60,12 @@ namespace Donatyk2.Server
                 });
             });
 
-            // Add services to the container.
-            builder.Services.AddDbContext<DonatykDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddMarketplaceRepositoryServices(builder.Configuration.GetConnectionString("DefaultConnection"));
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
-            builder.Services
-                .AddIdentityCore<ApplicationUser>(options =>
-                {
-                    options.Password.RequiredLength = 8;
-                    options.Lockout.MaxFailedAccessAttempts = 5;
-                    options.User.RequireUniqueEmail = true;
-                })
-                .AddRoles<IdentityRole<Guid>>()
-                .AddEntityFrameworkStores<DonatykDbContext>()
-                .AddSignInManager()
-                .AddDefaultTokenProviders();
 
             // TODO: Use options pattern to bind JWT settings
             builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>>(sp =>
@@ -103,17 +90,6 @@ namespace Donatyk2.Server
             builder.Services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer();
-
-            // core helpers
-            builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-            builder.Services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
-
-            // repositories
-            builder.Services.AddScoped<ILotsRepository, LotsRepository>();
-            builder.Services.AddScoped<ISellersRepository, SellersRepository>();
-            builder.Services.AddScoped<IUsersRepository, UsersRepository>();
-            builder.Services.AddScoped<ICartRepository, CartRepository>();
-            builder.Services.AddScoped<IOrdersRepository, OrdersRepository>();
 
             builder.Services.AddMarketplaceServices();
 

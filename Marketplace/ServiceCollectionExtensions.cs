@@ -18,6 +18,9 @@ namespace Marketplace
             services.AddScoped<INotificationService, NotificationService>();
             services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 
+            services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+            services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+
             return services;
         }
     }
