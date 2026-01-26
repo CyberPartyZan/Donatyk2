@@ -1,7 +1,7 @@
-using Donatyk2.Server.Data;
 using Donatyk2.Server.Dto;
 using Donatyk2.Server.Repositories.Interfaces;
 using Donatyk2.Server.Services.Interfaces;
+using Marketplace.Abstractions.Models;
 
 namespace Donatyk2.Server.Services
 {
@@ -43,8 +43,6 @@ namespace Donatyk2.Server.Services
             }
 
             existing.Email = userDto.Email;
-            existing.UserName = userDto.UserName;
-            existing.PhoneNumber = userDto.PhoneNumber;
             existing.EmailConfirmed = userDto.EmailConfirmed;
             existing.LockoutEnabled = userDto.LockoutEnabled;
             existing.LockoutEnd = userDto.LockoutEnd ?? existing.LockoutEnd;
@@ -58,17 +56,15 @@ namespace Donatyk2.Server.Services
             await _sellersService.DeleteByUserId(id);
         }
 
-        private static UserDto ToDto(ApplicationUser u)
+        private static UserDto ToDto(User user)
         {
             return new UserDto
             {
-                Id = u.Id,
-                Email = u.Email ?? string.Empty,
-                EmailConfirmed = u.EmailConfirmed,
-                UserName = u.UserName ?? string.Empty,
-                PhoneNumber = u.PhoneNumber ?? string.Empty,
-                LockoutEnabled = u.LockoutEnabled,
-                LockoutEnd = u.LockoutEnd?.UtcDateTime
+                Id = user.Id,
+                Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
+                LockoutEnabled = user.LockoutEnabled,
+                LockoutEnd = user.LockoutEnd
             };
         }
     }
