@@ -26,6 +26,7 @@ namespace Donatyk2.Server.Controllers
                 Path = "/api/auth/refresh"
             };
 
+        // TODO: Add external logins (Google, Facebook, etc.)
         public AuthController(IAuthService authService, HttpResponse response, HttpRequest request)
         {
             _authService = authService;
