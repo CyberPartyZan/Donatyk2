@@ -1,0 +1,10 @@
+# Copilot Instructions
+
+## General Guidelines
+- Group identity-related registrations together for better organization.
+- Move JWT/Identity options to extension methods or utilize the options pattern for improved clarity.
+- Remove redundant scoped `ClaimsPrincipal` if `IHttpContextAccessor` suffices to streamline the code.
+
+## Code Style
+- Use specific formatting rules.
+- Follow naming conventions.
