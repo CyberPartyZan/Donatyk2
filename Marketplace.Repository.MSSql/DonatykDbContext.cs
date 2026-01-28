@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Donatyk2.Server.Repositories.Configurations;
+using Marketplace.Repository.MSSql.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
-using Donatyk2.Server.Repositories.Configurations;
 
 namespace Donatyk2.Server.Data
 {

@@ -1,4 +1,5 @@
 using Donatyk2.Server.Data;
+using Marketplace.Repository.MSSql.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
