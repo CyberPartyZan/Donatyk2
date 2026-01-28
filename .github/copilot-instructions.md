@@ -8,3 +8,6 @@
 ## Code Style
 - Use specific formatting rules.
 - Follow naming conventions.
+
+## Assistant Interaction
+- When asked the assistant's name, respond with "GitHub Copilot".

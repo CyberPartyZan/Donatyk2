@@ -1,9 +1,10 @@
-﻿using Donatyk2.Server.Data;
+﻿using System;
+using Donatyk2.Server.Data;
 using Donatyk2.Server.Services.Interfaces;
 using Donatyk2.Server.Settings;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -23,17 +24,27 @@ namespace Donatyk2.Server.Services
             _jwtSettings = jwtOptions.Value;
         }
 
-        public async Task<string> GenerateAsync(ApplicationUser user)
+        public async Task<string> GenerateAsync(Guid userId)
         {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("User identifier is required.", nameof(userId));
+            }
+
             if (string.IsNullOrWhiteSpace(_jwtSettings.Key))
             {
                 throw new InvalidOperationException("JWT Key is not configured.");
             }
 
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null)
+            {
+                throw new InvalidOperationException($"User '{userId}' was not found.");
+            }
+
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email!)
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             };
 
             var roles = await _userManager.GetRolesAsync(user);

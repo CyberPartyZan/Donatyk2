@@ -1,59 +1,60 @@
 ﻿using Donatyk2.Server.Data;
 using Donatyk2.Server.Dto;
+using Donatyk2.Server.Repositories.Interfaces;
 using Donatyk2.Server.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
 using System.Text;
 
 namespace Donatyk2.Server.Services
 {
+    // TODO: Move to separate project
     public class AuthService : IAuthService
     {
         private readonly ClaimsPrincipal _user;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly DonatykDbContext _db;
         private readonly IJwtTokenGenerator _jwt;
         private readonly IRefreshTokenGenerator _refreshTokenGenerator;
         private readonly INotificationService _notificationService;
+        private readonly IAuthRepository _authRepository;
 
         public AuthService(
             ClaimsPrincipal user,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            DonatykDbContext db,
             IJwtTokenGenerator jwt,
             IRefreshTokenGenerator refreshTokenGenerator,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IAuthRepository authRepository)
         {
             _user = user;
             _userManager = userManager;
             _signInManager = signInManager;
-            _db = db;
             _jwt = jwt;
             _refreshTokenGenerator = refreshTokenGenerator;
             _notificationService = notificationService;
+            _authRepository = authRepository;
         }
 
-        private async Task<AuthResponse> CreateTokensAsync(ApplicationUser user)
+        private async Task<AuthResponse> CreateTokensAsync(Guid userId)
         {
-            var accessToken = await _jwt.GenerateAsync(user);
-
-            var refreshToken = new RefreshToken
+            if (userId == Guid.Empty)
             {
-                Id = Guid.NewGuid(),
-                Token = _refreshTokenGenerator.Generate(),
-                UserId = user.Id,
-                ExpiresAt = DateTime.UtcNow.AddDays(14)
-            };
+                throw new ArgumentException("User identifier is required.", nameof(userId));
+            }
 
-            _db.RefreshTokens.Add(refreshToken);
-            await _db.SaveChangesAsync();
+            var accessToken = await _jwt.GenerateAsync(userId);
 
-            return new AuthResponse(accessToken, refreshToken.Token);
+            var refreshTokenValue = _refreshTokenGenerator.Generate();
+            await _authRepository.CreateRefreshTokenAsync(
+                userId,
+                refreshTokenValue,
+                DateTime.UtcNow.AddDays(14));
+
+            return new AuthResponse(accessToken, refreshTokenValue);
         }
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request)
@@ -66,7 +67,9 @@ namespace Donatyk2.Server.Services
 
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user is null)
+            {
                 return null;
+            }
 
             if (!user.EmailConfirmed)
             {
@@ -88,9 +91,11 @@ namespace Donatyk2.Server.Services
             }
 
             if (!result.Succeeded)
+            {
                 return null;
+            }
 
-            return await CreateTokensAsync(user);
+            return await CreateTokensAsync(user.Id);
         }
 
         public async Task<AuthResponse?> LoginWithRecoveryCode(LoginWithRecoveryCodeRequest request)
@@ -125,7 +130,7 @@ namespace Donatyk2.Server.Services
                 throw new InvalidOperationException("Invalid recovery code.");
             }
 
-            return await CreateTokensAsync(user);
+            return await CreateTokensAsync(user.Id);
         }
 
         public async Task<AuthResponse?> RegisterAsync(RegisterUserRequest request)
@@ -146,7 +151,9 @@ namespace Donatyk2.Server.Services
 
             var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
+            {
                 return null;
+            }
 
             var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(confirmationToken));
@@ -156,29 +163,18 @@ namespace Donatyk2.Server.Services
                 user.Email ?? request.Email!,
                 encodedToken);
 
-            return await CreateTokensAsync(user);
+            return await CreateTokensAsync(user.Id);
         }
 
         public async Task<AuthResponse?> RefreshTokenAsync(string refreshToken)
         {
-            var dbRefreshToken = await _db.RefreshTokens
-                .AsNoTracking()
-                .Include(r => r.User)
-                .FirstOrDefaultAsync(r =>
-                    r.Token == refreshToken &&
-                    !r.IsRevoked &&
-                    r.ExpiresAt > DateTime.UtcNow);
-
-            if (dbRefreshToken == null)
+            var userId = await _authRepository.UseRefreshTokenAsync(refreshToken);
+            if (userId is null)
+            {
                 return null;
+            }
 
-            dbRefreshToken.IsRevoked = true;
-
-            var tokens = await CreateTokensAsync(dbRefreshToken.User);
-
-            await _db.SaveChangesAsync();
-
-            return tokens;
+            return await CreateTokensAsync(userId.Value);
         }
 
         public async Task LogoutAsync()
@@ -186,12 +182,7 @@ namespace Donatyk2.Server.Services
             var userId = Guid.Parse(
                 _user.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
 
-            var tokens = await _db.RefreshTokens
-                .Where(r => r.UserId == userId && !r.IsRevoked)
-                .ToListAsync();
-
-            tokens.ForEach(t => t.IsRevoked = true);
-            await _db.SaveChangesAsync();
+            await _authRepository.RevokeRefreshTokensAsync(userId);
         }
 
         public async Task ConfirmEmailAsync(string userId, string token)
@@ -362,16 +353,7 @@ namespace Donatyk2.Server.Services
             }
 
             await _userManager.UpdateSecurityStampAsync(user);
-
-            var refreshTokens = await _db.RefreshTokens
-                .Where(r => r.UserId == user.Id && !r.IsRevoked)
-                .ToListAsync();
-
-            if (refreshTokens.Count > 0)
-            {
-                refreshTokens.ForEach(t => t.IsRevoked = true);
-                await _db.SaveChangesAsync();
-            }
+            await _authRepository.RevokeRefreshTokensAsync(user.Id);
         }
 
         public async Task ReSendEmailConfirmationAsync(string email, string? redirectUrl)
