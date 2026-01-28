@@ -15,6 +15,7 @@ namespace Marketplace
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IOrdersService, OrdersService>();
+            services.AddScoped<ICategoriesService, CategoryService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 

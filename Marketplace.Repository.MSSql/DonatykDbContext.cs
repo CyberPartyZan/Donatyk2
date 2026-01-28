@@ -16,9 +16,10 @@ namespace Donatyk2.Server.Data
         public DbSet<CartItemEntity> CartItems { get; set; }
         public DbSet<OrderEntity> Orders { get; set; }
         public DbSet<OrderItemEntity> OrderItems { get; set; }
-        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-        public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
-        public DbSet<BidEntity> BidHistory => Set<BidEntity>();
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<BidEntity> BidHistory { get; set; }
+        public DbSet<CategoryEntity> Categories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +33,7 @@ namespace Donatyk2.Server.Data
             modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
             modelBuilder.ApplyConfiguration(new OrderConfiguration());
             modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryConfiguration());
         }
     }
 }

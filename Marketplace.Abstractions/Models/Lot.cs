@@ -20,6 +20,7 @@ namespace Donatyk2.Server.Models
         public Seller Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
+        public Guid CategoryId { get; set; }
         public Money Profit => Price - Compensation;
 
         public Lot(

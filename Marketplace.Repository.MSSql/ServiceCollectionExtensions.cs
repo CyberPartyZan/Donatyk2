@@ -12,7 +12,6 @@ namespace Marketplace.Repository.MSSql
     {
         public static IServiceCollection AddMarketplaceRepositoryServices(this IServiceCollection services, string connectionString)
         {
-            // Add services to the container.
             services.AddDbContext<DonatykDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
@@ -33,6 +32,7 @@ namespace Marketplace.Repository.MSSql
             services.AddScoped<IUsersRepository, UsersRepository>();
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IOrdersRepository, OrdersRepository>();
+            services.AddScoped<ICategoriesRepository, CategoriesRepository>();
 
             return services;
         }
