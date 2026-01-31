@@ -12,7 +12,6 @@ namespace Marketplace
             services.AddScoped<ILotsService, LotsService>();
             services.AddScoped<ISellersService, SellersService>();
             services.AddScoped<IUsersService, UsersService>();
-            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IOrdersService, OrdersService>();
             services.AddScoped<ICategoriesService, CategoryService>();

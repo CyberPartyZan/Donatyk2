@@ -1,6 +1,8 @@
 ﻿using Donatyk2.Server.Data;
 using Donatyk2.Server.Repositories;
 using Donatyk2.Server.Repositories.Interfaces;
+using Donatyk2.Server.Services;
+using Donatyk2.Server.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +36,8 @@ namespace Marketplace.Repository.MSSql
             services.AddScoped<IOrdersRepository, OrdersRepository>();
             services.AddScoped<ICategoriesRepository, CategoriesRepository>();
             services.AddScoped<IAuthRepository, AuthRepository>();
+
+            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }
