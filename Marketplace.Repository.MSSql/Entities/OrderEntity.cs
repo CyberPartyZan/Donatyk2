@@ -3,7 +3,7 @@ using Donatyk2.Server.ValueObjects;
 
 namespace Donatyk2.Server.Data
 {
-    public class OrderEntity
+    internal class OrderEntity
     {
         public Guid Id { get; set; }
         public Guid CustomerId { get; set; }
@@ -22,6 +22,6 @@ namespace Donatyk2.Server.Data
         public decimal PaymentTaxRate { get; set; }
         public string? PaymentReturnUrl { get; set; }
         public string? PaymentReference { get; set; }
-        public ICollection<OrderItemEntity> Items { get; set; } = new List<OrderItemEntity>();
+        public virtual ICollection<OrderItemEntity> Items { get; set; } = new List<OrderItemEntity>();
     }
 }

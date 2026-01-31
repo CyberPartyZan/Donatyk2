@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Donatyk2.Server.Repositories
 {
-    public class CategoriesRepository : ICategoriesRepository
+    internal class CategoriesRepository : ICategoriesRepository
     {
         private readonly DonatykDbContext _dbContext;
 

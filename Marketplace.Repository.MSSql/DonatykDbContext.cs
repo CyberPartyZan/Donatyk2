@@ -7,7 +7,7 @@ using System;
 
 namespace Donatyk2.Server.Data
 {
-    public class DonatykDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    internal class DonatykDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {
         public DonatykDbContext(DbContextOptions<DonatykDbContext> options)
             : base(options) { }

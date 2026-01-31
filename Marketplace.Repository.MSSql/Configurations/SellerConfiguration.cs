@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Donatyk2.Server.Repositories.Configurations
 {
-    public class SellerConfiguration : IEntityTypeConfiguration<SellerEntity>
+    internal class SellerConfiguration : IEntityTypeConfiguration<SellerEntity>
     {
         public void Configure(EntityTypeBuilder<SellerEntity> builder)
         {

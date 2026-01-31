@@ -6,10 +6,8 @@ namespace Donatyk2.Server.Services
 {
     public class RefreshTokenGenerator : IRefreshTokenGenerator
     {
-        public readonly DonatykDbContext _db;
-        public RefreshTokenGenerator(DonatykDbContext db)
+        public RefreshTokenGenerator()
         {
-            _db = db;
         }
 
         public string Generate()

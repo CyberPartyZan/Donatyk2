@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Donatyk2.Server.Repositories
 {
-    public class LotsRepository : ILotsRepository
+    internal class LotsRepository : ILotsRepository
     {
         private readonly DonatykDbContext _db;
 

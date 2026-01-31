@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Donatyk2.Server.Repositories.Configurations
 {
-    public class CategoryConfiguration : IEntityTypeConfiguration<CategoryEntity>
+    internal class CategoryConfiguration : IEntityTypeConfiguration<CategoryEntity>
     {
         public void Configure(EntityTypeBuilder<CategoryEntity> builder)
         {

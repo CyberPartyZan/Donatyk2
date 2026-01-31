@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Donatyk2.Server.Repositories.Configurations
 {
-    public class LotConfiguration : IEntityTypeConfiguration<LotEntity>
+    internal class LotConfiguration : IEntityTypeConfiguration<LotEntity>
     {
         public void Configure(EntityTypeBuilder<LotEntity> builder)
         {

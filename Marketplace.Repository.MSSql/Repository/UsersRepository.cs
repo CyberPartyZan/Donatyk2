@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Donatyk2.Server.Repositories
 {
-    public class UsersRepository : IUsersRepository
+    internal class UsersRepository : IUsersRepository
     {
         private readonly DonatykDbContext _db;
 

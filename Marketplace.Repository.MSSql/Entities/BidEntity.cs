@@ -2,13 +2,13 @@
 
 namespace Donatyk2.Server.Data
 {
-    public class BidEntity
+    internal class BidEntity
     {
         public Guid Id { get; set; }
         public Guid AuctionId { get; set; }
-        public LotEntity Auction { get; set; } = null!;
+        public virtual LotEntity Auction { get; set; } = null!;
         public Guid BidderId { get; set; }
-        public ApplicationUser Bidder { get; set; } = null!;
+        public virtual ApplicationUser Bidder { get; set; } = null!;
         public Money Amount { get; set; }
         public DateTime PlacedAt { get; set; }
     }

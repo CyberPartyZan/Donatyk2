@@ -4,7 +4,7 @@ using Marketplace.Repository.MSSql.Entities;
 
 namespace Donatyk2.Server.Data
 {
-    public class LotEntity
+    internal class LotEntity
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -15,7 +15,7 @@ namespace Donatyk2.Server.Data
         public double Discount { get; set; }
         public LotType Type { get; set; }
         public LotStage Stage { get; set; }
-        public SellerEntity Seller { get; set; }
+        public virtual SellerEntity Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
         public DateTime CreatedAt { get; set; }

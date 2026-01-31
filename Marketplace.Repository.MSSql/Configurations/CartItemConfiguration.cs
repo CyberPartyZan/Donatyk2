@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Donatyk2.Server.Repositories.Configurations
 {
-    public class CartItemConfiguration : IEntityTypeConfiguration<CartItemEntity>
+    internal class CartItemConfiguration : IEntityTypeConfiguration<CartItemEntity>
     {
         public void Configure(EntityTypeBuilder<CartItemEntity> builder)
         {

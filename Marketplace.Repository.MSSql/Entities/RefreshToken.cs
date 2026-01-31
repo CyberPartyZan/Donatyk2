@@ -1,6 +1,6 @@
 ﻿namespace Donatyk2.Server.Data
 {
-    public class RefreshToken
+    internal class RefreshToken
     {
         public Guid Id { get; set; }
         public string Token { get; set; } = null!;

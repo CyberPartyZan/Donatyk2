@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Donatyk2.Server.Repositories.Configurations
 {
-    public class OrderConfiguration : IEntityTypeConfiguration<OrderEntity>
+    internal class OrderConfiguration : IEntityTypeConfiguration<OrderEntity>
     {
         public void Configure(EntityTypeBuilder<OrderEntity> builder)
         {

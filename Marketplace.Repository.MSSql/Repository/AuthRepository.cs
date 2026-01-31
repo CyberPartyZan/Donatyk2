@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Donatyk2.Server.Repositories
 {
-    public class AuthRepository : IAuthRepository
+    internal class AuthRepository : IAuthRepository
     {
         private readonly DonatykDbContext _db;
 

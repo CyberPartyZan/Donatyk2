@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Donatyk2.Server.Repositories
 {
-    public class SellersRepository : ISellersRepository
+    internal class SellersRepository : ISellersRepository
     {
         private readonly DonatykDbContext _db;
 
