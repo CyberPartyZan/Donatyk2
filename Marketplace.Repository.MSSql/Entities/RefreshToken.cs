@@ -8,6 +8,6 @@
         public bool IsRevoked { get; set; }
 
         public Guid UserId { get; set; }
-        public ApplicationUser User { get; set; } = null!;
+        public virtual ApplicationUser User { get; set; } = null!;
     }
 }

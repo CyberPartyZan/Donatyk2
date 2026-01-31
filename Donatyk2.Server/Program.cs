@@ -18,6 +18,8 @@ using System.Text;
 using System.Security.Claims;
 using Marketplace;
 using Marketplace.Repository.MSSql;
+using Marketplace.Authentication.JWT;
+using Marketplace.Notification;
 
 namespace Donatyk2.Server
 {
@@ -61,6 +63,8 @@ namespace Donatyk2.Server
             });
 
             builder.Services.AddMarketplaceRepositoryServices(builder.Configuration.GetConnectionString("DefaultConnection"));
+            builder.Services.AddAuthenticationServices();
+            builder.Services.AddNotificationServices();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

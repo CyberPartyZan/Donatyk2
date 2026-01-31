@@ -1,5 +1,4 @@
 ﻿using System;
-using Donatyk2.Server.Data;
 
 namespace Donatyk2.Server.Services.Interfaces;
 

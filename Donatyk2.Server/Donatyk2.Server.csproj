@@ -24,6 +24,8 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
+    <ProjectReference Include="..\Marketplace.Authentication.JWT\Marketplace.Authentication.JWT.csproj" />
+    <ProjectReference Include="..\Marketplace.Notification\Marketplace.Notification.csproj" />
     <ProjectReference Include="..\Marketplace\Marketplace.csproj" />
   </ItemGroup>
 

@@ -1,5 +1,7 @@
 ﻿using Donatyk2.Server.Dto;
+using Donatyk2.Server.Services;
 using Donatyk2.Server.Services.Interfaces;
+using Marketplace.Abstractions.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

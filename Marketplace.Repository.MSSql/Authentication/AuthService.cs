@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Donatyk2.Server.Services
 {
-    // TODO: Move to separate project
+    // TODO: Move whole Identity to separate project? Or at least to Marketplace.Repository.MSSql?
     public class AuthService : IAuthService
     {
         private readonly ClaimsPrincipal _user;
