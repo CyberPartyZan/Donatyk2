@@ -11,5 +11,6 @@ namespace Donatyk2.Server.Repositories.Interfaces
         Task UpdateLot(Guid id, Lot lot);
         Task DeleteLot(Guid id);
         Task ApproveLot(Guid id);
+        Task DeclineLot(Guid id, string declineReason);
     }
 }

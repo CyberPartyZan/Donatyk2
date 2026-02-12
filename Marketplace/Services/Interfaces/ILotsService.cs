@@ -10,5 +10,6 @@ namespace Donatyk2.Server.Services
         Task UpdateLot(Guid id, LotDto lot);
         Task DeleteLot(Guid id);
         Task ApproveLot(Guid id);
+        Task DeclineLot(Guid id, string reason);
     }
 }

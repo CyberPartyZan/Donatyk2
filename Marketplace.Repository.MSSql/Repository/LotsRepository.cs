@@ -61,15 +61,15 @@ namespace Donatyk2.Server.Repositories
             if (query?.GetDeleted is not null)
             {
                 q = q.Where(e => e.IsDeleted == query.GetDeleted.Value);
-            } 
+            }
             else
             {
                 q = q.Where(e => !e.IsDeleted && !e.Seller.IsDeleted);
             }
 
-                var entities = await q
-                    .OrderByDescending(e => e.CreatedAt)
-                    .ToListAsync();
+            var entities = await q
+                .OrderByDescending(e => e.CreatedAt)
+                .ToListAsync();
 
             return entities.Select(e => CreateFromEntity(e));
         }
@@ -199,6 +199,26 @@ namespace Donatyk2.Server.Repositories
             }
 
             existing.Stage = LotStage.Approved;
+            existing.DeclineReason = null;
+            _db.Lots.Update(existing);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task DeclineLot(Guid id, string declineReason)
+        {
+            if (string.IsNullOrWhiteSpace(declineReason))
+            {
+                throw new ArgumentException("Decline reason is required.", nameof(declineReason));
+            }
+
+            var existing = await _db.Lots.FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
+            if (existing is null)
+            {
+                throw new KeyNotFoundException($"Lot with id '{id}' not found.");
+            }
+
+            existing.Stage = LotStage.Denied;
+            existing.DeclineReason = declineReason.Trim();
             _db.Lots.Update(existing);
             await _db.SaveChangesAsync();
         }
@@ -230,7 +250,8 @@ namespace Donatyk2.Server.Repositories
                         sellerEntity.AvatarImageUrl,
                         sellerEntity.UserId),
                     entity.IsActive,
-                    entity.IsCompensationPaid),
+                    entity.IsCompensationPaid,
+                    entity.DeclineReason),
 
                 LotType.Auction => new AuctionLot(
                     entity.Id,
@@ -253,7 +274,8 @@ namespace Donatyk2.Server.Repositories
                     entity.IsActive,
                     entity.IsCompensationPaid,
                     entity.EndOfAuction ?? throw new ArgumentNullException(nameof(entity.EndOfAuction)),
-                    entity.AuctionStepPercent ?? throw new ArgumentNullException(nameof(entity.AuctionStepPercent))),
+                    entity.AuctionStepPercent ?? throw new ArgumentNullException(nameof(entity.AuctionStepPercent)),
+                    entity.DeclineReason),
 
                 LotType.Draw => new DrawLot(
                     entity.Id,
@@ -275,7 +297,8 @@ namespace Donatyk2.Server.Repositories
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
-                    entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice))),
+                    entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice)),
+                    entity.DeclineReason),
 
                 _ => throw new InvalidOperationException($"Unsupported LotType: {entity.Type}")
             };

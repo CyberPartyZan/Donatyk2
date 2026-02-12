@@ -31,6 +31,9 @@ namespace Donatyk2.Server.Repositories.Configurations
             builder.Property(x => x.IsActive)
                    .HasDefaultValue(true);
 
+            builder.Property(x => x.DeclineReason)
+                   .HasMaxLength(1024);
+
             builder.OwnsOne(x => x.Price, moneyBuilder => 
             {
                 moneyBuilder.Property(m => m.Amount)

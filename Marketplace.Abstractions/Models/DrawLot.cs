@@ -20,8 +20,9 @@ namespace Donatyk2.Server.Models
             Seller seller,
             bool isActive,
             bool isCompensationPaid,
-            Money ticketPrice)
-            : base(id, name, description, price, compensation, stockCount, discount, type, stage, seller, isActive, isCompensationPaid)
+            Money ticketPrice,
+            string? declineReason = null)
+            : base(id, name, description, price, compensation, stockCount, discount, type, stage, seller, isActive, isCompensationPaid, declineReason)
         {
             if (ticketPrice is null || ticketPrice.Amount <= 0)
                 throw new ArgumentOutOfRangeException(nameof(ticketPrice), "Ticket price should be more than zero.");

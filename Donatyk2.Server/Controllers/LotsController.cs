@@ -79,5 +79,25 @@ namespace Donatyk2.Server.Controllers
                 return NotFound();
             }
         }
+
+        [HttpPost("{id}/decline")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Decline(Guid id, [FromBody] DeclineLotRequest request)
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.Reason))
+            {
+                return BadRequest("Decline reason is required.");
+            }
+
+            try
+            {
+                await _lotsService.DeclineLot(id, request.Reason);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
     }
 }

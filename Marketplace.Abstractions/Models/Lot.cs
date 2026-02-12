@@ -20,6 +20,7 @@ namespace Donatyk2.Server.Models
         public Seller Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
+        public string? DeclineReason { get; set; }
         public Guid CategoryId { get; set; }
         public Money Profit => Price - Compensation;
 
@@ -35,7 +36,8 @@ namespace Donatyk2.Server.Models
             LotStage stage,
             Seller seller,
             bool isActive,
-            bool isCompensationPaid)
+            bool isCompensationPaid,
+            string? declineReason = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -92,6 +94,7 @@ namespace Donatyk2.Server.Models
             Seller = seller;
             IsActive = isActive;
             IsCompensationPaid = isCompensationPaid;
+            DeclineReason = declineReason;
         }
     }
 }

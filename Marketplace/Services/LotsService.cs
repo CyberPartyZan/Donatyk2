@@ -117,6 +117,25 @@ namespace Donatyk2.Server.Services
             await _lotsRepository.ApproveLot(id);
         }
 
+        public async Task DeclineLot(Guid id, string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                throw new ArgumentException("Decline reason is required.", nameof(reason));
+            }
+
+            var existing = await _lotsRepository.GetLotById(id);
+            if (existing is null) throw new KeyNotFoundException($"Lot with id '{id}' not found.");
+
+            var trimmedReason = reason.Trim();
+            if (existing.Stage == LotStage.Denied && string.Equals(existing.DeclineReason, trimmedReason, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            await _lotsRepository.DeclineLot(id, trimmedReason);
+        }
+
         private Guid GetCurrentUserIdOrThrow()
         {
             var sub = _user.FindFirstValue(JwtRegisteredClaimNames.Sub);
@@ -137,6 +156,7 @@ namespace Donatyk2.Server.Services
                 Discount = lot.Discount,
                 Type = lot.Type,
                 Stage = lot.Stage,
+                DeclineReason = lot.DeclineReason,
                 Seller = new SellerDto
                 {
                     Id = lot.Seller.Id,

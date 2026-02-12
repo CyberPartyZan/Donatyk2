@@ -14,6 +14,7 @@ namespace Donatyk2.Server.Dto
         public double Discount { get; set; }
         public LotType Type { get; set; }
         public LotStage Stage { get; set; }
+        public string? DeclineReason { get; set; }
         public SellerDto Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
