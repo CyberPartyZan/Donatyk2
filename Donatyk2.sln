@@ -33,7 +33,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Notification", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{D61F83D3-A20E-4071-BEFB-931758A940E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Abstractions.Unit.Tests", "Marketplace.Unit.Tests\Marketplace.Abstractions.Unit.Tests.csproj", "{488B0392-59CA-4044-93E8-43C8A56D50BB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Abstractions.Unit.Tests", "Marketplace.Abstractions.Unit.Tests\Marketplace.Abstractions.Unit.Tests.csproj", "{488B0392-59CA-4044-93E8-43C8A56D50BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
