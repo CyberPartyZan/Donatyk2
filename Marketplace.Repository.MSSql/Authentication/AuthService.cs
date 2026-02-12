@@ -146,7 +146,9 @@ namespace Donatyk2.Server.Services
             {
                 UserName = request.Email,
                 Email = request.Email,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                // TODO: HINT: WARNING: Do NOT store passwords in plain text. This is just for demonstration purposes.
+                Password = request.Password
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);

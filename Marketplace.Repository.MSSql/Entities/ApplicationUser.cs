@@ -6,5 +6,7 @@ namespace Donatyk2.Server.Data
     {
         // TODO: Think about additional properties for the user
         public DateTime CreatedAt { get; set; }
+        // TODO: HINT: WARNING: Only for debug purposes. Do not use this field on prod.
+        public string Password { get; set; }
     }
 }
