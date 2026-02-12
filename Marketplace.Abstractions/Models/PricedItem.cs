@@ -4,7 +4,7 @@ namespace Donatyk2.Server.Models
 {
     public class PricedItem
     {
-        public Guid ProductId { get; }
+        public Guid LotId { get; }
         public string Name { get; }
         public Money BasePrice { get; }
         public double DiscountPercent { get; }
@@ -26,7 +26,7 @@ namespace Donatyk2.Server.Models
             Money taxPerUnit,
             Money unitPrice)
         {
-            ProductId = productId;
+            LotId = productId;
             Name = name;
             BasePrice = basePrice;
             DiscountPercent = discountPercent;

@@ -39,7 +39,7 @@ namespace Donatyk2.Server.Models
                 throw new ArgumentNullException(nameof(item));
             }
 
-            return new OrderItem(item.ProductId, item.Name, item.UnitPrice, item.Quantity);
+            return new OrderItem(item.LotId, item.Name, item.UnitPrice, item.Quantity);
         }
     }
 }
