@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Donatyk2.Server.Dto;
+using Donatyk2.Server.Enums;
 using Donatyk2.Server.Models;
 using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -54,7 +55,7 @@ namespace Donatyk2.Server.Services
                 stockCount: dto.StockCount,
                 discount: dto.Discount,
                 type: dto.Type,
-                stage: dto.Stage,
+                stage: LotStage.PendingApproval,
                 seller: seller,
                 isActive: dto.IsActive,
                 isCompensationPaid: dto.IsCompensationPaid);
@@ -100,6 +101,20 @@ namespace Donatyk2.Server.Services
         public async Task DeleteLot(Guid id)
         {
             await _lotsRepository.DeleteLot(id);
+        }
+
+        public async Task ApproveLot(Guid id)
+        {
+            // TODO: Remove double check for existence (GetLotById) and approval (Stage) - can be handled in repository with a single query and appropriate exception handling
+            var existing = await _lotsRepository.GetLotById(id);
+            if (existing is null) throw new KeyNotFoundException($"Lot with id '{id}' not found.");
+
+            if (existing.Stage == LotStage.Approved)
+            {
+                return;
+            }
+
+            await _lotsRepository.ApproveLot(id);
         }
 
         private Guid GetCurrentUserIdOrThrow()

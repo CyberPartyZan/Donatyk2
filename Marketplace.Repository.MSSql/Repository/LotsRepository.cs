@@ -185,6 +185,24 @@ namespace Donatyk2.Server.Repositories
             }
         }
 
+        public async Task ApproveLot(Guid id)
+        {
+            var existing = await _db.Lots.FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
+            if (existing is null)
+            {
+                throw new KeyNotFoundException($"Lot with id '{id}' not found.");
+            }
+
+            if (existing.Stage == LotStage.Approved)
+            {
+                return;
+            }
+
+            existing.Stage = LotStage.Approved;
+            _db.Lots.Update(existing);
+            await _db.SaveChangesAsync();
+        }
+
         private static Lot CreateFromEntity(LotEntity entity)
         {
             if (entity is null) throw new ArgumentNullException(nameof(entity));

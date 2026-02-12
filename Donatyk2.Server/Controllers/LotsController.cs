@@ -64,5 +64,20 @@ namespace Donatyk2.Server.Controllers
             await _lotsService.DeleteLot(id);
             return NoContent();
         }
+
+        [HttpPost("{id}/approve")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Approve(Guid id)
+        {
+            try
+            {
+                await _lotsService.ApproveLot(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
     }
 }
