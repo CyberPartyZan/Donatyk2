@@ -23,7 +23,7 @@ using Marketplace.Notification;
 
 namespace Donatyk2.Server
 {
-    public class Program
+    public partial class Program
     {
         public static void Main(string[] args)
         {
