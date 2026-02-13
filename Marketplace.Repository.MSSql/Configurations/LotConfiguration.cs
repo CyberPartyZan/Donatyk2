@@ -26,7 +26,8 @@ namespace Donatyk2.Server.Repositories.Configurations
                 .IsRequired();
 
             builder.Property(x => x.CreatedAt)
-                .HasDefaultValue(DateTime.UtcNow);
+                   .ValueGeneratedOnAdd()
+                   .HasDefaultValueSql("GETUTCDATE()");
 
             builder.Property(x => x.IsActive)
                    .HasDefaultValue(true);

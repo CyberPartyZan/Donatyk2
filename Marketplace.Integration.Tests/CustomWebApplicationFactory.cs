@@ -2,6 +2,8 @@
 using Donatyk2.Server.Data;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using Marketplace.Integration.Tests.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
@@ -31,7 +33,6 @@ public class CustomWebApplicationFactory
         _connection = new SqlConnection(_sqlContainer.GetConnectionString());
         await _connection.OpenAsync();
 
-        // Apply migrations
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
         await db.Database.MigrateAsync();
@@ -57,10 +58,17 @@ public class CustomWebApplicationFactory
                      typeof(DbContextOptions<DonatykDbContext>));
 
             if (descriptor != null)
+            {
                 services.Remove(descriptor);
+            }
 
             services.AddDbContext<DonatykDbContext>(options =>
                 options.UseSqlServer(_sqlContainer.GetConnectionString()));
+
+            services.AddAuthentication(TestAuthHandler.Scheme)
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+                        TestAuthHandler.Scheme,
+                        _ => { });
         });
     }
 

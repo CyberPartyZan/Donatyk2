@@ -1,0 +1,3 @@
+To add migrations to the project, run the following command in the Package Manager Console:
+	dotnet ef migrations add <MigrationName> --project Marketplace.Repository.MSSql/Marketplace.Repository.MSSql.csproj --startup-project Donatyk2.Server/Donatyk2.Server.csproj
+	dotnet ef migrations remove --project Marketplace.Repository.MSSql/Marketplace.Repository.MSSql.csproj --startup-project Donatyk2.Server/Donatyk2.Server.csproj

@@ -22,9 +22,9 @@ namespace Donatyk2.Server.Repositories.Configurations
                 .HasMaxLength(1024);
 
             builder.HasOne(c => c.ParentCategory)
-                .WithMany(c => c.Subcategories)
-                .HasForeignKey(c => c.ParentCategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
+                   .WithMany(c => c.Subcategories)
+                   .HasForeignKey(c => c.ParentCategoryId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
