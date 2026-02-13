@@ -151,17 +151,20 @@ namespace Donatyk2.Server.Repositories
 
             if (lot.Seller is not null)
             {
-                existing.Seller = new SellerEntity
+                var seller = existing.Seller ?? throw new ArgumentException("The seller for this Lot doesn't exists! Please create a seller first.");
+
+                seller.Name = lot.Seller.Name;
+                seller.Description = lot.Seller.Description;
+                seller.Email = lot.Seller.Email;
+                seller.PhoneNumber = lot.Seller.PhoneNumber;
+                seller.AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty;
+                seller.UserId = lot.Seller.UserId;
+                seller.IsDeleted = seller.IsDeleted;
+
+                if (existing.Seller == null)
                 {
-                    Id = lot.Seller.Id == Guid.Empty ? Guid.NewGuid() : lot.Seller.Id,
-                    Name = lot.Seller.Name,
-                    Description = lot.Seller.Description,
-                    Email = lot.Seller.Email,
-                    PhoneNumber = lot.Seller.PhoneNumber,
-                    AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty,
-                    UserId = lot.Seller.UserId,
-                    CreatedAt = existing.Seller?.CreatedAt ?? DateTime.UtcNow
-                };
+                    existing.Seller = seller;
+                }
             }
 
             _db.Lots.Update(existing);

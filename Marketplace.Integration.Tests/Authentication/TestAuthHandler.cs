@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -9,6 +10,7 @@ namespace Marketplace.Integration.Tests.Authentication;
 internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     public const string Scheme = "Test";
+    public static readonly Guid UserId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeffffffff");
 
     public TestAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -23,8 +25,10 @@ internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSche
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "integration-test-user"),
-            new Claim(ClaimTypes.Name, "Integration Test User")
+            new Claim(JwtRegisteredClaimNames.Sub, UserId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, UserId.ToString()),
+            new Claim(ClaimTypes.Name, "Integration Test User"),
+            new Claim(ClaimTypes.Role, "Admin")
         };
 
         var identity = new ClaimsIdentity(claims, Scheme);
