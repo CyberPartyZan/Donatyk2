@@ -29,6 +29,12 @@ namespace Donatyk2.Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services
+                .AddOptions<JwtSettings>()  
+                .Bind(builder.Configuration.GetSection("Jwt"))
+                .Validate(settings => !string.IsNullOrWhiteSpace(settings.Key), "JWT key must be configured.")
+                .ValidateOnStart();
+
             // read allowed origins from configuration (Spa:AllowedOrigins)
             var allowedOrigins = builder.Configuration
                 .GetSection("Spa:AllowedOrigins")
