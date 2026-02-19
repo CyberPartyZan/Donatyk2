@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <SpaRoot>..\donatyk2.client</SpaRoot>
+    <SpaRoot>..\marketplace.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:62630</SpaProxyServerUrl>
   </PropertyGroup>
@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\donatyk2.client\donatyk2.client.esproj">
+    <ProjectReference Include="..\marketplace.client\marketplace.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />

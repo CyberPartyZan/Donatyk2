@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Donatyk2.Server\Marketplace.Server.csproj" />
     <ProjectReference Include="..\Marketplace.Repository.MSSql\Marketplace.Repository.MSSql.csproj" />
     <ProjectReference Include="..\Marketplace.Server\Marketplace.Server.csproj" />
   </ItemGroup>
