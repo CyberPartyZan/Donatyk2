@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "donatyk2.client", "donatyk2.client\donatyk2.client.esproj", "{23F62E10-46C6-8444-C61A-EE2209D5CE00}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "marketplace.client", "marketplace.client\marketplace.client.esproj", "{23F62E10-46C6-8444-C61A-EE2209D5CE00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Donatyk2.Server", "Donatyk2.Server\Donatyk2.Server.csproj", "{419F239A-E12F-4DD0-A65B-8860097A89D0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Server", "Marketplace.Server\Marketplace.Server.csproj", "{419F239A-E12F-4DD0-A65B-8860097A89D0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application", "{CAA3B598-6EEC-44E7-BFBA-DF62489A4823}"
 EndProject
