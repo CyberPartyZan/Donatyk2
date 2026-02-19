@@ -78,7 +78,7 @@ public class UsersEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var updated = await db.Users.SingleAsync(u => u.Id == seeded.Id);
 
         Assert.Equal(dto.Email, updated.Email);
@@ -91,7 +91,7 @@ public class UsersEndpointTests : IntegrationTestsBase
     private async Task<ApplicationUser> SeedUserAsync(Action<ApplicationUser>? configure = null)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var unique = Guid.NewGuid().ToString("N");
         var email = $"user-{unique}@example.com";

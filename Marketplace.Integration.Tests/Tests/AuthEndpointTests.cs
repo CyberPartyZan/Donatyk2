@@ -154,7 +154,7 @@ public class AuthEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.OK, logoutResponse.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var tokens = await db.RefreshTokens.Where(t => t.UserId == TestUser.Id).ToListAsync();
 
         Assert.NotEmpty(tokens);

@@ -67,7 +67,7 @@ public class SellersEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var stored = await db.Sellers.SingleAsync(s => s.UserId == TestAuthHandler.UserId);
 
         Assert.Equal(request.Name, stored.Name);
@@ -97,7 +97,7 @@ public class SellersEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var updated = await db.Sellers.SingleAsync(s => s.Id == seller.Id);
 
         Assert.Equal(update.Name, updated.Name);
@@ -117,7 +117,7 @@ public class SellersEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var stored = await db.Sellers.IgnoreQueryFilters().SingleAsync(s => s.Id == seller.Id);
 
         Assert.True(stored.IsDeleted);
@@ -126,7 +126,7 @@ public class SellersEndpointTests : IntegrationTestsBase
     private async Task<SellerEntity> SeedSellerAsync(Action<SellerEntity>? configure = null)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var sellerUser = new ApplicationUser
         {

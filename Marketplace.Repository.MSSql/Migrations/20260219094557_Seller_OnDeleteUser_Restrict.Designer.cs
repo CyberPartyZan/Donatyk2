@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Marketplace.Repository.MSSql.Migrations
 {
-    [DbContext(typeof(DonatykDbContext))]
+    [DbContext(typeof(MarketplaceDbContext))]
     [Migration("20260219094557_Seller_OnDeleteUser_Restrict")]
     partial class Seller_OnDeleteUser_Restrict
     {

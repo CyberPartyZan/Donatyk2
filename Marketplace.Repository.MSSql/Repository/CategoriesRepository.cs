@@ -4,9 +4,9 @@ namespace Marketplace.Repository.MSSql
 {
     internal class CategoriesRepository : ICategoriesRepository
     {
-        private readonly DonatykDbContext _dbContext;
+        private readonly MarketplaceDbContext _dbContext;
 
-        public CategoriesRepository(DonatykDbContext dbContext)
+        public CategoriesRepository(MarketplaceDbContext dbContext)
         {
             _dbContext = dbContext;
         }

@@ -46,7 +46,7 @@ public class CartEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var storedItem = await db.CartItems.SingleAsync(c => c.UserId == TestAuthHandler.UserId && c.LotId == lot.Id);
         Assert.Equal(3, storedItem.Quantity);
     }
@@ -65,7 +65,7 @@ public class CartEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         Assert.False(await db.CartItems.AnyAsync());
     }
 
@@ -82,7 +82,7 @@ public class CartEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var updated = await db.CartItems.SingleAsync(c => c.LotId == lot.Id && c.UserId == TestAuthHandler.UserId);
         Assert.Equal(5, updated.Quantity);
     }
@@ -108,7 +108,7 @@ public class CartEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         Assert.False(await db.CartItems.AnyAsync(c => c.LotId == lot.Id && c.UserId == TestAuthHandler.UserId));
     }
 
@@ -125,7 +125,7 @@ public class CartEndpointTests : IntegrationTestsBase
         var lot = await SeedLotAsync();
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var entity = new CartItemEntity
         {
@@ -143,7 +143,7 @@ public class CartEndpointTests : IntegrationTestsBase
     private async Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var sellerUser = new ApplicationUser
         {

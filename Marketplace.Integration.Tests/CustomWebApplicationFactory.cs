@@ -32,7 +32,7 @@ public class CustomWebApplicationFactory
         await _connection.OpenAsync();
 
         using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         await db.Database.MigrateAsync();
 
         _respawner = await Respawner.CreateAsync(_connection, new RespawnerOptions
@@ -53,14 +53,14 @@ public class CustomWebApplicationFactory
         {
             var descriptor = services.SingleOrDefault(
                 d => d.ServiceType ==
-                     typeof(DbContextOptions<DonatykDbContext>));
+                     typeof(DbContextOptions<MarketplaceDbContext>));
 
             if (descriptor != null)
             {
                 services.Remove(descriptor);
             }
 
-            services.AddDbContext<DonatykDbContext>(options =>
+            services.AddDbContext<MarketplaceDbContext>(options =>
                 options.UseSqlServer(_sqlContainer.GetConnectionString()));
 
             services.AddAuthentication(TestAuthHandler.Scheme)

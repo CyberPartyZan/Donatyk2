@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Marketplace.Repository.MSSql.Migrations
 {
-    [DbContext(typeof(DonatykDbContext))]
+    [DbContext(typeof(MarketplaceDbContext))]
     [Migration("20260213122830_Seller_AvatarImgUrl_Null")]
     partial class Seller_AvatarImgUrl_Null
     {

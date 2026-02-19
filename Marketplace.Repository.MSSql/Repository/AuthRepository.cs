@@ -4,9 +4,9 @@ namespace Marketplace.Repository.MSSql
 {
     internal class AuthRepository : IAuthRepository
     {
-        private readonly DonatykDbContext _db;
+        private readonly MarketplaceDbContext _db;
 
-        public AuthRepository(DonatykDbContext db)
+        public AuthRepository(MarketplaceDbContext db)
         {
             _db = db;
         }

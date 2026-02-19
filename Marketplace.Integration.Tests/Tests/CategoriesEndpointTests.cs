@@ -78,7 +78,7 @@ public class CategoriesEndpointTests : IntegrationTestsBase
         Assert.Equal(parent.Id, created.ParentId);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var stored = await db.Categories.SingleAsync(c => c.Id == created.Id);
         Assert.Equal(parent.Id, stored.ParentCategoryId);
     }
@@ -103,7 +103,7 @@ public class CategoriesEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var stored = await db.Categories.SingleAsync(c => c.Id == category.Id);
         Assert.Equal(update.Name, stored.Name);
         Assert.Equal(update.Description, stored.Description);
@@ -120,14 +120,14 @@ public class CategoriesEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         Assert.False(await db.Categories.AnyAsync(c => c.Id == category.Id));
     }
 
     private async Task<CategoryEntity> SeedCategoryAsync(string? name = null, Guid? parentId = null)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var unique = Guid.NewGuid().ToString("N");
         var entity = new CategoryEntity

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Marketplace.Repository.MSSql
 {
-    internal class DonatykDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    internal class MarketplaceDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {
-        public DonatykDbContext(DbContextOptions<DonatykDbContext> options)
+        public MarketplaceDbContext(DbContextOptions<MarketplaceDbContext> options)
             : base(options) { }
 
         public DbSet<LotEntity> Lots { get; set; }

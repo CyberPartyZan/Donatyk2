@@ -4,9 +4,9 @@ namespace Marketplace.Repository.MSSql
 {
     internal class OrdersRepository : IOrdersRepository
     {
-        private readonly DonatykDbContext _db;
+        private readonly MarketplaceDbContext _db;
 
-        public OrdersRepository(DonatykDbContext db)
+        public OrdersRepository(MarketplaceDbContext db)
         {
             _db = db;
         }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Marketplace.Repository.MSSql.Migrations
 {
-    [DbContext(typeof(DonatykDbContext))]
+    [DbContext(typeof(MarketplaceDbContext))]
     partial class DonatykDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

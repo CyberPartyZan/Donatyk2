@@ -9,7 +9,7 @@ namespace Marketplace.Repository.MSSql
     {
         public static IServiceCollection AddMarketplaceRepositoryServices(this IServiceCollection services, string connectionString)
         {
-            services.AddDbContext<DonatykDbContext>(options =>
+            services.AddDbContext<MarketplaceDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
             services
@@ -20,7 +20,7 @@ namespace Marketplace.Repository.MSSql
                     options.User.RequireUniqueEmail = true;
                 })
                 .AddRoles<IdentityRole<Guid>>()
-                .AddEntityFrameworkStores<DonatykDbContext>()
+                .AddEntityFrameworkStores<MarketplaceDbContext>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
 

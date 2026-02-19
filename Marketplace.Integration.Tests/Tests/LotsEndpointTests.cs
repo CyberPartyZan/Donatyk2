@@ -83,7 +83,7 @@ public class LotsEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var updatedLot = await db.Lots.Include(l => l.Seller).SingleAsync(l => l.Id == seededLot.Id);
 
         Assert.Equal(updateDto.Name, updatedLot.Name);
@@ -103,7 +103,7 @@ public class LotsEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var deletedLot = await db.Lots.IgnoreQueryFilters().SingleAsync(l => l.Id == seededLot.Id);
 
         Assert.True(deletedLot.IsDeleted);
@@ -119,7 +119,7 @@ public class LotsEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var lot = await db.Lots.SingleAsync(l => l.Id == seededLot.Id);
 
         Assert.Equal(LotStage.Approved, lot.Stage);
@@ -137,7 +137,7 @@ public class LotsEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var lot = await db.Lots.SingleAsync(l => l.Id == seededLot.Id);
 
         Assert.Equal(LotStage.Denied, lot.Stage);
@@ -147,7 +147,7 @@ public class LotsEndpointTests : IntegrationTestsBase
     private async Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var sellerUser = new ApplicationUser
         {

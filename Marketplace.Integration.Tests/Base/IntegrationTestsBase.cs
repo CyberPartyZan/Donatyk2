@@ -36,7 +36,7 @@ namespace Marketplace.Integration.Tests
         private async Task EnsureTestUserExistsAsync()
         {
             using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
             if (await db.Users.AnyAsync(u => u.Id == TestAuthHandler.UserId))
             {

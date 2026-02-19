@@ -33,7 +33,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
         var orderId = Guid.Parse(headerValues!.Single());
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var order = await db.Orders.Include(o => o.Items).SingleAsync(o => o.Id == orderId);
         Assert.Equal(TestAuthHandler.UserId, order.CustomerId);
@@ -71,7 +71,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.OK, webhookResponse.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         var order = await db.Orders.SingleAsync(o => o.Id == orderId);
 
         Assert.Equal(OrderStatus.Paid, order.Status);
@@ -107,7 +107,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
         var stockBefore = lot.StockCount;
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var cartItem = new CartItemEntity
         {
@@ -125,7 +125,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
     private async Task<LotEntity> SeedLotAsync(int stockCount = 10)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
         var sellerUser = new ApplicationUser
         {
