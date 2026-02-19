@@ -1,9 +1,6 @@
-﻿using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
+﻿using Donatyk2.Server.Dto;
 using Donatyk2.Server.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -41,8 +38,10 @@ namespace Donatyk2.Server.Controllers
             }
 
             var user = await _usersService.GetById(id);
-            if (user is null) 
+            if (user is null)
+            {
                 return NotFound();
+            }
 
             return Ok(user);
         }
@@ -50,19 +49,23 @@ namespace Donatyk2.Server.Controllers
         [HttpGet("by-email")]
         public async Task<IActionResult> GetByEmail([FromQuery] string email)
         {
-            if (string.IsNullOrWhiteSpace(email)) return BadRequest("Email is required.");
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return BadRequest("Email is required.");
+            }
+
             var user = await _usersService.GetByEmail(email);
-
-            if (user is null) 
+            if (user is null)
+            {
                 return NotFound();
+            }
 
-            // TODO: Or I should use JwtRegisteredClaimNames.Sub to get UserId from claims?
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!User.IsInRole("Admin") && user.Id.ToString() != userIdClaim)
             {
-                // Don't return Forbid() to avoid information leakage
                 return NotFound();
             }
+
             return Ok(user);
         }
 
@@ -76,25 +79,13 @@ namespace Donatyk2.Server.Controllers
                 return BadRequest();
             }
 
-            if (user is null) 
-                return BadRequest();
-
-            user.Id = id;
-            await _usersService.Update(user);
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            // TODO: Or I should use JwtRegisteredClaimNames.Sub to get UserId from claims?
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!User.IsInRole("Admin") && id.ToString() != userIdClaim)
+            if (user is null)
             {
                 return BadRequest();
             }
 
-            await _usersService.Delete(id);
+            user.Id = id;
+            await _usersService.Update(user);
             return NoContent();
         }
     }

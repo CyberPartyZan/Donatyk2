@@ -22,7 +22,7 @@ namespace Donatyk2.Server.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAll([FromQuery] string search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var sellers = await _sellersService.GetAll(search, page, pageSize);
 

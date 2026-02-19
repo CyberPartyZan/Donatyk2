@@ -13,8 +13,6 @@ namespace Donatyk2.Server.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly HttpResponse _response;
-        private readonly HttpRequest _request;
 
         private const string RefreshCookieName = "refreshToken";
         private static CookieOptions RefreshCookieOptions =>
@@ -29,11 +27,9 @@ namespace Donatyk2.Server.Controllers
             };
 
         // TODO: Add external logins (Google, Facebook, etc.)
-        public AuthController(IAuthService authService, HttpResponse response, HttpRequest request)
+        public AuthController(IAuthService authService)
         {
             _authService = authService;
-            _response = response;
-            _request = request;
         }
 
         [AllowAnonymous]
@@ -58,7 +54,7 @@ namespace Donatyk2.Server.Controllers
                 return Results.Redirect(redirectUrl, permanent: false);
             }
 
-            _response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
+            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
             return Results.Ok(tokens);
         }
 
@@ -77,7 +73,7 @@ namespace Donatyk2.Server.Controllers
             if (tokens is null)
                 return Results.Unauthorized();
 
-            _response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
+            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
             return Results.Ok(tokens);
         }
 
@@ -135,6 +131,22 @@ namespace Donatyk2.Server.Controllers
             return Results.Ok();
         }
 
+        [Authorize]
+        [HttpPost("change-email")]
+        public async Task<IResult> ChangeEmail([FromBody] ChangeEmailRequest request)
+        {
+            if (request is null ||
+                string.IsNullOrWhiteSpace(request.NewEmail) ||
+                string.IsNullOrWhiteSpace(request.Password) ||
+                string.IsNullOrWhiteSpace(request.RedirectUrl))
+            {
+                return Results.BadRequest("NewEmail, Password and RedirectUrl are required.");
+            }
+
+            await _authService.ChangeEmailAsync(request);
+            return Results.Ok();
+        }
+
         [AllowAnonymous]
         [HttpPost("forgot-password")]
         public async Task<IResult> ForgotPassword([FromBody] EmailRequest request)
@@ -172,7 +184,7 @@ namespace Donatyk2.Server.Controllers
         [HttpPost("refresh")]
         public async Task<IResult> Refresh()
         {
-            if (!_request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+            if (!Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken))
                 return Results.Unauthorized();
 
             if (string.IsNullOrWhiteSpace(refreshToken))
@@ -182,7 +194,7 @@ namespace Donatyk2.Server.Controllers
             if (tokens is null)
                 return Results.Unauthorized();
 
-            _response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
+            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
             return Results.Ok(tokens);
         }
 
@@ -191,7 +203,7 @@ namespace Donatyk2.Server.Controllers
         {
             await _authService.LogoutAsync();
 
-            _response.Cookies.Delete(RefreshCookieName, RefreshCookieOptions);
+            Response.Cookies.Delete(RefreshCookieName, RefreshCookieOptions);
             return Results.Ok();
         }
     }

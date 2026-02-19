@@ -8,6 +8,5 @@ namespace Donatyk2.Server.Repositories.Interfaces
         Task<User?> GetById(Guid id);
         Task<User?> GetByEmail(string email);
         Task Update(User user);
-        Task Delete(Guid id);
     }
 }

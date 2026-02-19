@@ -275,6 +275,65 @@ namespace Donatyk2.Server.Services
             }
         }
 
+        public async Task ChangeEmailAsync(ChangeEmailRequest request)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+
+            if (string.IsNullOrWhiteSpace(request.NewEmail))
+            {
+                throw new ArgumentException("New email is required.", nameof(request.NewEmail));
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+            {
+                throw new ArgumentException("Password is required.", nameof(request.Password));
+            }
+
+            if (string.IsNullOrWhiteSpace(request.RedirectUrl))
+            {
+                throw new ArgumentException("RedirectUrl is required.", nameof(request.RedirectUrl));
+            }
+
+            var userIdClaim = _user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            if (string.IsNullOrWhiteSpace(userIdClaim))
+            {
+                throw new InvalidOperationException("Authenticated user context is required.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userIdClaim);
+            if (user is null)
+            {
+                throw new InvalidOperationException($"User '{userIdClaim}' was not found.");
+            }
+
+            var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
+            if (!passwordValid)
+            {
+                throw new InvalidOperationException("The provided password is invalid.");
+            }
+
+            if (string.Equals(user.Email, request.NewEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var existing = await _userManager.FindByEmailAsync(request.NewEmail);
+            if (existing is not null && existing.Id != user.Id)
+            {
+                throw new InvalidOperationException("The requested email is already in use.");
+            }
+
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var confirmationUrl = BuildEmailConfirmationUrl(request.RedirectUrl, user.Id, encodedToken);
+
+            await _notificationService.NotifyEmailConfirmationAsync(
+                user.Id,
+                request.NewEmail,
+                encodedToken,
+                confirmationUrl);
+        }
+
         public async Task ForgotPassword(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

@@ -16,6 +16,11 @@ namespace Donatyk2.Server.Repositories.Configurations
                    .WithOne(rt => rt.User)
                    .HasForeignKey(rt => rt.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne<SellerEntity>()
+                   .WithOne(s => s.User)
+                   .HasForeignKey<SellerEntity>(s => s.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

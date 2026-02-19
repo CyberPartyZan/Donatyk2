@@ -163,23 +163,6 @@ namespace Marketplace.Unit.Tests.Services
                 u.Email == dto.Email)), Times.Once);
         }
 
-        [Fact]
-        public async Task Delete_RemovesUserAndSeller()
-        {
-            var fixture = CreateFixture();
-            var id = fixture.Create<Guid>();
-
-            var repo = fixture.Freeze<Mock<IUsersRepository>>();
-            var sellersService = fixture.Freeze<Mock<ISellersService>>();
-
-            var service = fixture.Create<UsersService>();
-
-            await service.Delete(id);
-
-            repo.Verify(r => r.Delete(id), Times.Once);
-            sellersService.Verify(s => s.DeleteByUserId(id), Times.Once);
-        }
-
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 

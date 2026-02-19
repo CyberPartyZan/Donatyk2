@@ -12,6 +12,7 @@ namespace Donatyk2.Server.Services.Interfaces
 
         Task ConfirmEmailAsync(string userId, string token);
         Task ConfirmEmailChangeAsync(string userId, string newEmail, string token);
+        Task ChangeEmailAsync(ChangeEmailRequest request);
         Task ForgotPassword(string email);
         Task ResetPasswordAsync(ResetPasswordRequest request);
         Task ReSendEmailConfirmationAsync(string email, string? redirectUrl);

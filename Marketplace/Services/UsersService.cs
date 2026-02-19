@@ -8,12 +8,10 @@ namespace Donatyk2.Server.Services
     public class UsersService : IUsersService
     {
         private readonly IUsersRepository _usersRepository;
-        private readonly ISellersService _sellersService;
 
-        public UsersService(IUsersRepository usersRepository, ISellersService sellersService)
+        public UsersService(IUsersRepository usersRepository)
         {
             _usersRepository = usersRepository;
-            _sellersService = sellersService;
         }
 
         public async Task<IEnumerable<UserDto>> GetAll(string? search, int page, int pageSize)
@@ -48,12 +46,6 @@ namespace Donatyk2.Server.Services
             existing.LockoutEnd = userDto.LockoutEnd ?? existing.LockoutEnd;
 
             await _usersRepository.Update(existing);
-        }
-
-        public async Task Delete(Guid id)
-        {
-            await _usersRepository.Delete(id);
-            await _sellersService.DeleteByUserId(id);
         }
 
         private static UserDto ToDto(User user)

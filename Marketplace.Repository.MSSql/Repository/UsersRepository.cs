@@ -58,12 +58,6 @@ namespace Donatyk2.Server.Repositories
             await _db.SaveChangesAsync();
         }
 
-        public async Task Delete(Guid id)
-        {
-            _db.Users.Remove(new ApplicationUser { Id = id });
-            await _db.SaveChangesAsync();
-        }
-
         private static User ToModel(ApplicationUser entity)
         {
             if (string.IsNullOrWhiteSpace(entity.Email))
@@ -82,7 +76,9 @@ namespace Donatyk2.Server.Repositories
         private static void ApplyDomainValues(User source, ApplicationUser target)
         {
             target.Email = source.Email;
+            target.NormalizedEmail = source.Email.ToUpperInvariant();
             target.UserName = source.Email;
+            target.NormalizedUserName = source.Email.ToUpperInvariant();
             target.EmailConfirmed = source.EmailConfirmed;
             target.LockoutEnabled = source.LockoutEnabled;
             target.LockoutEnd = source.LockoutEnd;
