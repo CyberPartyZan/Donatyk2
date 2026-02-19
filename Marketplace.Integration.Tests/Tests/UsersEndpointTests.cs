@@ -8,25 +8,12 @@ using Xunit;
 
 namespace Marketplace.Integration.Tests;
 
-public class UsersEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class UsersEndpointTests : IntegrationTestsBase
 {
-    private readonly CustomWebApplicationFactory _factory;
-    private HttpClient _client = default!;
-
     public UsersEndpointTests(CustomWebApplicationFactory factory)
+        : base(factory)
     {
-        _factory = factory;
     }
-
-    public async Task InitializeAsync()
-    {
-        await _factory.ResetDatabaseAsync();
-        _client = _factory.CreateClient();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthHandler.Scheme);
-        await EnsureAdminUserExistsAsync();
-    }
-
-    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task GetAll_ReturnsSeededUser()
@@ -99,37 +86,6 @@ public class UsersEndpointTests : IClassFixture<CustomWebApplicationFactory>, IA
         Assert.Equal(dto.EmailConfirmed, updated.EmailConfirmed);
         Assert.Equal(dto.LockoutEnabled, updated.LockoutEnabled);
         Assert.Equal(dto.LockoutEnd, updated.LockoutEnd);
-    }
-
-    private async Task EnsureAdminUserExistsAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
-
-        if (await db.Users.AnyAsync(u => u.Id == TestAuthHandler.UserId))
-        {
-            return;
-        }
-
-        var user = new ApplicationUser
-        {
-            Id = TestAuthHandler.UserId,
-            UserName = "integration@test.com",
-            NormalizedUserName = "INTEGRATION@TEST.COM",
-            Email = "integration@test.com",
-            NormalizedEmail = "INTEGRATION@TEST.COM",
-            EmailConfirmed = true,
-            PasswordHash = "integration-test",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550123",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "integration-test"
-        };
-
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
     }
 
     private async Task<ApplicationUser> SeedUserAsync(Action<ApplicationUser>? configure = null)

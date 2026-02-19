@@ -3,34 +3,17 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Xunit;
 
 namespace Marketplace.Integration.Tests;
 
-public class OrdersEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class OrdersEndpointTests : IntegrationTestsBase
 {
-    private readonly CustomWebApplicationFactory _factory;
-    private HttpClient _client = default!;
-
     public OrdersEndpointTests(CustomWebApplicationFactory factory)
+        : base(factory)
     {
-        _factory = factory;
     }
-
-    public async Task InitializeAsync()
-    {
-        await _factory.ResetDatabaseAsync();
-        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthHandler.Scheme);
-        await EnsureTestUserExistsAsync();
-    }
-
-    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task Checkout_ReturnsRedirectAndPersistsOrder()
@@ -116,37 +99,6 @@ public class OrdersEndpointTests : IClassFixture<CustomWebApplicationFactory>, I
                 ReturnUrl = "https://example.com/return"
             }
         };
-    }
-
-    private async Task EnsureTestUserExistsAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
-
-        if (await db.Users.AnyAsync(u => u.Id == TestAuthHandler.UserId))
-        {
-            return;
-        }
-
-        var user = new ApplicationUser
-        {
-            Id = TestAuthHandler.UserId,
-            UserName = "integration@test.com",
-            NormalizedUserName = "INTEGRATION@TEST.COM",
-            Email = "integration@test.com",
-            NormalizedEmail = "INTEGRATION@TEST.COM",
-            EmailConfirmed = true,
-            PasswordHash = "integration-test",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550123",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "integration-test"
-        };
-
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
     }
 
     private async Task<(LotEntity Lot, CartItemEntity CartItem, int StockBefore)> SeedCartItemAsync(int quantity)

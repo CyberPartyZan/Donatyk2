@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Marketplace.Repository.MSSql;
 using Microsoft.EntityFrameworkCore;
@@ -8,25 +7,12 @@ using Xunit;
 
 namespace Marketplace.Integration.Tests;
 
-public class CategoriesEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class CategoriesEndpointTests : IntegrationTestsBase
 {
-    private readonly CustomWebApplicationFactory _factory;
-    private HttpClient _client = default!;
-
     public CategoriesEndpointTests(CustomWebApplicationFactory factory)
+            : base(factory)
     {
-        _factory = factory;
     }
-
-    public async Task InitializeAsync()
-    {
-        await _factory.ResetDatabaseAsync();
-        _client = _factory.CreateClient();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthHandler.Scheme);
-        await EnsureTestUserExistsAsync();
-    }
-
-    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task GetAll_ReturnsCategoryHierarchy()
@@ -136,37 +122,6 @@ public class CategoriesEndpointTests : IClassFixture<CustomWebApplicationFactory
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
         Assert.False(await db.Categories.AnyAsync(c => c.Id == category.Id));
-    }
-
-    private async Task EnsureTestUserExistsAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
-
-        if (await db.Users.AnyAsync(u => u.Id == TestAuthHandler.UserId))
-        {
-            return;
-        }
-
-        var user = new ApplicationUser
-        {
-            Id = TestAuthHandler.UserId,
-            UserName = "integration@test.com",
-            NormalizedUserName = "INTEGRATION@TEST.COM",
-            Email = "integration@test.com",
-            NormalizedEmail = "INTEGRATION@TEST.COM",
-            EmailConfirmed = true,
-            PasswordHash = "integration-test",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550123",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "integration-test"
-        };
-
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
     }
 
     private async Task<CategoryEntity> SeedCategoryAsync(string? name = null, Guid? parentId = null)

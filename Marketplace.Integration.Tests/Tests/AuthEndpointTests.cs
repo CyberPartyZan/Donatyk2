@@ -12,15 +12,11 @@ using Xunit;
 
 namespace Marketplace.Integration.Tests;
 
-public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class AuthEndpointTests : IntegrationTestsBase
 {
-    private const string DefaultPassword = "P@ssw0rd1!";
-    private readonly CustomWebApplicationFactory _factory;
-    private HttpClient _client = default!;
-
     public AuthEndpointTests(CustomWebApplicationFactory factory)
+            : base(factory)
     {
-        _factory = factory;
     }
 
     public async Task InitializeAsync()
@@ -144,11 +140,9 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAs
     [Fact]
     public async Task Logout_RevokesRefreshTokens()
     {
-        var user = await CreateUserAsync(emailConfirmed: true, email: "integration@test.com", userId: TestAuthHandler.UserId);
-
         await _client.PostAsJsonAsync("/api/auth/login", new LoginRequest
         {
-            Email = user.Email,
+            Email = TestUser.Email,
             Password = DefaultPassword
         });
 
@@ -161,7 +155,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAs
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DonatykDbContext>();
-        var tokens = await db.RefreshTokens.Where(t => t.UserId == user.Id).ToListAsync();
+        var tokens = await db.RefreshTokens.Where(t => t.UserId == TestUser.Id).ToListAsync();
 
         Assert.NotEmpty(tokens);
         Assert.All(tokens, token => Assert.True(token.IsRevoked));
@@ -218,8 +212,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAs
     public async Task ChangeEmail_Succeeds_ForAuthenticatedUser()
     {
         const string redirectUrl = "https://app.test/email-change";
-        var originalEmail = "change-user@example.com";
-        var user = await CreateUserAsync(email: originalEmail, userId: TestAuthHandler.UserId);
+        var originalEmail = TestUser.Email;
 
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/auth/change-email")
         {
@@ -238,7 +231,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAs
 
         using var scope = _factory.Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var reloaded = await userManager.FindByIdAsync(user.Id.ToString());
+        var reloaded = await userManager.FindByIdAsync(TestUser.Id.ToString());
 
         Assert.Equal(originalEmail, reloaded!.Email);
         Assert.Equal(originalEmail, reloaded.UserName);
