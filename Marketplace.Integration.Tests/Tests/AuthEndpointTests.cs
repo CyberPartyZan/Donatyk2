@@ -2,15 +2,15 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
-using Marketplace.Integration.Tests.Authentication;
+using Marketplace.Repository.MSSql;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+
+namespace Marketplace.Integration.Tests;
 
 public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {

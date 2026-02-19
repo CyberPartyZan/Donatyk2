@@ -1,8 +1,6 @@
-﻿using Donatyk2.Server.Data;
-using Donatyk2.Server.Services.Interfaces;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace.Authentication.JWT
 {
     public class RefreshTokenGenerator : IRefreshTokenGenerator
     {

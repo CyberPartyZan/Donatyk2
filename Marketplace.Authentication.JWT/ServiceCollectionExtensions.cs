@@ -1,6 +1,4 @@
-﻿using Donatyk2.Server.Services;
-using Donatyk2.Server.Services.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 
 namespace Marketplace.Authentication.JWT

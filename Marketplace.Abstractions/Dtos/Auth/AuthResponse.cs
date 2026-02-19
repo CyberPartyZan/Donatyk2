@@ -1,4 +1,4 @@
-﻿namespace Donatyk2.Server.Dto
+﻿namespace Marketplace
 {
     // TODO: Move Auth Dtos to other project?
     public record AuthResponse(

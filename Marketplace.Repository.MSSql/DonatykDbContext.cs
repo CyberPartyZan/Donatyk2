@@ -1,11 +1,8 @@
-﻿using Donatyk2.Server.Repositories.Configurations;
-using Marketplace.Repository.MSSql.Entities;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
 
-namespace Donatyk2.Server.Data
+namespace Marketplace.Repository.MSSql
 {
     internal class DonatykDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {

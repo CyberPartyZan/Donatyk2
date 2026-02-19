@@ -1,4 +1,4 @@
-namespace Donatyk2.Server.ValueObjects
+namespace Marketplace
 {
     public class PaymentInfo
     {

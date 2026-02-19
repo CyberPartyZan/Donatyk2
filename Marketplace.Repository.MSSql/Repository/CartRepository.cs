@@ -1,10 +1,6 @@
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Enums;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Donatyk2.Server.Repositories
+namespace Marketplace.Repository.MSSql
 {
     internal class CartRepository : ICartRepository
     {

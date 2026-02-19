@@ -1,13 +1,12 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
-using Marketplace.Integration.Tests.Authentication;
-using Marketplace.Repository.MSSql.Entities;
+using Marketplace.Repository.MSSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+
+namespace Marketplace.Integration.Tests;
 
 public class SellersEndpointTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {

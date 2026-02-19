@@ -1,4 +1,4 @@
-﻿namespace Marketplace.Abstractions.Models
+﻿namespace Marketplace
 {
     public sealed class User
     {

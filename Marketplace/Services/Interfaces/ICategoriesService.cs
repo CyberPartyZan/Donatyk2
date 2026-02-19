@@ -1,6 +1,4 @@
-using Donatyk2.Server.Dto;
-
-namespace Donatyk2.Server.Services.Interfaces
+namespace Marketplace
 {
     public interface ICategoriesService
     {

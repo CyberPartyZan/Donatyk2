@@ -1,6 +1,4 @@
-using Marketplace.Abstractions.Models;
-
-namespace Donatyk2.Server.Repositories.Interfaces
+namespace Marketplace.Repository
 {
     public interface ICategoriesRepository
     {

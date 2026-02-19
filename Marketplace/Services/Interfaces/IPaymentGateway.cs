@@ -1,7 +1,4 @@
-using Donatyk2.Server.Models;
-using Donatyk2.Server.ValueObjects;
-
-namespace Donatyk2.Server.Services.Interfaces
+namespace Marketplace
 {
     public interface IPaymentGateway
     {

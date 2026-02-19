@@ -1,8 +1,4 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Donatyk2.Server.Repositories.Interfaces
+namespace Marketplace.Repository
 {
     public interface IAuthRepository
     {

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Donatyk2.Server.Enums;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.ValueObjects;
-using Xunit;
-
-namespace Marketplace.Abstractions.Unit.Tests.Models
+﻿namespace Marketplace.Abstractions.Unit.Tests.Models
 {
     public sealed class LotTests
     {

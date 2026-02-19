@@ -1,11 +1,8 @@
-﻿using Donatyk2.Server.Dto;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services.Interfaces;
+﻿using Marketplace.Repository;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace
 {
     public class SellersService : ISellersService
     {

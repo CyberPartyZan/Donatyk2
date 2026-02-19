@@ -1,4 +1,4 @@
-﻿namespace Donatyk2.Server.Settings
+﻿namespace Marketplace.Authentication.JWT
 {
     public class JwtSettings
     {

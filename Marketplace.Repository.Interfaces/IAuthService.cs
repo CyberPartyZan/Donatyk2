@@ -1,6 +1,5 @@
-﻿using Donatyk2.Server.Dto;
-
-namespace Donatyk2.Server.Services.Interfaces
+﻿// TODO: Namespace should be Repository?
+namespace Marketplace.Authentication
 {
     public interface IAuthService
     {

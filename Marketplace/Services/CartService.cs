@@ -1,10 +1,8 @@
 using System.Security.Claims;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services.Interfaces;
+using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace
 {
     public class CartService : ICartService
     {
@@ -27,13 +25,13 @@ namespace Donatyk2.Server.Services
 
         public async Task<Guid> AddItem(Guid lotId, int quantity)
         {
-            if (quantity <= 0) 
+            if (quantity <= 0)
                 throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
 
             var userId = GetCurrentUserIdOrThrow();
 
             var lot = await _lotsRepository.GetLotById(lotId);
-            if (lot is null) 
+            if (lot is null)
                 throw new KeyNotFoundException($"Lot with id '{lotId}' not found.");
 
             var item = new CartItem(
@@ -59,7 +57,7 @@ namespace Donatyk2.Server.Services
         private Guid GetCurrentUserIdOrThrow()
         {
             var sub = _user.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (string.IsNullOrWhiteSpace(sub)) 
+            if (string.IsNullOrWhiteSpace(sub))
                 throw new InvalidOperationException("User id is not available in the current principal.");
 
             return Guid.Parse(sub);

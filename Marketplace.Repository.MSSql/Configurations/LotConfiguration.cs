@@ -1,8 +1,7 @@
-﻿using Donatyk2.Server.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Donatyk2.Server.Repositories.Configurations
+namespace Marketplace.Repository.MSSql
 {
     internal class LotConfiguration : IEntityTypeConfiguration<LotEntity>
     {
@@ -35,7 +34,7 @@ namespace Donatyk2.Server.Repositories.Configurations
             builder.Property(x => x.DeclineReason)
                    .HasMaxLength(1024);
 
-            builder.OwnsOne(x => x.Price, moneyBuilder => 
+            builder.OwnsOne(x => x.Price, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount)
                             .IsRequired();
@@ -45,7 +44,7 @@ namespace Donatyk2.Server.Repositories.Configurations
                             .HasMaxLength(3);
             });
 
-            builder.OwnsOne(x => x.Compensation, moneyBuilder => 
+            builder.OwnsOne(x => x.Compensation, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount)
                             .IsRequired();

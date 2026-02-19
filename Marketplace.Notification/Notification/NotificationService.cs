@@ -1,7 +1,6 @@
-using Donatyk2.Server.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace.Notification
 {
     public class NotificationService : INotificationService
     {

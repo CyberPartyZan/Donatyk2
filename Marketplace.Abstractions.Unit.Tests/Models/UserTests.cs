@@ -1,5 +1,3 @@
-using Marketplace.Abstractions.Models;
-
 namespace Marketplace.Abstractions.Unit.Tests.Models
 {
     public sealed class UserTests

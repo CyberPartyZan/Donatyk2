@@ -1,6 +1,4 @@
-﻿using Donatyk2.Server.Enums;
-
-namespace Donatyk2.Server.ValueObjects
+﻿namespace Marketplace
 {
     public record Money(decimal Amount, Currency Currency)
     {

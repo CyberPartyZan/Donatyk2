@@ -1,7 +1,4 @@
-﻿using Donatyk2.Server.Dto;
-using Donatyk2.Server.Models;
-
-namespace Donatyk2.Server.Repositories.Interfaces
+﻿namespace Marketplace.Repository
 {
     public interface ILotsRepository
     {

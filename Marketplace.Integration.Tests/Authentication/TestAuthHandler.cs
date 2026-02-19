@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Marketplace.Integration.Tests.Authentication;
+namespace Marketplace.Integration.Tests;
 
 internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

@@ -1,7 +1,4 @@
-﻿using System;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Services.Interfaces;
-using Donatyk2.Server.Settings;
+﻿using Marketplace.Repository.MSSql;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -9,7 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace.Authentication.JWT
 {
     public class JwtTokenGenerator : IJwtTokenGenerator
     {

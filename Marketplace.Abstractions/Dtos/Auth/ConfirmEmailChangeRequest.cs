@@ -1,4 +1,4 @@
-namespace Donatyk2.Server.Dto
+namespace Marketplace
 {
     public sealed class ConfirmEmailChangeRequest
     {

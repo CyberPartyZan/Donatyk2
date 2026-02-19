@@ -1,12 +1,7 @@
-﻿using Donatyk2.Server.Dto;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
-namespace Donatyk2.Server.Controllers
+namespace Marketplace.Server.Controllers
 {
     [Authorize]
     [ApiController]

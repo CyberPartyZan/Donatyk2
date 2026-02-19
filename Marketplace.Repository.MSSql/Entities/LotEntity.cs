@@ -1,8 +1,4 @@
-﻿using Donatyk2.Server.Enums;
-using Donatyk2.Server.ValueObjects;
-using Marketplace.Repository.MSSql.Entities;
-
-namespace Donatyk2.Server.Data
+﻿namespace Marketplace.Repository.MSSql
 {
     internal class LotEntity
     {

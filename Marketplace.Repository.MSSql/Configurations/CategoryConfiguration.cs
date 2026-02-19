@@ -1,9 +1,7 @@
-using Donatyk2.Server.Data;
-using Marketplace.Repository.MSSql.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Donatyk2.Server.Repositories.Configurations
+namespace Marketplace.Repository.MSSql
 {
     internal class CategoryConfiguration : IEntityTypeConfiguration<CategoryEntity>
     {

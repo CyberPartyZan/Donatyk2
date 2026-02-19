@@ -1,8 +1,7 @@
-﻿using Donatyk2.Server.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Donatyk2.Server.Repositories.Configurations
+namespace Marketplace.Repository.MSSql
 {
     internal class CartItemConfiguration : IEntityTypeConfiguration<CartItemEntity>
     {

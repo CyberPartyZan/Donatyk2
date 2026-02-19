@@ -1,4 +1,4 @@
-﻿namespace Donatyk2.Server.Data
+﻿namespace Marketplace.Repository.MSSql
 {
     internal class SellerEntity
     {

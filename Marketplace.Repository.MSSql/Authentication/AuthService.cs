@@ -1,14 +1,14 @@
-﻿using Donatyk2.Server.Data;
-using Donatyk2.Server.Dto;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services.Interfaces;
+﻿using Marketplace.Notification;
+using Marketplace.Repository;
+using Marketplace.Repository.MSSql;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
 using System.Text;
 
-namespace Donatyk2.Server.Services
+// TODO: Namespace should be Repository?
+namespace Marketplace.Authentication
 {
     // TODO: Move whole Identity to separate project? Or at least to Marketplace.Repository.MSSql?
     public class AuthService : IAuthService

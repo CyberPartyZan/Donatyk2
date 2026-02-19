@@ -1,4 +1,4 @@
-namespace Donatyk2.Server.Dto.Orders
+namespace Marketplace
 {
     public class PaymentWebhookRequest
     {

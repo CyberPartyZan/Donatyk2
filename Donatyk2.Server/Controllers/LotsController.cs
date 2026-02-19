@@ -1,11 +1,9 @@
-﻿using Donatyk2.Server.Dto;
-using Donatyk2.Server.Services;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace Donatyk2.Server.Controllers
+namespace Marketplace.Server.Controllers
 {
     [Authorize]
     [ApiController]

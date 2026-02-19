@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Marketplace.Repository.MSSql.Entities
+﻿namespace Marketplace.Repository.MSSql
 {
     internal class CategoryEntity
     {

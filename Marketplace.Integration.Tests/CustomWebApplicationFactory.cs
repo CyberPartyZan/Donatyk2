@@ -1,8 +1,5 @@
-﻿using Donatyk2.Server;
-using Donatyk2.Server.Data;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
-using Marketplace.Integration.Tests.Authentication;
+﻿using Marketplace.Repository.MSSql;
+using Marketplace.Server;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -10,10 +7,11 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Respawn;
-using System;
 using System.Data.Common;
 using Testcontainers.MsSql;
 using Xunit;
+
+namespace Marketplace.Integration.Tests;
 
 public class CustomWebApplicationFactory
     : WebApplicationFactory<Program>, IAsyncLifetime

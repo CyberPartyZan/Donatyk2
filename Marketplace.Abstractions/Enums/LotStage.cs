@@ -1,4 +1,4 @@
-﻿namespace Donatyk2.Server.Enums
+﻿namespace Marketplace
 {
     public enum LotStage
     {

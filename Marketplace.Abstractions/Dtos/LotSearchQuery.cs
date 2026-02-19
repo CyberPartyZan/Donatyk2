@@ -1,6 +1,4 @@
-﻿using Donatyk2.Server.Enums;
-
-namespace Donatyk2.Server.Dto
+﻿namespace Marketplace
 {
     public class LotSearchQuery
     {

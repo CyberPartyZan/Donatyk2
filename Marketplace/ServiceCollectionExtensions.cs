@@ -1,7 +1,4 @@
-﻿using Donatyk2.Server.Services;
-using Donatyk2.Server.Services.Interfaces;
-using Donatyk2.Server.Services.Payments;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Marketplace
 {

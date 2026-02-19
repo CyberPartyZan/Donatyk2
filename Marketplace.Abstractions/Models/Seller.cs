@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Donatyk2.Server.Models
+namespace Marketplace
 {
     public class Seller
     {

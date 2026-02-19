@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Donatyk2.Server.Dto;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services.Interfaces;
-using Marketplace.Abstractions.Models;
+using Marketplace.Repository;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace
 {
     public class CategoryService : ICategoriesService
     {

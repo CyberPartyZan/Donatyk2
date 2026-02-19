@@ -1,9 +1,6 @@
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Donatyk2.Server.Dto;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services;
-using Marketplace.Abstractions.Models;
+using Marketplace.Repository;
 using Moq;
 
 namespace Marketplace.Unit.Tests.Services

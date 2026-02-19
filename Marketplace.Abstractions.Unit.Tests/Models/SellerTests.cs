@@ -1,5 +1,3 @@
-using Donatyk2.Server.Models;
-
 namespace Marketplace.Abstractions.Unit.Tests.Models
 {
     public sealed class SellerTests

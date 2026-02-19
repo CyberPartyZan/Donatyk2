@@ -1,12 +1,7 @@
-﻿using Donatyk2.Server.Data;
-using Donatyk2.Server.Repositories;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services;
-using Donatyk2.Server.Services.Interfaces;
+﻿using Marketplace.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System.Data.Common;
 
 namespace Marketplace.Repository.MSSql
 {

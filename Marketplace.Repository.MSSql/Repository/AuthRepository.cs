@@ -1,12 +1,6 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace Donatyk2.Server.Repositories
+namespace Marketplace.Repository.MSSql
 {
     internal class AuthRepository : IAuthRepository
     {

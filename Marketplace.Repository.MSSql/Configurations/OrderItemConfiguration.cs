@@ -1,8 +1,7 @@
-﻿using Donatyk2.Server.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Donatyk2.Server.Repositories.Configurations
+namespace Marketplace.Repository.MSSql
 {
     internal class OrderItemConfiguration : IEntityTypeConfiguration<OrderItemEntity>
     {
@@ -14,7 +13,7 @@ namespace Donatyk2.Server.Repositories.Configurations
                    .IsRequired()
                    .HasMaxLength(200);
 
-            builder.OwnsOne(oi => oi.UnitPrice, moneyBuilder => 
+            builder.OwnsOne(oi => oi.UnitPrice, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount)
                             .IsRequired();

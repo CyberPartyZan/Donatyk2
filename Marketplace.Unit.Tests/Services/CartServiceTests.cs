@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Donatyk2.Server.Enums;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services;
-using Donatyk2.Server.ValueObjects;
+using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Moq;
 

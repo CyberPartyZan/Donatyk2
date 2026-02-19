@@ -1,9 +1,6 @@
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Repositories.Interfaces;
-using Marketplace.Abstractions.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Donatyk2.Server.Repositories
+namespace Marketplace.Repository.MSSql
 {
     internal class UsersRepository : IUsersRepository
     {

@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
-namespace Donatyk2.Server.Repositories
+namespace Marketplace.Repository.MSSql
 {
     internal class SellersRepository : ISellersRepository
     {

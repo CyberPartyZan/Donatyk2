@@ -1,8 +1,3 @@
-using System.Linq;
-using Donatyk2.Server.Enums;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.ValueObjects;
-
 namespace Marketplace.Abstractions.Unit.Tests.Models
 {
     public sealed class OrderTests

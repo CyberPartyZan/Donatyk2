@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Marketplace.Abstractions.Models;
-
-namespace Marketplace.Abstractions.Unit.Tests.Models
+﻿namespace Marketplace.Abstractions.Unit.Tests.Models
 {
     public sealed class CategoryTests
     {

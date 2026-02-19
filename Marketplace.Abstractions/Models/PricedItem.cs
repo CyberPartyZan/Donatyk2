@@ -1,6 +1,4 @@
-using Donatyk2.Server.ValueObjects;
-
-namespace Donatyk2.Server.Models
+namespace Marketplace
 {
     public class PricedItem
     {

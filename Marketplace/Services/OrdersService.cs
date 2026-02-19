@@ -1,13 +1,10 @@
 using System.Security.Claims;
-using Donatyk2.Server.Dto.Orders;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services.Interfaces;
-using Donatyk2.Server.ValueObjects;
+using Marketplace.Notification;
+using Marketplace.Repository;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace
 {
     public class OrdersService : IOrdersService
     {

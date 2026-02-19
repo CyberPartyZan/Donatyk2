@@ -1,13 +1,6 @@
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Repositories.Interfaces;
-using Marketplace.Abstractions.Models;
-using Marketplace.Repository.MSSql.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Donatyk2.Server.Repositories
+namespace Marketplace.Repository.MSSql
 {
     internal class CategoriesRepository : ICategoriesRepository
     {

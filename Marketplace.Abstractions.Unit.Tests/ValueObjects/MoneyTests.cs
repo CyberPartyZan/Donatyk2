@@ -1,9 +1,4 @@
-﻿using System;
-using Donatyk2.Server.Enums;
-using Donatyk2.Server.ValueObjects;
-using Xunit;
-
-namespace Marketplace.Abstractions.Unit.Tests.ValueObjects
+﻿namespace Marketplace.Abstractions.Unit.Tests.ValueObjects
 {
     public sealed class MoneyTests
     {

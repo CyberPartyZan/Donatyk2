@@ -1,8 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Donatyk2.Server.Dto
+namespace Marketplace
 {
     public class CategoryDto
     {

@@ -1,4 +1,4 @@
-namespace Donatyk2.Server.Services.Interfaces
+namespace Marketplace.Notification
 {
     public interface INotificationService
     {

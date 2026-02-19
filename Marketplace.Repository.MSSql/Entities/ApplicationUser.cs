@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace Donatyk2.Server.Data
+namespace Marketplace.Repository.MSSql
 {
     public class ApplicationUser : IdentityUser<Guid>
     {

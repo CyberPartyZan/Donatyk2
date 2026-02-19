@@ -1,27 +1,15 @@
-using Donatyk2.Server.Controllers;
-using Donatyk2.Server.Data;
-using Donatyk2.Server.Services;
-using Donatyk2.Server.Services.Interfaces;
-using Donatyk2.Server.Settings;
-using Donatyk2.Server.Repositories;
-using Donatyk2.Server.Repositories.Interfaces;
-using Donatyk2.Server.Services.Payments;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Http;
-using System;
 using System.Text;
 using System.Security.Claims;
-using Marketplace;
 using Marketplace.Repository.MSSql;
 using Marketplace.Authentication.JWT;
 using Marketplace.Notification;
 
-namespace Donatyk2.Server
+namespace Marketplace.Server
 {
     public partial class Program
     {
@@ -30,7 +18,7 @@ namespace Donatyk2.Server
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services
-                .AddOptions<JwtSettings>()  
+                .AddOptions<JwtSettings>()
                 .Bind(builder.Configuration.GetSection("Jwt"))
                 .Validate(settings => !string.IsNullOrWhiteSpace(settings.Key), "JWT key must be configured.")
                 .ValidateOnStart();

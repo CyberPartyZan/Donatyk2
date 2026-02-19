@@ -1,7 +1,4 @@
-﻿using Donatyk2.Server.ValueObjects;
-using Donatyk2.Server.Enums;
-
-namespace Donatyk2.Server.Models
+﻿namespace Marketplace
 {
     public class DrawLot : Lot
     {

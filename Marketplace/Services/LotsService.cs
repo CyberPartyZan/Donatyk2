@@ -1,11 +1,8 @@
 ﻿using System.Security.Claims;
-using Donatyk2.Server.Dto;
-using Donatyk2.Server.Enums;
-using Donatyk2.Server.Models;
-using Donatyk2.Server.Repositories.Interfaces;
+using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace Donatyk2.Server.Services
+namespace Marketplace
 {
     public class LotsService : ILotsService
     {

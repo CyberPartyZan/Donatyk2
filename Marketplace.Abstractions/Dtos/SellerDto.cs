@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Donatyk2.Server.Dto
+namespace Marketplace
 {
     public class SellerDto
     {
