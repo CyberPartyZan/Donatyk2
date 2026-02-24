@@ -59,6 +59,7 @@ namespace Marketplace.Server
             builder.Services.AddMarketplaceRepositoryServices(builder.Configuration.GetConnectionString("DefaultConnection"));
             builder.Services.AddAuthenticationServices();
             builder.Services.AddNotificationServices();
+            builder.Services.AddMarketplaceServices();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -88,8 +89,6 @@ namespace Marketplace.Server
             builder.Services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer();
-
-            builder.Services.AddMarketplaceServices();
 
             // Ensure HttpContext is available to services that depend on ClaimsPrincipal
             builder.Services.AddHttpContextAccessor();
