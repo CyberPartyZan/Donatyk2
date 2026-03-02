@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
+    <ProjectReference Include="..\Marketplace.Cache.Interfaces\Marketplace.Cache.Interfaces.csproj" />
     <ProjectReference Include="..\Marketplace.Notification.Interfaces\Marketplace.Notification.Interfaces.csproj" />
     <ProjectReference Include="..\Marketplace.Repository.Interfaces\Marketplace.Repository.Interfaces.csproj" />
   </ItemGroup>

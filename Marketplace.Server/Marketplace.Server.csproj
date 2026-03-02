@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Marketplace.Cache.Redis\Marketplace.Cache.Redis.csproj" />
     <ProjectReference Include="..\marketplace.client\marketplace.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

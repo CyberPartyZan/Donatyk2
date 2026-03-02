@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Marketplace.Repository.MSSql;
 using Marketplace.Authentication.JWT;
 using Marketplace.Notification;
+using Marketplace.Cache;
 
 namespace Marketplace.Server
 {
@@ -59,6 +60,7 @@ namespace Marketplace.Server
             builder.Services.AddMarketplaceRepositoryServices(builder.Configuration.GetConnectionString("DefaultConnection"));
             builder.Services.AddAuthenticationServices();
             builder.Services.AddNotificationServices();
+            builder.Services.AddCacheServices(builder.Configuration);
             builder.Services.AddMarketplaceServices();
 
             builder.Services.AddControllers();
