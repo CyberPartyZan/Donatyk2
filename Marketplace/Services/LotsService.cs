@@ -11,7 +11,10 @@ namespace Marketplace
         private readonly IDistributedCache _cache;
         private readonly ClaimsPrincipal _user;
 
-        public LotsService(ClaimsPrincipal user, ILotsRepository lotsRepository, IDistributedCache cache)
+        public LotsService(
+            ClaimsPrincipal user,
+            ILotsRepository lotsRepository,
+            IDistributedCache cache)
         {
             _lotsRepository = lotsRepository;
             _cache = cache;
@@ -36,7 +39,7 @@ namespace Marketplace
 
             if (effectiveQuery.IsCacheSupported())
             {
-                _cache.Set(effectiveQuery.ToCacheKey(), results, TimeSpan.FromMinutes(10));
+                _cache.Set(effectiveQuery.ToCacheKey(), results);
             }
 
             return results;
@@ -54,7 +57,7 @@ namespace Marketplace
             if (lot is null) return null;
 
             var dto = ToDto(lot);
-            _cache.Set(cacheKey, dto, TimeSpan.FromMinutes(10));
+            _cache.Set(cacheKey, dto);
 
             return dto;
         }

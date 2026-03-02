@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace Marketplace.Cache
@@ -7,10 +8,17 @@ namespace Marketplace.Cache
     {
         private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
         private readonly IDatabase _database;
+        private readonly TimeSpan _defaultExpiration;
 
-        public DistributedCacheService(IConnectionMultiplexer connectionMultiplexer)
+        public DistributedCacheService(
+            IConnectionMultiplexer connectionMultiplexer,
+            IOptions<RedisSettings> redisOptions)
         {
             _database = connectionMultiplexer.GetDatabase();
+
+            var settings = redisOptions?.Value ?? new RedisSettings();
+            var cacheMinutes = Math.Max(settings.CacheExpirationMinutes, 1);
+            _defaultExpiration = TimeSpan.FromMinutes(cacheMinutes);
         }
 
         public bool TryGet<T>(string key, out T value)
@@ -40,7 +48,7 @@ namespace Marketplace.Cache
             }
 
             var serialized = JsonSerializer.Serialize(value, SerializerOptions);
-            _database.StringSet(key, serialized, expiration);
+            _database.StringSet(key, serialized, expiration ?? _defaultExpiration);
         }
     }
 }

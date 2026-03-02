@@ -8,6 +8,11 @@ namespace Marketplace.Cache
     {
         public static IServiceCollection AddCacheServices(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddOptions<RedisSettings>()
+                .Bind(configuration.GetSection(RedisSettings.SectionName))
+                .Validate(settings => settings.CacheExpirationMinutes > 0, "Redis cache expiration must be greater than zero.")
+                .ValidateOnStart();
+
             var connectionString = configuration.GetConnectionString("Redis");
 
             if (string.IsNullOrWhiteSpace(connectionString))
