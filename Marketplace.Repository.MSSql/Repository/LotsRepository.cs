@@ -15,6 +15,7 @@ namespace Marketplace.Repository.MSSql
         {
             var q = _db.Lots
                 .Include(l => l.Seller)
+                .Include(l => l.Category)
                 .Where(l => !l.IsDeleted)
                 .AsQueryable();
 
@@ -53,6 +54,11 @@ namespace Marketplace.Repository.MSSql
                 q = q.Where(e => e.Discount <= query.MaxDiscount.Value);
             }
 
+            if (query?.CategoryId is not null)
+            {
+                q = q.Where(e => e.Category != null && e.Category.Id == query.CategoryId.Value);
+            }
+
             if (query?.GetDeleted is not null)
             {
                 q = q.Where(e => e.IsDeleted == query.GetDeleted.Value);
@@ -62,8 +68,13 @@ namespace Marketplace.Repository.MSSql
                 q = q.Where(e => !e.IsDeleted && !e.Seller.IsDeleted);
             }
 
+            var pageNumber = query?.PageNumber > 0 ? query.PageNumber : 1;
+            var pageSize = query?.PageSize > 0 ? query.PageSize : 20;
+
             var entities = await q
                 .OrderByDescending(e => e.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             return entities.Select(e => CreateFromEntity(e));
@@ -73,6 +84,7 @@ namespace Marketplace.Repository.MSSql
         {
             var entity = await _db.Lots
                 .Include(l => l.Seller)
+                .Include(l => l.Category)
                 .FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
 
             return entity is null ? null : CreateFromEntity(entity);
@@ -226,6 +238,9 @@ namespace Marketplace.Repository.MSSql
             if (entity is null) throw new ArgumentNullException(nameof(entity));
 
             var sellerEntity = entity.Seller ?? throw new InvalidOperationException("Lot entity must have a Seller.");
+            var category = entity.Category is null
+                ? null
+                : new Category(entity.Category.Id, entity.Category.Name, entity.Category.Description);
 
             return entity.Type switch
             {
@@ -249,7 +264,8 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
-                    entity.DeclineReason),
+                    entity.DeclineReason,
+                    category),
 
                 LotType.Auction => new AuctionLot(
                     entity.Id,
@@ -273,7 +289,8 @@ namespace Marketplace.Repository.MSSql
                     entity.IsCompensationPaid,
                     entity.EndOfAuction ?? throw new ArgumentNullException(nameof(entity.EndOfAuction)),
                     entity.AuctionStepPercent ?? throw new ArgumentNullException(nameof(entity.AuctionStepPercent)),
-                    entity.DeclineReason),
+                    entity.DeclineReason,
+                    category),
 
                 LotType.Draw => new DrawLot(
                     entity.Id,
@@ -296,7 +313,8 @@ namespace Marketplace.Repository.MSSql
                     entity.IsActive,
                     entity.IsCompensationPaid,
                     entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice)),
-                    entity.DeclineReason),
+                    entity.DeclineReason,
+                    category),
 
                 _ => throw new InvalidOperationException($"Unsupported LotType: {entity.Type}")
             };

@@ -20,8 +20,9 @@
             bool isCompensationPaid,
             DateTime endOfAuction,
             int auctionStepPercent,
-            string? declineReason = null)
-            : base(id, name, description, price, compensation, stockCount, discount, type, stage, seller, isActive, isCompensationPaid, declineReason)
+            string? declineReason = null,
+            Category? category = null)
+            : base(id, name, description, price, compensation, stockCount, discount, type, stage, seller, isActive, isCompensationPaid, declineReason, category)
         {
             if (endOfAuction <= DateTime.UtcNow)
                 throw new ArgumentException("End of auction date should be in the future.", nameof(endOfAuction));

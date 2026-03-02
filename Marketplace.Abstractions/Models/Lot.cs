@@ -18,7 +18,7 @@
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
         public string? DeclineReason { get; set; }
-        public Guid CategoryId { get; set; }
+        public Category? Category { get; set; }
         public Money Profit => Price - Compensation;
 
         public Lot(
@@ -34,7 +34,8 @@
             Seller seller,
             bool isActive,
             bool isCompensationPaid,
-            string? declineReason = null)
+            string? declineReason = null,
+            Category? category = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -92,6 +93,7 @@
             IsActive = isActive;
             IsCompensationPaid = isCompensationPaid;
             DeclineReason = declineReason;
+            Category = category;
         }
     }
 }

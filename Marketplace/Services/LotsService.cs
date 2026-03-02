@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Marketplace.Cache;
 using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -7,25 +8,55 @@ namespace Marketplace
     public class LotsService : ILotsService
     {
         private readonly ILotsRepository _lotsRepository;
+        private readonly IDistributedCache _cache;
         private readonly ClaimsPrincipal _user;
 
-        public LotsService(ClaimsPrincipal user, ILotsRepository lotsRepository)
+        public LotsService(ClaimsPrincipal user, ILotsRepository lotsRepository, IDistributedCache cache)
         {
             _lotsRepository = lotsRepository;
+            _cache = cache;
             _user = user;
         }
 
         public async Task<IEnumerable<LotDto>> GetAll(LotSearchQuery query)
         {
-            var lots = await _lotsRepository.GetAll(query ?? new LotSearchQuery());
-            return lots.Select(ToDto);
+            var effectiveQuery = query ?? new LotSearchQuery();
+
+            if (effectiveQuery.IsCacheSupported())
+            {
+                var cacheKey = effectiveQuery.ToCacheKey();
+                if (_cache.TryGet(cacheKey, out IReadOnlyCollection<LotDto> cached))
+                {
+                    return cached;
+                }
+            }
+
+            var lots = await _lotsRepository.GetAll(effectiveQuery);
+            var results = lots.Select(ToDto).ToList();
+
+            if (effectiveQuery.IsCacheSupported())
+            {
+                _cache.Set(effectiveQuery.ToCacheKey(), results, TimeSpan.FromMinutes(10));
+            }
+
+            return results;
         }
 
         public async Task<LotDto?> GetLotById(Guid id)
         {
+            var cacheKey = $"lots:id:{id:N}";
+            if (_cache.TryGet(cacheKey, out LotDto cached))
+            {
+                return cached;
+            }
+
             var lot = await _lotsRepository.GetLotById(id);
             if (lot is null) return null;
-            return ToDto(lot);
+
+            var dto = ToDto(lot);
+            _cache.Set(cacheKey, dto, TimeSpan.FromMinutes(10));
+
+            return dto;
         }
 
         public async Task<Guid> CreateLot(LotDto dto)
