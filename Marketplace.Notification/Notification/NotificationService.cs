@@ -11,9 +11,15 @@ namespace Marketplace.Notification
             _logger = logger;
         }
 
-        public Task NotifyOrderPaidAsync(Guid userId, Guid orderId)
+        public Task NotifyOrderPaidAsync(Guid orderId)
         {
-            _logger.LogInformation("Order {OrderId} for user {UserId} has been marked as paid.", orderId, userId);
+            _logger.LogInformation("Order {OrderId} has been marked as paid.", orderId);
+            return Task.CompletedTask;
+        }
+
+        public Task NotifyOrderCreatedAsync(Guid orderId)
+        {
+            _logger.LogInformation("Order {OrderId} has been created.", orderId);
             return Task.CompletedTask;
         }
 

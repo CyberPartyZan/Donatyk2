@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Marketplace
 {
@@ -13,6 +14,25 @@ namespace Marketplace
             services.AddScoped<IOrdersService, OrdersService>();
             services.AddScoped<ICategoriesService, CategoryService>();
             services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
+
+            services.AddMassTransit(x =>
+            {
+                x.AddConsumer<OrderCreatedConsumer>();
+
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    // TODO: Move RabbitMQ configuration to appsettings and use options pattern
+                    cfg.Host("localhost", "/", h =>
+                    {
+                        h.Username("guest");
+                        h.Password("guest");
+                    });
+
+                    cfg.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
+
+                    cfg.ConfigureEndpoints(context);
+                });
+            });
 
             return services;
         }

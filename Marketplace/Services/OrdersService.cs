@@ -1,8 +1,10 @@
-using System.Security.Claims;
+using Marketplace.Abstractions;
 using Marketplace.Notification;
 using Marketplace.Repository;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
 
 namespace Marketplace
 {
@@ -15,6 +17,7 @@ namespace Marketplace
         private readonly IPaymentGateway _paymentGateway;
         private readonly INotificationService _notificationService;
         private readonly ILogger<OrdersService> _logger;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public OrdersService(
             ClaimsPrincipal user,
@@ -23,6 +26,7 @@ namespace Marketplace
             IOrdersRepository ordersRepository,
             IPaymentGateway paymentGateway,
             INotificationService notificationService,
+            IPublishEndpoint publishEndpoint,
             ILogger<OrdersService> logger)
         {
             _user = user;
@@ -32,6 +36,7 @@ namespace Marketplace
             _paymentGateway = paymentGateway;
             _notificationService = notificationService;
             _logger = logger;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task<CheckoutResponse> CheckoutAsync(CheckoutRequest request)
@@ -81,6 +86,8 @@ namespace Marketplace
 
             await _cartRepository.ClearCart(userId);
 
+            await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
+
             return new CheckoutResponse
             {
                 OrderId = order.Id,
@@ -102,7 +109,7 @@ namespace Marketplace
             }
 
             var userId = await _ordersRepository.MarkPaid(request.OrderId, request.Provider, request.Reference);
-            await _notificationService.NotifyOrderPaidAsync(userId, request.OrderId);
+            await _notificationService.NotifyOrderPaidAsync(request.OrderId);
         }
 
         private static ShippingInfo ToShippingInfo(ShippingInfoDto dto)

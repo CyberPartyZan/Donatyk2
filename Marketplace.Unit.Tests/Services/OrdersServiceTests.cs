@@ -193,7 +193,7 @@ namespace Marketplace.Unit.Tests.Services
             await service.HandlePaymentWebhookAsync(request);
 
             ordersRepository.Verify(r => r.MarkPaid(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            notificationService.Verify(n => n.NotifyOrderPaidAsync(It.IsAny<Guid>(), It.IsAny<Guid>()), Times.Never);
+            notificationService.Verify(n => n.NotifyOrderPaidAsync(It.IsAny<Guid>()), Times.Never);
         }
 
         [Fact]
@@ -218,7 +218,7 @@ namespace Marketplace.Unit.Tests.Services
 
             await service.HandlePaymentWebhookAsync(request);
 
-            notificationService.Verify(n => n.NotifyOrderPaidAsync(userId, request.OrderId), Times.Once);
+            notificationService.Verify(n => n.NotifyOrderPaidAsync(request.OrderId), Times.Once);
         }
 
         private static IFixture CreateFixture() =>
