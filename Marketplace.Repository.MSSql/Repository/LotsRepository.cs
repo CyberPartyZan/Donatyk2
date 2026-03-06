@@ -128,6 +128,7 @@ namespace Marketplace.Repository.MSSql
                 EndOfAuction = (lot is AuctionLot a) ? a.EndOfAuction : null,
                 AuctionStepPercent = (lot is AuctionLot a2) ? a2.AuctionStepPercent : null,
                 TicketPrice = (lot is DrawLot dl) ? dl.TicketPrice : null,
+                TicketsSold = (lot is DrawLot dl2) ? dl2.TicketsSold : null,
                 IsDeleted = false
             };
 
@@ -161,6 +162,7 @@ namespace Marketplace.Repository.MSSql
             existing.EndOfAuction = (lot is AuctionLot a) ? a.EndOfAuction : null;
             existing.AuctionStepPercent = (lot is AuctionLot a2) ? a2.AuctionStepPercent : null;
             existing.TicketPrice = (lot is DrawLot dl) ? dl.TicketPrice : existing.TicketPrice;
+            existing.TicketsSold = (lot is DrawLot dl2) ? dl2.TicketsSold : existing.TicketsSold;
 
             if (lot.Seller is not null)
             {
@@ -319,6 +321,7 @@ namespace Marketplace.Repository.MSSql
                     entity.IsActive,
                     entity.IsCompensationPaid,
                     entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice)),
+                    ticketsSold: entity.TicketsSold ?? 0,
                     entity.DeclineReason,
                     category),
 

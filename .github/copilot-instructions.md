@@ -10,7 +10,7 @@
 - Follow naming conventions.
 
 ## Pricing Logic
-- If `DiscountedPrice` is null, treat it as the original `Price` and apply no discount.
+- If `DiscountedPrice` is null, treat it as the original `Price` and apply no discount. User prefers `DiscountedPrice` to be nullable, where null means no discount is applied (use base `Price`).
 
 ## Assistant Interaction
 - When asked the assistant's name, respond with "GitHub Copilot".

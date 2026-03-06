@@ -72,6 +72,9 @@ namespace Marketplace.Repository.MSSql
                             .IsRequired()
                             .HasMaxLength(3);
             });
+
+            builder.Property(x => x.TicketsSold)
+                   .IsRequired(false);
         }
     }
 }

@@ -27,12 +27,61 @@
                 isActive: true,
                 isCompensationPaid: false,
                 ticketPrice,
+                ticketsSold: 0,
                 declineReason);
 
             Assert.Equal(id, lot.Id);
             Assert.Equal(ticketPrice, lot.TicketPrice);
+            Assert.Equal(0, lot.TicketsSold);
+            Assert.Equal(15, lot.TotalTickets);
+            Assert.Equal(15, lot.TicketsLeft);
             Assert.Equal(price - compensation, lot.Profit);
             Assert.Equal(declineReason, lot.DeclineReason);
+        }
+
+        [Fact]
+        public void Constructor_WithTicketsSold_ComputesTicketsLeft()
+        {
+            var lot = new DrawLot(
+                Guid.NewGuid(),
+                "Raffle",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: CreateMoney(45m),
+                LotType.Draw,
+                LotStage.PendingApproval,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 4);
+
+            Assert.Equal(10, lot.TotalTickets);
+            Assert.Equal(4, lot.TicketsSold);
+            Assert.Equal(6, lot.TicketsLeft);
+        }
+
+        [Fact]
+        public void Constructor_WithTicketsSoldAboveTotal_ThrowsArgumentOutOfRangeException()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new DrawLot(
+                    Guid.NewGuid(),
+                    "Raffle",
+                    "Description",
+                    CreateMoney(50m),
+                    CreateMoney(25m),
+                    stockCount: 10,
+                    discountedPrice: CreateMoney(45m),
+                    LotType.Draw,
+                    LotStage.PendingApproval,
+                    CreateSeller(),
+                    isActive: true,
+                    isCompensationPaid: false,
+                    ticketPrice: CreateMoney(5m),
+                    ticketsSold: 11));
         }
 
         [Fact]

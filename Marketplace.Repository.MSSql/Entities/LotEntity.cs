@@ -20,6 +20,7 @@
         public DateTime? EndOfAuction { get; set; }
         public int? AuctionStepPercent { get; set; }
         public Money? TicketPrice { get; set; }
+        public int? TicketsSold { get; set; }
         public bool IsDeleted { get; set; }
     }
 }
