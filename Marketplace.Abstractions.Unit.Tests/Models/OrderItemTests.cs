@@ -5,7 +5,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         [Fact]
         public void From_WithValidPricedItem_PopulatesOrderItem()
         {
-            var priced = PricedItem.FromLot(CreateLot("Special lot", 150m, discount: 10), quantity: 3, taxRate: 0.05m);
+            var priced = PricedItem.FromLot(CreateLot("Special lot", 150m), quantity: 3, taxRate: 0.05m);
 
             var orderItem = OrderItem.From(priced);
 
@@ -22,10 +22,11 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             Assert.Throws<ArgumentNullException>(() => OrderItem.From(null!));
         }
 
-        private static Lot CreateLot(string name, decimal priceAmount, double discount = 0, Currency currency = Currency.USD)
+        private static Lot CreateLot(string name, decimal priceAmount, Currency currency = Currency.USD)
         {
             var price = new Money(priceAmount, currency);
             var compensation = new Money(Math.Max(priceAmount - 20m, 0m), currency);
+            var discount = new Money(Math.Max(priceAmount - 10m, 0m), currency);
 
             return new Lot(
                 Guid.NewGuid(),
@@ -34,7 +35,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
                 price,
                 compensation,
                 stockCount: 5,
-                discount: discount,
+                discountedPrice: discount,
                 LotType.Simple,
                 LotStage.PendingApproval,
                 CreateSeller(),

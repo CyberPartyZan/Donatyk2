@@ -9,6 +9,7 @@
             var seller = CreateSeller();
             var price = CreateMoney(75m);
             var compensation = CreateMoney(40m);
+            var discountedPrice = CreateMoney(70m);
             var ticketPrice = CreateMoney(5m);
             const string declineReason = "Need better docs";
 
@@ -19,7 +20,7 @@
                 price,
                 compensation,
                 stockCount: 100,
-                discount: 0,
+                discountedPrice,
                 LotType.Draw,
                 LotStage.PendingApproval,
                 seller,
@@ -47,7 +48,7 @@
                     CreateMoney(50m),
                     CreateMoney(25m),
                     stockCount: 10,
-                    discount: 0,
+                    discountedPrice: CreateMoney(45m),
                     LotType.Draw,
                     LotStage.PendingApproval,
                     seller,
@@ -71,7 +72,7 @@
                     CreateMoney(50m),
                     CreateMoney(25m),
                     stockCount: 10,
-                    discount: 0,
+                    discountedPrice: CreateMoney(45m),
                     LotType.Draw,
                     LotStage.PendingApproval,
                     seller,

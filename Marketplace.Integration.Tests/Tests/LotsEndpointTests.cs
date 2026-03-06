@@ -195,7 +195,7 @@ public class LotsEndpointTests : IntegrationTestsBase
             Price = new Money(100, Currency.USD),
             Compensation = new Money(50, Currency.USD),
             StockCount = 10,
-            Discount = 0,
+            DiscountedPrice = null,
             Type = LotType.Simple,
             Stage = LotStage.PendingApproval,
             Seller = seller,

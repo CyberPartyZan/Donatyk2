@@ -46,12 +46,18 @@ namespace Marketplace.Repository.MSSql
 
             if (query?.MinDiscount is not null)
             {
-                q = q.Where(e => e.Discount >= query.MinDiscount.Value);
+                q = q.Where(e =>
+                    (e.Price.Amount == 0m
+                        ? 0m
+                        : ((e.Price.Amount - (e.DiscountedPrice != null ? e.DiscountedPrice.Amount : e.Price.Amount)) / e.Price.Amount) * 100m) >= query.MinDiscount.Value);
             }
 
             if (query?.MaxDiscount is not null)
             {
-                q = q.Where(e => e.Discount <= query.MaxDiscount.Value);
+                q = q.Where(e =>
+                    (e.Price.Amount == 0m
+                        ? 0m
+                        : ((e.Price.Amount - (e.DiscountedPrice != null ? e.DiscountedPrice.Amount : e.Price.Amount)) / e.Price.Amount) * 100m) <= query.MaxDiscount.Value);
             }
 
             if (query?.CategoryId is not null)
@@ -102,7 +108,7 @@ namespace Marketplace.Repository.MSSql
                 Price = lot.Price,
                 Compensation = lot.Compensation,
                 StockCount = lot.StockCount,
-                Discount = lot.Discount,
+                DiscountedPrice = lot.DiscountedPrice,
                 Type = lot.Type,
                 Stage = lot.Stage,
                 Seller = new SellerEntity
@@ -147,7 +153,7 @@ namespace Marketplace.Repository.MSSql
             existing.Price = lot.Price;
             existing.Compensation = lot.Compensation;
             existing.StockCount = lot.StockCount;
-            existing.Discount = lot.Discount;
+            existing.DiscountedPrice = lot.DiscountedPrice;
             existing.Type = lot.Type;
             existing.Stage = lot.Stage;
             existing.IsActive = lot.IsActive;
@@ -251,7 +257,7 @@ namespace Marketplace.Repository.MSSql
                     entity.Price,
                     entity.Compensation,
                     entity.StockCount,
-                    entity.Discount,
+                    entity.DiscountedPrice,
                     entity.Type,
                     entity.Stage,
                     new Seller(
@@ -274,7 +280,7 @@ namespace Marketplace.Repository.MSSql
                     entity.Price,
                     entity.Compensation,
                     entity.StockCount,
-                    entity.Discount,
+                    entity.DiscountedPrice,
                     entity.Type,
                     entity.Stage,
                     new Seller(
@@ -299,7 +305,7 @@ namespace Marketplace.Repository.MSSql
                     entity.Price,
                     entity.Compensation,
                     entity.StockCount,
-                    entity.Discount,
+                    entity.DiscountedPrice,
                     entity.Type,
                     entity.Stage,
                     new Seller(

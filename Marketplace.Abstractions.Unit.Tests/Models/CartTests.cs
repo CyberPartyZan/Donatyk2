@@ -55,7 +55,7 @@
                 new Money(100m, Currency.USD),
                 new Money(80m, Currency.USD),
                 stockCount: 1,
-                discount: 0,
+                discountedPrice: new Money(90m, Currency.USD),
                 LotType.Simple,
                 LotStage.PendingApproval,
                 CreateSeller(),

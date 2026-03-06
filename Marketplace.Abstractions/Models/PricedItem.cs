@@ -52,8 +52,10 @@ namespace Marketplace
                 throw new ArgumentOutOfRangeException(nameof(taxRate), "Tax rate must be between 0 and 1.");
             }
 
-            var discountAmount = lot.Price.Amount * (decimal)(lot.Discount / 100d);
-            var discountedUnitAmount = lot.Price.Amount - discountAmount;
+            var discountedUnitAmount = lot.DiscountedPrice?.Amount ?? lot.Price.Amount;
+            var discountAmount = lot.Price.Amount - discountedUnitAmount;
+            var discountPercent = lot.Discount;
+
             var taxAmount = discountedUnitAmount * taxRate;
             var finalUnitAmount = discountedUnitAmount + taxAmount;
 
@@ -67,7 +69,7 @@ namespace Marketplace
                 lot.Id,
                 lot.Name,
                 lot.Price,
-                lot.Discount,
+                discountPercent,
                 taxRate,
                 quantity,
                 discountMoney,

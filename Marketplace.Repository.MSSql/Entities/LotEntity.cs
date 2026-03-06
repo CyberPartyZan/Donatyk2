@@ -8,7 +8,7 @@
         public Money Price { get; set; }
         public Money Compensation { get; set; }
         public int StockCount { get; set; }
-        public double Discount { get; set; }
+        public Money? DiscountedPrice { get; set; }
         public LotType Type { get; set; }
         public LotStage Stage { get; set; }
         public string? DeclineReason { get; set; }

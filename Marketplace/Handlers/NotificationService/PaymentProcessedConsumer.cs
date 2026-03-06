@@ -4,7 +4,7 @@ using MassTransit;
 
 namespace Marketplace
 {
-    public class PaymentProcessedConsumer : IConsumer<PaymentProcessed>
+    internal class PaymentProcessedConsumer : IConsumer<PaymentProcessed>
     {
         private readonly INotificationService _notificationService;
 

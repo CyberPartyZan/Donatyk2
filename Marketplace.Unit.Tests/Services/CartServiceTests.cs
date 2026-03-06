@@ -161,7 +161,7 @@ namespace Marketplace.Unit.Tests.Services
                 new Money(150m, Currency.USD),
                 new Money(75m, Currency.USD),
                 stockCount: 5,
-                discount: 0,
+                discountedPrice: new Money(100m, Currency.USD),
                 LotType.Simple,
                 LotStage.Created,
                 seller,

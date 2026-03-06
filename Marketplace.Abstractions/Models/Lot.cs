@@ -11,7 +11,26 @@
         /// </summary>
         public Money Compensation { get; set; }
         public int StockCount { get; set; }
-        public double Discount { get; set; }
+        public Money? DiscountedPrice { get; set; }
+        public double Discount
+        {
+            get
+            {
+                if (Price.Amount <= 0)
+                {
+                    return 0d;
+                }
+
+                var discountedAmount = DiscountedPrice?.Amount ?? Price.Amount;
+                if (discountedAmount >= Price.Amount)
+                {
+                    return 0d;
+                }
+
+                var discountAmount = Price.Amount - discountedAmount;
+                return (double)(discountAmount / Price.Amount * 100m);
+            }
+        }
         public LotType Type { get; set; }
         public LotStage Stage { get; set; }
         public Seller Seller { get; set; }
@@ -28,7 +47,7 @@
             Money price,
             Money compensation,
             int stockCount,
-            double discount,
+            Money? discountedPrice,
             LotType type,
             LotStage stage,
             Seller seller,
@@ -62,9 +81,22 @@
                 throw new ArgumentOutOfRangeException(nameof(stockCount), "Stock count cannot be negative.");
             }
 
-            if (discount < 0 || discount > 100)
+            if (discountedPrice is not null)
             {
-                throw new ArgumentOutOfRangeException(nameof(discount), "Discount must be between 0 and 100.");
+                if (discountedPrice.Amount < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(discountedPrice), "Discounted price cannot be negative.");
+                }
+
+                if (discountedPrice.Currency != price.Currency)
+                {
+                    throw new ArgumentException("Discounted price currency must match price currency.", nameof(discountedPrice));
+                }
+
+                if (discountedPrice > price)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(discountedPrice), "Discounted price cannot exceed price.");
+                }
             }
 
             if (seller == null)
@@ -86,7 +118,7 @@
             Price = price;
             Compensation = compensation;
             StockCount = stockCount;
-            Discount = discount;
+            DiscountedPrice = discountedPrice;
             Type = type;
             Stage = stage;
             Seller = seller;

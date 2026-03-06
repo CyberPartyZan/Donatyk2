@@ -128,7 +128,7 @@ namespace Marketplace.Repository.MSSql
                     entity.Price,
                     entity.Compensation,
                     entity.StockCount,
-                    entity.Discount,
+                    entity.DiscountedPrice,
                     entity.Type,
                     entity.Stage,
                     new Seller(
@@ -149,7 +149,7 @@ namespace Marketplace.Repository.MSSql
                     entity.Price,
                     entity.Compensation,
                     entity.StockCount,
-                    entity.Discount,
+                    entity.DiscountedPrice,
                     entity.Type,
                     entity.Stage,
                     new Seller(
@@ -172,7 +172,7 @@ namespace Marketplace.Repository.MSSql
                     entity.Price,
                     entity.Compensation,
                     entity.StockCount,
-                    entity.Discount,
+                    entity.DiscountedPrice,
                     entity.Type,
                     entity.Stage,
                     new Seller(

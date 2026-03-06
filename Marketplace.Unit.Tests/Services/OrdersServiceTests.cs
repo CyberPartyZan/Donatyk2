@@ -250,7 +250,7 @@ namespace Marketplace.Unit.Tests.Services
                 CreateMoney(priceAmount),
                 CreateMoney(compensationAmount),
                 stockCount,
-                discount: 0,
+                discountedPrice: null,
                 type,
                 stage,
                 CreateSeller(sellerUserId),

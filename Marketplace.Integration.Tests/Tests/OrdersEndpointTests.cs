@@ -173,7 +173,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
             Price = new Money(100, Currency.USD),
             Compensation = new Money(60, Currency.USD),
             StockCount = stockCount,
-            Discount = 0,
+            DiscountedPrice = null,
             Type = LotType.Simple,
             Stage = LotStage.Approved,
             Seller = seller,

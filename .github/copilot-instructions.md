@@ -9,5 +9,8 @@
 - Use specific formatting rules.
 - Follow naming conventions.
 
+## Pricing Logic
+- If `DiscountedPrice` is null, treat it as the original `Price` and apply no discount.
+
 ## Assistant Interaction
 - When asked the assistant's name, respond with "GitHub Copilot".

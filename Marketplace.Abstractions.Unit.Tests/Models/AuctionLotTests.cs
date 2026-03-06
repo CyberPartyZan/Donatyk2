@@ -9,9 +9,9 @@
             var seller = CreateSeller();
             var price = CreateMoney(250m);
             var compensation = CreateMoney(150m);
+            var discountedPrice = CreateMoney(230m);
             var endOfAuction = DateTime.UtcNow.AddHours(4);
             const int stepPercent = 10;
-            const double discount = 5d;
             const string declineReason = "Needs better photos";
 
             var lot = new AuctionLot(
@@ -21,7 +21,7 @@
                 price,
                 compensation,
                 stockCount: 1,
-                discount,
+                discountedPrice,
                 LotType.Auction,
                 LotStage.PendingApproval,
                 seller,
@@ -56,7 +56,7 @@
                     CreateMoney(120m),
                     CreateMoney(80m),
                     stockCount: 1,
-                    discount: 0,
+                    discountedPrice: CreateMoney(110m),
                     LotType.Auction,
                     LotStage.PendingApproval,
                     seller,
@@ -82,7 +82,7 @@
                     CreateMoney(120m),
                     CreateMoney(80m),
                     stockCount: 1,
-                    discount: 0,
+                    discountedPrice: CreateMoney(110m),
                     LotType.Auction,
                     LotStage.PendingApproval,
                     seller,

@@ -11,8 +11,8 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var payment = CreatePaymentInfo();
             var items = new[]
             {
-                PricedItem.FromLot(CreateLot("Lot A", 120m, 10), quantity: 2, taxRate: 0.05m),
-                PricedItem.FromLot(CreateLot("Lot B", 80m, 0), quantity: 1, taxRate: 0.05m)
+                PricedItem.FromLot(CreateLot("Lot A", 120m), quantity: 2, taxRate: 0.05m),
+                PricedItem.FromLot(CreateLot("Lot B", 80m), quantity: 1, taxRate: 0.05m)
             };
 
             var order = Order.Create(userId, shipping, payment, items);
@@ -121,10 +121,11 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         private static PaymentInfo CreatePaymentInfo() =>
             new("FakeGateway", 0.05m, "https://example.com/return");
 
-        private static Lot CreateLot(string name, decimal priceAmount, double discount = 0, Currency currency = Currency.USD)
+        private static Lot CreateLot(string name, decimal priceAmount, Currency currency = Currency.USD)
         {
             var price = new Money(priceAmount, currency);
             var compensation = new Money(Math.Max(priceAmount - 20m, 0m), currency);
+            var discount = new Money(Math.Max(priceAmount - 10m, 0m), currency);
 
             return new Lot(
                 Guid.NewGuid(),
@@ -133,7 +134,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
                 price,
                 compensation,
                 stockCount: 10,
-                discount: discount,
+                discountedPrice: discount,
                 LotType.Simple,
                 LotStage.PendingApproval,
                 CreateSeller(),

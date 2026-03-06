@@ -4,7 +4,7 @@ using MassTransit;
 
 namespace Marketplace
 {
-    public class OrderCreatedConsumer : IConsumer<OrderCreated>
+    internal class OrderCreatedConsumer : IConsumer<OrderCreated>
     {
         private readonly INotificationService _notificationService;
 

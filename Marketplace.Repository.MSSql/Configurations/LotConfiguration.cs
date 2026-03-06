@@ -54,6 +54,15 @@ namespace Marketplace.Repository.MSSql
                             .HasMaxLength(3);
             });
 
+            builder.OwnsOne(x => x.DiscountedPrice, moneyBuilder =>
+            {
+                moneyBuilder.Property(m => m.Amount);
+                moneyBuilder.Property(m => m.Currency)
+                            .HasConversion<string>()
+                            .HasMaxLength(3);
+            });
+            builder.Navigation(x => x.DiscountedPrice).IsRequired(false);
+
             builder.OwnsOne(x => x.TicketPrice, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount)

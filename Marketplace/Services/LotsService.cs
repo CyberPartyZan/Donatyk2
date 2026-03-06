@@ -84,7 +84,7 @@ namespace Marketplace
                 price: dto.Price,
                 compensation: dto.Compensation,
                 stockCount: dto.StockCount,
-                discount: dto.Discount,
+                discountedPrice: dto.DiscountedPrice,
                 type: dto.Type,
                 stage: LotStage.PendingApproval,
                 seller: seller,
@@ -119,7 +119,7 @@ namespace Marketplace
                 price: dto.Price,
                 compensation: dto.Compensation,
                 stockCount: dto.StockCount,
-                discount: dto.Discount,
+                discountedPrice: dto.DiscountedPrice,
                 type: dto.Type,
                 stage: dto.Stage,
                 seller: seller,
@@ -140,10 +140,7 @@ namespace Marketplace
             var existing = await _lotsRepository.GetLotById(id);
             if (existing is null) throw new KeyNotFoundException($"Lot with id '{id}' not found.");
 
-            if (existing.Stage == LotStage.Approved)
-            {
-                return;
-            }
+            if (existing.Stage == LotStage.Approved) return;
 
             await _lotsRepository.ApproveLot(id);
         }
@@ -184,6 +181,7 @@ namespace Marketplace
                 Price = lot.Price,
                 Compensation = lot.Compensation,
                 StockCount = lot.StockCount,
+                DiscountedPrice = lot.DiscountedPrice,
                 Discount = lot.Discount,
                 Type = lot.Type,
                 Stage = lot.Stage,
