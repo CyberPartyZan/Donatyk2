@@ -104,12 +104,14 @@ namespace Marketplace
 
             if (!request.IsSuccess)
             {
+                await _publishEndpoint.Publish(new PaymentProcessed(request.OrderId, false));
                 _logger.LogWarning("Received failed payment webhook for order {OrderId}", request.OrderId);
                 return;
             }
 
             var userId = await _ordersRepository.MarkPaid(request.OrderId, request.Provider, request.Reference);
-            await _notificationService.NotifyOrderPaidAsync(request.OrderId);
+
+            await _publishEndpoint.Publish(new PaymentProcessed(request.OrderId, true));
         }
 
         private static ShippingInfo ToShippingInfo(ShippingInfoDto dto)

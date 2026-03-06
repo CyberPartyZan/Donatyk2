@@ -17,9 +17,26 @@ namespace Marketplace.Notification
             return Task.CompletedTask;
         }
 
+        public Task NotifyOrderPayFailedAsync(Guid orderId)
+        {
+            _logger.LogWarning("Payment failed for order {OrderId}.", orderId);
+            return Task.CompletedTask;
+        }
+
         public Task NotifyOrderCreatedAsync(Guid orderId)
         {
             _logger.LogInformation("Order {OrderId} has been created.", orderId);
+            return Task.CompletedTask;
+        }
+
+        public Task NotifyShipmentCreatedAsync(Guid orderId, Guid shipmentId, DateTimeOffset createdAt)
+        {
+            _logger.LogInformation(
+                "Shipment {ShipmentId} created for order {OrderId} at {CreatedAt}.",
+                shipmentId,
+                orderId,
+                createdAt);
+
             return Task.CompletedTask;
         }
 

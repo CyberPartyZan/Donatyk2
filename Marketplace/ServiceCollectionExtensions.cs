@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Marketplace
 {
@@ -18,6 +19,11 @@ namespace Marketplace
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<OrderCreatedConsumer>();
+                x.AddConsumer<PaymentProcessedConsumer>();
+                x.AddConsumer<ShipmentServicePaymentProcessedConsumer>();
+                x.AddConsumer<ShipmentCreatedConsumer>();
+
+                //x.AddEntityFrameworkOutbox<AppDbContext>();
 
                 x.UsingRabbitMq((context, cfg) =>
                 {

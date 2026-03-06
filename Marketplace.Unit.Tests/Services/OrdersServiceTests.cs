@@ -196,31 +196,6 @@ namespace Marketplace.Unit.Tests.Services
             notificationService.Verify(n => n.NotifyOrderPaidAsync(It.IsAny<Guid>()), Times.Never);
         }
 
-        [Fact]
-        public async Task HandlePaymentWebhookAsync_WhenPaymentSucceeded_NotifiesUser()
-        {
-            var fixture = CreateFixture();
-            var request = new PaymentWebhookRequest
-            {
-                OrderId = Guid.NewGuid(),
-                Provider = "Stripe",
-                Reference = "ref-2",
-                IsSuccess = true
-            };
-
-            var userId = fixture.Create<Guid>();
-            fixture.Freeze<Mock<IOrdersRepository>>()
-                .Setup(r => r.MarkPaid(request.OrderId, request.Provider, request.Reference))
-                .ReturnsAsync(userId);
-
-            var notificationService = fixture.Freeze<Mock<INotificationService>>();
-            var service = fixture.Create<OrdersService>();
-
-            await service.HandlePaymentWebhookAsync(request);
-
-            notificationService.Verify(n => n.NotifyOrderPaidAsync(request.OrderId), Times.Once);
-        }
-
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 

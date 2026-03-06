@@ -3,7 +3,9 @@ namespace Marketplace.Notification
     public interface INotificationService
     {
         Task NotifyOrderPaidAsync(Guid orderId);
+        Task NotifyOrderPayFailedAsync(Guid orderId);
         Task NotifyOrderCreatedAsync(Guid orderId);
+        Task NotifyShipmentCreatedAsync(Guid orderId, Guid shipmentId, DateTimeOffset createdAt);
         Task NotifyPasswordResetAsync(Guid userId, string email, string resetToken);
         Task NotifyEmailConfirmationAsync(
             Guid userId,
