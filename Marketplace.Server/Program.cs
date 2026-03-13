@@ -9,6 +9,10 @@ using Marketplace.Repository.MSSql;
 using Marketplace.Authentication.JWT;
 using Marketplace.Notification;
 using Marketplace.Cache;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Marketplace.Server
 {
@@ -17,6 +21,11 @@ namespace Marketplace.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            var openTelemetrySection = builder.Configuration.GetSection("OpenTelemetry");
+            var serviceName = openTelemetrySection.GetValue<string>("ServiceName") ?? "Marketplace.Server";
+            var otlpEndpoint = openTelemetrySection.GetValue<string>("Otlp:Endpoint") ?? "http://localhost:4317";
+            var otlpEndpointUri = new Uri(otlpEndpoint);
 
             builder.Services
                 .AddOptions<JwtSettings>()
@@ -49,7 +58,7 @@ namespace Marketplace.Server
                     }
                     else
                     {
-                        // fallback: conservative default (no origins) — change as appropriate
+                        // fallback: conservative default (no origins) - change as appropriate
                         policy.DisallowCredentials()
                               .AllowAnyHeader()
                               .AllowAnyMethod();
@@ -62,6 +71,27 @@ namespace Marketplace.Server
             builder.Services.AddNotificationServices();
             builder.Services.AddCacheServices(builder.Configuration);
             builder.Services.AddMarketplaceServices();
+
+            builder.Logging.AddOpenTelemetry(options =>
+            {
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName));
+                options.IncludeFormattedMessage = true;
+                options.IncludeScopes = true;
+                options.ParseStateValues = true;
+                options.AddOtlpExporter(exporter => exporter.Endpoint = otlpEndpointUri);
+            });
+
+            builder.Services.AddOpenTelemetry()
+                .ConfigureResource(resource => resource.AddService(serviceName))
+                .WithTracing(tracing => tracing
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddOtlpExporter(exporter => exporter.Endpoint = otlpEndpointUri))
+                .WithMetrics(metrics => metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddOtlpExporter(exporter => exporter.Endpoint = otlpEndpointUri));
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -116,7 +146,6 @@ namespace Marketplace.Server
 
             app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 
