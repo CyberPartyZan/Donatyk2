@@ -43,6 +43,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Cache.Interface
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Cache.Redis", "Marketplace.Cache.Redis\Marketplace.Cache.Redis.csproj", "{043D5D75-4E85-4F62-9830-BAFDB9EC6556}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Load.Tests.k6", "Marketplace.Load.Tests.k6\Marketplace.Load.Tests.k6.csproj", "{9C864A3D-29C5-4EF9-ACC2-87055A5CB8FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,10 @@ Global
 		{043D5D75-4E85-4F62-9830-BAFDB9EC6556}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{043D5D75-4E85-4F62-9830-BAFDB9EC6556}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{043D5D75-4E85-4F62-9830-BAFDB9EC6556}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C864A3D-29C5-4EF9-ACC2-87055A5CB8FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C864A3D-29C5-4EF9-ACC2-87055A5CB8FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C864A3D-29C5-4EF9-ACC2-87055A5CB8FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C864A3D-29C5-4EF9-ACC2-87055A5CB8FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -130,6 +136,7 @@ Global
 		{28A1F791-F1DF-4E54-A38F-CE61498A2E46} = {D61F83D3-A20E-4071-BEFB-931758A940E9}
 		{DC5E7ED0-0E06-4B86-808B-02D37FDE1DC4} = {CAA3B598-6EEC-44E7-BFBA-DF62489A4823}
 		{043D5D75-4E85-4F62-9830-BAFDB9EC6556} = {F14F43C1-8E34-4486-BB6F-AAF6112E79C5}
+		{9C864A3D-29C5-4EF9-ACC2-87055A5CB8FB} = {D61F83D3-A20E-4071-BEFB-931758A940E9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7C749432-367B-4F24-901D-39713ADBB313}

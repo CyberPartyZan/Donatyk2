@@ -154,6 +154,8 @@ namespace Marketplace.Unit.Tests.Services
         private static Lot CreateLot()
         {
             var seller = new Seller(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, Guid.NewGuid());
+            var category = CreateCategory();
+
             return new Lot(
                 Guid.NewGuid(),
                 "Vintage poster",
@@ -166,7 +168,11 @@ namespace Marketplace.Unit.Tests.Services
                 LotStage.Created,
                 seller,
                 isActive: true,
-                isCompensationPaid: false);
+                isCompensationPaid: false,
+                category: category);
         }
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
     }
 }

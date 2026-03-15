@@ -17,6 +17,8 @@ namespace Marketplace.Repository.MSSql
                 .AsNoTracking()
                 .Include(c => c.Lot)
                     .ThenInclude(l => l.Seller)
+                .Include(c => c.Lot)
+                    .ThenInclude(l => l.Category)
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
 
@@ -118,6 +120,8 @@ namespace Marketplace.Repository.MSSql
             }
 
             var sellerEntity = entity.Seller ?? throw new InvalidOperationException("Lot entity must have a Seller.");
+            var categoryEntity = entity.Category ?? throw new InvalidOperationException("Lot entity must have a Category.");
+            var category = new Category(categoryEntity.Id, categoryEntity.Name, categoryEntity.Description);
 
             return entity.Type switch
             {
@@ -140,7 +144,9 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.AvatarImageUrl,
                         sellerEntity.UserId),
                     entity.IsActive,
-                    entity.IsCompensationPaid),
+                    entity.IsCompensationPaid,
+                    category,
+                    entity.DeclineReason),
 
                 LotType.Auction => new AuctionLot(
                     entity.Id,
@@ -163,7 +169,9 @@ namespace Marketplace.Repository.MSSql
                     entity.IsActive,
                     entity.IsCompensationPaid,
                     entity.EndOfAuction ?? throw new ArgumentNullException(nameof(entity.EndOfAuction)),
-                    entity.AuctionStepPercent ?? throw new ArgumentNullException(nameof(entity.AuctionStepPercent))),
+                    entity.AuctionStepPercent ?? throw new ArgumentNullException(nameof(entity.AuctionStepPercent)),
+                    category,
+                    entity.DeclineReason),
 
                 LotType.Draw => new DrawLot(
                     entity.Id,
@@ -185,7 +193,10 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
-                    entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice))),
+                    entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice)),
+                    ticketsSold: entity.TicketsSold ?? 0,
+                    category,
+                    entity.DeclineReason),
 
                 _ => throw new InvalidOperationException($"Unsupported LotType: {entity.Type}")
             };

@@ -7,6 +7,7 @@
         {
             var id = Guid.NewGuid();
             var seller = CreateSeller();
+            var category = CreateCategory();
             var price = CreateMoney(75m);
             var compensation = CreateMoney(40m);
             var discountedPrice = CreateMoney(70m);
@@ -28,6 +29,7 @@
                 isCompensationPaid: false,
                 ticketPrice,
                 ticketsSold: 0,
+                category,
                 declineReason);
 
             Assert.Equal(id, lot.Id);
@@ -56,7 +58,8 @@
                 isActive: true,
                 isCompensationPaid: false,
                 ticketPrice: CreateMoney(5m),
-                ticketsSold: 4);
+                ticketsSold: 4,
+                category: CreateCategory());
 
             Assert.Equal(10, lot.TotalTickets);
             Assert.Equal(4, lot.TicketsSold);
@@ -81,7 +84,8 @@
                     isActive: true,
                     isCompensationPaid: false,
                     ticketPrice: CreateMoney(5m),
-                    ticketsSold: 11));
+                    ticketsSold: 11,
+                    category: CreateCategory()));
         }
 
         [Fact]
@@ -103,7 +107,8 @@
                     seller,
                     isActive: true,
                     isCompensationPaid: false,
-                    ticketPrice: null!));
+                    ticketPrice: null!,
+                    category: CreateCategory()));
         }
 
         [Theory]
@@ -127,12 +132,16 @@
                     seller,
                     isActive: true,
                     isCompensationPaid: false,
-                    new Money(ticketPriceAmount, Currency.USD)));
+                    new Money(ticketPriceAmount, Currency.USD),
+                    category: CreateCategory()));
         }
 
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         private static Seller CreateSeller() =>
             new(Guid.NewGuid(), "Seller name", "Seller description", "seller@example.com", "+12345678901", null, Guid.NewGuid());
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
     }
 }

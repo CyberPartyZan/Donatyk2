@@ -121,7 +121,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                     b.HasIndex("BidderId");
 
-                    b.ToTable("BidHistory");
+                    b.ToTable("BidHistory", (string)null);
                 });
 
             modelBuilder.Entity("Marketplace.Repository.MSSql.CartItemEntity", b =>
@@ -139,7 +139,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("Marketplace.Repository.MSSql.CategoryEntity", b =>
@@ -235,7 +235,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                     b.HasIndex("SellerId");
 
-                    b.ToTable("Lots");
+                    b.ToTable("Lots", (string)null);
                 });
 
             modelBuilder.Entity("Marketplace.Repository.MSSql.OrderEntity", b =>
@@ -312,7 +312,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("Marketplace.Repository.MSSql.OrderItemEntity", b =>
@@ -335,7 +335,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                     b.HasIndex("LotId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("Marketplace.Repository.MSSql.RefreshToken", b =>
@@ -362,7 +362,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Marketplace.Repository.MSSql.SellerEntity", b =>
@@ -408,7 +408,7 @@ namespace Marketplace.Repository.MSSql.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Sellers");
+                    b.ToTable("Sellers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -573,7 +573,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                             b1.HasKey("BidEntityId");
 
-                            b1.ToTable("BidHistory");
+                            b1.ToTable("BidHistory", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("BidEntityId");
@@ -645,7 +645,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                             b1.HasKey("LotEntityId");
 
-                            b1.ToTable("Lots");
+                            b1.ToTable("Lots", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("LotEntityId");
@@ -666,7 +666,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                             b1.HasKey("LotEntityId");
 
-                            b1.ToTable("Lots");
+                            b1.ToTable("Lots", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("LotEntityId");
@@ -687,7 +687,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                             b1.HasKey("LotEntityId");
 
-                            b1.ToTable("Lots");
+                            b1.ToTable("Lots", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("LotEntityId");
@@ -708,7 +708,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                             b1.HasKey("LotEntityId");
 
-                            b1.ToTable("Lots");
+                            b1.ToTable("Lots", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("LotEntityId");
@@ -748,7 +748,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                             b1.HasKey("OrderEntityId");
 
-                            b1.ToTable("Orders");
+                            b1.ToTable("Orders", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderEntityId");
@@ -790,7 +790,7 @@ namespace Marketplace.Repository.MSSql.Migrations
 
                             b1.HasKey("OrderItemEntityOrderId", "OrderItemEntityLotId");
 
-                            b1.ToTable("OrderItems");
+                            b1.ToTable("OrderItems", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderItemEntityOrderId", "OrderItemEntityLotId");

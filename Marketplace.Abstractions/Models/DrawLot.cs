@@ -22,9 +22,9 @@
             bool isCompensationPaid,
             Money ticketPrice,
             int ticketsSold = 0,
-            string? declineReason = null,
-            Category? category = null)
-            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, declineReason, category)
+            Category category = null!,
+            string? declineReason = null)
+            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason)
         {
             if (ticketPrice is null || ticketPrice.Amount <= 0)
                 throw new ArgumentOutOfRangeException(nameof(ticketPrice), "Ticket price should be more than zero.");

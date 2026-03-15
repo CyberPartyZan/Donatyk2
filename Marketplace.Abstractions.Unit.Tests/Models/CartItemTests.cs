@@ -42,8 +42,11 @@
             Assert.Throws<ArgumentNullException>(() => new CartItem(null!, quantity: 1, userId));
         }
 
-        private static Lot CreateLot() =>
-            new(
+        private static Lot CreateLot()
+        {
+            var category = CreateCategory();
+
+            return new(
                 Guid.NewGuid(),
                 "Test lot",
                 "Lot description",
@@ -55,7 +58,12 @@
                 LotStage.PendingApproval,
                 CreateSeller(),
                 isActive: true,
-                isCompensationPaid: false);
+                isCompensationPaid: false,
+                category: category);
+        }
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
 
         private static Seller CreateSeller() =>
             new(Guid.NewGuid(), "Seller name", "Seller description", "seller@example.com", "+12345678901", null, Guid.NewGuid());

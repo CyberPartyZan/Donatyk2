@@ -7,6 +7,7 @@
         {
             var id = Guid.NewGuid();
             var seller = CreateSeller();
+            var category = CreateCategory();
             var price = CreateMoney(250m);
             var compensation = CreateMoney(150m);
             var discountedPrice = CreateMoney(230m);
@@ -29,6 +30,7 @@
                 isCompensationPaid: false,
                 endOfAuction,
                 stepPercent,
+                category,
                 declineReason);
 
             Assert.Equal(id, lot.Id);
@@ -46,6 +48,7 @@
         public void Constructor_WithPastEndOfAuction_ThrowsArgumentException()
         {
             var seller = CreateSeller();
+            var category = CreateCategory();
             var pastEnd = DateTime.UtcNow.AddMinutes(-5);
 
             Assert.Throws<ArgumentException>(() =>
@@ -63,7 +66,8 @@
                     isActive: true,
                     isCompensationPaid: false,
                     pastEnd,
-                    auctionStepPercent: 5));
+                    auctionStepPercent: 5,
+                    category));
         }
 
         [Theory]
@@ -72,6 +76,7 @@
         public void Constructor_WithNonPositiveStepPercent_ThrowsArgumentOutOfRangeException(int stepPercent)
         {
             var seller = CreateSeller();
+            var category = CreateCategory();
             var futureEnd = DateTime.UtcNow.AddHours(1);
 
             Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -89,12 +94,16 @@
                     isActive: true,
                     isCompensationPaid: false,
                     futureEnd,
-                    stepPercent));
+                    stepPercent,
+                    category));
         }
 
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         private static Seller CreateSeller() =>
             new(Guid.NewGuid(), "Seller name", "Seller description", "seller@example.com", "+12345678901", null, Guid.NewGuid());
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
     }
 }

@@ -37,7 +37,7 @@
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
         public string? DeclineReason { get; set; }
-        public Category? Category { get; set; }
+        public Category Category { get; set; }
         public Money Profit => Price - Compensation;
 
         public Lot(
@@ -53,8 +53,8 @@
             Seller seller,
             bool isActive,
             bool isCompensationPaid,
-            string? declineReason = null,
-            Category? category = null)
+            Category category,
+            string? declineReason = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -102,6 +102,11 @@
             if (seller == null)
             {
                 throw new ArgumentNullException(nameof(seller), "Seller cannot be null.");
+            }
+
+            if (category == null)
+            {
+                throw new ArgumentNullException(nameof(category), "Category cannot be null.");
             }
 
             if (price < compensation)

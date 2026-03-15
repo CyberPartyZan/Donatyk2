@@ -121,7 +121,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         private static PaymentInfo CreatePaymentInfo() =>
             new("FakeGateway", 0.05m, "https://example.com/return");
 
-        private static Lot CreateLot(string name, decimal priceAmount, Currency currency = Currency.USD)
+        private static Lot CreateLot(string name, decimal priceAmount, Currency currency = Currency.USD, Category? category = null)
         {
             var price = new Money(priceAmount, currency);
             var compensation = new Money(Math.Max(priceAmount - 20m, 0m), currency);
@@ -139,7 +139,13 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
                 LotStage.PendingApproval,
                 CreateSeller(),
                 isActive: true,
-                isCompensationPaid: false);
+                isCompensationPaid: false,
+                category ?? CreateCategory());
+        }
+
+        private static Category CreateCategory()
+        {
+            return new Category(Guid.NewGuid(), "Test Category", "Test category description");
         }
 
         private static Seller CreateSeller() =>

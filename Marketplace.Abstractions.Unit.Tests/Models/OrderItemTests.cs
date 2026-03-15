@@ -27,6 +27,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var price = new Money(priceAmount, currency);
             var compensation = new Money(Math.Max(priceAmount - 20m, 0m), currency);
             var discount = new Money(Math.Max(priceAmount - 10m, 0m), currency);
+            var category = CreateCategory();
 
             return new Lot(
                 Guid.NewGuid(),
@@ -40,8 +41,12 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
                 LotStage.PendingApproval,
                 CreateSeller(),
                 isActive: true,
-                isCompensationPaid: false);
+                isCompensationPaid: false,
+                category: category);
         }
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
 
         private static Seller CreateSeller() =>
             new(Guid.NewGuid(), "Seller name", "Valid seller", "seller@example.com", "+12345678901", null, Guid.NewGuid());

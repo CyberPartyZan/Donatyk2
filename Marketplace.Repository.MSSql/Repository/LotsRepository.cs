@@ -111,6 +111,13 @@ namespace Marketplace.Repository.MSSql
                 DiscountedPrice = lot.DiscountedPrice,
                 Type = lot.Type,
                 Stage = lot.Stage,
+                Category = new CategoryEntity
+                {
+                    Id = lot.Category.Id,
+                    Name = lot.Category.Name,
+                    Description = lot.Category.Description,
+                    ParentCategoryId = lot.Category.ParentCategory?.Id
+                },
                 Seller = new SellerEntity
                 {
                     Id = lot.Seller.Id == Guid.Empty ? Guid.NewGuid() : lot.Seller.Id,
@@ -246,9 +253,8 @@ namespace Marketplace.Repository.MSSql
             if (entity is null) throw new ArgumentNullException(nameof(entity));
 
             var sellerEntity = entity.Seller ?? throw new InvalidOperationException("Lot entity must have a Seller.");
-            var category = entity.Category is null
-                ? null
-                : new Category(entity.Category.Id, entity.Category.Name, entity.Category.Description);
+            var categoryEntity = entity.Category ?? throw new InvalidOperationException("Lot entity must have a Category.");
+            var category = new Category(categoryEntity.Id, categoryEntity.Name, categoryEntity.Description);
 
             return entity.Type switch
             {
@@ -272,8 +278,8 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
-                    entity.DeclineReason,
-                    category),
+                    category,
+                    entity.DeclineReason),
 
                 LotType.Auction => new AuctionLot(
                     entity.Id,
@@ -297,8 +303,8 @@ namespace Marketplace.Repository.MSSql
                     entity.IsCompensationPaid,
                     entity.EndOfAuction ?? throw new ArgumentNullException(nameof(entity.EndOfAuction)),
                     entity.AuctionStepPercent ?? throw new ArgumentNullException(nameof(entity.AuctionStepPercent)),
-                    entity.DeclineReason,
-                    category),
+                    category,
+                    entity.DeclineReason),
 
                 LotType.Draw => new DrawLot(
                     entity.Id,
@@ -322,8 +328,8 @@ namespace Marketplace.Repository.MSSql
                     entity.IsCompensationPaid,
                     entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice)),
                     ticketsSold: entity.TicketsSold ?? 0,
-                    entity.DeclineReason,
-                    category),
+                    category,
+                    entity.DeclineReason),
 
                 _ => throw new InvalidOperationException($"Unsupported LotType: {entity.Type}")
             };

@@ -4,6 +4,7 @@
 - Group identity-related registrations together for better organization.
 - Move JWT/Identity options to extension methods or utilize the options pattern for improved clarity.
 - Remove redundant scoped `ClaimsPrincipal` if `IHttpContextAccessor` suffices to streamline the code.
+- Ensure that the `Category` in the model and mappings is not nullable to maintain data integrity.
 
 ## Code Style
 - Use specific formatting rules.

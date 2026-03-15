@@ -14,6 +14,7 @@
         public LotStage Stage { get; set; }
         public string? DeclineReason { get; set; }
         public SellerDto Seller { get; set; }
+        public required CategoryDto Category { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
         public DateTime CreatedAt { get; set; }

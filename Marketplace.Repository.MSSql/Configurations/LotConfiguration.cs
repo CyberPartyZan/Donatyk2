@@ -17,6 +17,8 @@ namespace Marketplace.Repository.MSSql
 
             builder.HasOne(x => x.Seller);
 
+            builder.HasOne(x => x.Category);
+
             builder.Property(x => x.Name)
                    .IsRequired()
                    .HasMaxLength(200);

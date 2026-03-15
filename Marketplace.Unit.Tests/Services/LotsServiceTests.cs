@@ -339,7 +339,7 @@ namespace Marketplace.Unit.Tests.Services
         private static ClaimsPrincipal CreatePrincipal(Guid userId)
         {
             var identity = new ClaimsIdentity();
-            identity.AddClaim(new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()));
+            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId.ToString()));
             return new ClaimsPrincipal(identity);
         }
 
@@ -362,6 +362,7 @@ namespace Marketplace.Unit.Tests.Services
                 seller: CreateSeller(sellerUserId),
                 isActive: true,
                 isCompensationPaid: false,
+                category: CreateCategory(),
                 declineReason: declineReason);
         }
 
@@ -381,7 +382,8 @@ namespace Marketplace.Unit.Tests.Services
                 isActive: true,
                 isCompensationPaid: false,
                 DateTime.UtcNow.AddHours(2),
-                auctionStepPercent: 5);
+                auctionStepPercent: 5,
+                category: CreateCategory());
         }
 
         private static DrawLot CreateDrawLot()
@@ -399,13 +401,9 @@ namespace Marketplace.Unit.Tests.Services
                 CreateSeller(),
                 isActive: true,
                 isCompensationPaid: false,
-                ticketPrice: CreateMoney(5m));
+                ticketPrice: CreateMoney(5m),
+                category: CreateCategory());
         }
-
-        private static Seller CreateSeller(Guid? userId = null) =>
-            new(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, userId ?? Guid.NewGuid());
-
-        private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         private static LotDto CreateLotDto() =>
             new()
@@ -429,9 +427,31 @@ namespace Marketplace.Unit.Tests.Services
                     PhoneNumber = "+12345678901",
                     AvatarImageUrl = string.Empty
                 },
+                Category = new CategoryDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Category dto",
+                    Description = "Category dto description"
+                },
                 IsActive = true,
                 IsCompensationPaid = false,
                 CreatedAt = DateTime.UtcNow
             };
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category", "Category description");
+
+        private static Money CreateMoney(decimal amount) =>
+            new(amount, Currency.USD);
+
+        private static Seller CreateSeller(Guid? userId = null) =>
+            new(
+                Guid.NewGuid(),
+                "Seller " + Guid.NewGuid().ToString("N"),
+                "Seller description",
+                "seller@example.com",
+                "+1234567890",
+                string.Empty,
+                userId ?? Guid.NewGuid());
     }
 }

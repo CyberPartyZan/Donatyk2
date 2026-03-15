@@ -47,8 +47,11 @@
         private static CartItem CreateCartItem(Guid userId) =>
             new(CreateLot(), quantity: 1, userId);
 
-        private static Lot CreateLot() =>
-            new(
+        private static Lot CreateLot()
+        {
+            var category = CreateCategory();
+
+            return new(
                 Guid.NewGuid(),
                 "Lot name",
                 "Lot description",
@@ -60,7 +63,12 @@
                 LotStage.PendingApproval,
                 CreateSeller(),
                 isActive: true,
-                isCompensationPaid: false);
+                isCompensationPaid: false,
+                category: category);
+        }
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
 
         private static Seller CreateSeller() =>
             new(Guid.NewGuid(), "Seller", "Seller description", "seller@example.com", "+12345678901", null, Guid.NewGuid());

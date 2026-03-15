@@ -73,6 +73,13 @@ public class LotsEndpointTests : IntegrationTestsBase
                 PhoneNumber = "+15555550101",
                 AvatarImageUrl = "https://example.com/avatar.png"
             },
+            Category = new CategoryDto
+            {
+                Id = seededLot.Category.Id,
+                Name = seededLot.Category.Name,
+                Description = seededLot.Category.Description,
+                ParentId = seededLot.Category.ParentCategoryId
+            },
             IsActive = true,
             IsCompensationPaid = true,
             CreatedAt = DateTime.UtcNow

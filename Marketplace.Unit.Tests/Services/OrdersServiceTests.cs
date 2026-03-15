@@ -243,6 +243,8 @@ namespace Marketplace.Unit.Tests.Services
             Guid? sellerUserId = null,
             string? declineReason = null)
         {
+            var category = CreateCategory();
+
             return new Lot(
                 id ?? Guid.NewGuid(),
                 "Lot " + Guid.NewGuid().ToString("N"),
@@ -256,8 +258,12 @@ namespace Marketplace.Unit.Tests.Services
                 CreateSeller(sellerUserId),
                 isActive: true,
                 isCompensationPaid: false,
-                declineReason);
+                category: category,
+                declineReason: declineReason);
         }
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
 
         private static Seller CreateSeller(Guid? userId = null) =>
             new(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, userId ?? Guid.NewGuid());

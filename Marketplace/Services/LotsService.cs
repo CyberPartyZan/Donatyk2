@@ -77,6 +77,11 @@ namespace Marketplace
                 dto.Seller.AvatarImageUrl,
                 userId);
 
+            var category = new Category(
+                dto.Category.Id == Guid.Empty ? Guid.NewGuid() : dto.Category.Id,
+                dto.Category.Name,
+                dto.Category.Description);
+
             var lot = new Lot(
                 id: dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id,
                 name: dto.Name,
@@ -89,7 +94,8 @@ namespace Marketplace
                 stage: LotStage.PendingApproval,
                 seller: seller,
                 isActive: dto.IsActive,
-                isCompensationPaid: dto.IsCompensationPaid);
+                isCompensationPaid: dto.IsCompensationPaid,
+                category: category);
 
             // child specific props are handled by repository/factory if needed (e.g. AuctionLot/DrawLot)
             return await _lotsRepository.CreateLot(lot);
@@ -112,6 +118,11 @@ namespace Marketplace
                 dto.Seller.AvatarImageUrl,
                 sellerUserId);
 
+            var category = new Category(
+                dto.Category.Id == Guid.Empty ? Guid.NewGuid() : dto.Category.Id,
+                dto.Category.Name,
+                dto.Category.Description);
+
             var updated = new Lot(
                 id: id,
                 name: dto.Name,
@@ -124,7 +135,8 @@ namespace Marketplace
                 stage: dto.Stage,
                 seller: seller,
                 isActive: dto.IsActive,
-                isCompensationPaid: dto.IsCompensationPaid);
+                isCompensationPaid: dto.IsCompensationPaid,
+                category: category);
 
             await _lotsRepository.UpdateLot(id, updated);
         }
@@ -166,9 +178,12 @@ namespace Marketplace
 
         private Guid GetCurrentUserIdOrThrow()
         {
-            var sub = _user.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (string.IsNullOrWhiteSpace(sub)) throw new InvalidOperationException("User id is not available in the current principal.");
-            return Guid.Parse(sub);
+            var userIdValue = _user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdValue))
+            {
+                throw new InvalidOperationException("User id is not available in the current principal.");
+            }
+            return Guid.Parse(userIdValue);
         }
 
         private static LotDto ToDto(Lot lot)
@@ -194,6 +209,13 @@ namespace Marketplace
                     Email = lot.Seller.Email,
                     PhoneNumber = lot.Seller.PhoneNumber,
                     AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty
+                },
+                Category = new CategoryDto
+                {
+                    Id = lot.Category.Id,
+                    Name = lot.Category.Name,
+                    Description = lot.Category.Description,
+                    ParentId = lot.Category.ParentCategory?.Id
                 },
                 IsActive = lot.IsActive,
                 IsCompensationPaid = lot.IsCompensationPaid,

@@ -135,7 +135,7 @@ namespace Marketplace.Server
 
             var app = builder.Build();
 
-            await app.SeedAdminUserAsync();
+            //await app.SeedAdminUserAsync();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
