@@ -1,3 +1,4 @@
+# enable on Prod env
 auth_enabled: false
 
 server:
@@ -24,3 +25,15 @@ schema_config:
       index:
         prefix: index_
         period: 24h
+
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /loki/rules-temp
+  ring:
+    kvstore:
+      store: inmemory
+  alertmanager_url: http://localhost:9093
+  enable_api: true
