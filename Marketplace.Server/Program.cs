@@ -9,6 +9,7 @@ using Marketplace.Repository.MSSql;
 using Marketplace.Authentication.JWT;
 using Marketplace.Notification;
 using Marketplace.Cache;
+using Marketplace.Server.Identity;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -18,7 +19,7 @@ namespace Marketplace.Server
 {
     public partial class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,10 @@ namespace Marketplace.Server
                 .Bind(builder.Configuration.GetSection("Jwt"))
                 .Validate(settings => !string.IsNullOrWhiteSpace(settings.Key), "JWT key must be configured.")
                 .ValidateOnStart();
+
+            builder.Services
+                .AddOptions<AdminUserOptions>()
+                .Bind(builder.Configuration.GetSection("AdminUser"));
 
             // read allowed origins from configuration (Spa:AllowedOrigins)
             var allowedOrigins = builder.Configuration
@@ -129,6 +134,8 @@ namespace Marketplace.Server
                 sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.User ?? new ClaimsPrincipal());
 
             var app = builder.Build();
+
+            await app.SeedAdminUserAsync();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
