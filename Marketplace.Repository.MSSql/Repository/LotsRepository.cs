@@ -140,6 +140,13 @@ namespace Marketplace.Repository.MSSql
             };
 
             _db.Lots.Add(entity);
+
+            if (entity.Seller.Id != Guid.Empty)
+                _db.Entry(entity.Seller).State = EntityState.Unchanged;
+
+            if (entity.Category.Id != Guid.Empty)
+                _db.Entry(entity.Category).State = EntityState.Unchanged;
+
             await _db.SaveChangesAsync();
 
             return entity.Id;
