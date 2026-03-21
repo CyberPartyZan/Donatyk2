@@ -18,6 +18,7 @@ namespace Marketplace.Repository.MSSql
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<BidEntity> BidHistory { get; set; }
         public DbSet<CategoryEntity> Categories { get; set; }
+        public DbSet<TicketEntity> Tickets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +34,7 @@ namespace Marketplace.Repository.MSSql
             modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
             modelBuilder.ApplyConfiguration(new BidConfiguration());
+            modelBuilder.ApplyConfiguration(new TicketConfiguration());
         }
     }
 }

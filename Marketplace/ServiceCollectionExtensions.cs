@@ -14,6 +14,7 @@ namespace Marketplace
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IOrdersService, OrdersService>();
             services.AddScoped<ICategoriesService, CategoryService>();
+            services.AddScoped<ITicketsService, TicketsService>();
             services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 
             services.AddMassTransit(x =>
@@ -35,7 +36,6 @@ namespace Marketplace
                     });
 
                     cfg.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
-
                     cfg.ConfigureEndpoints(context);
                 });
             });

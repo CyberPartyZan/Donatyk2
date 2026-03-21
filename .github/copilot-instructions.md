@@ -6,6 +6,11 @@
 - Remove redundant scoped `ClaimsPrincipal` if `IHttpContextAccessor` suffices to streamline the code.
 - Ensure that the `Category` in the model and mappings is not nullable to maintain data integrity.
 
+## Ticket Domain Rules
+- One user can have multiple tickets per lot.
+- Ticket creation supports count, and the repository create should accept collections.
+- `DrawLot` should produce tickets.
+
 ## Code Style
 - Use specific formatting rules.
 - Follow naming conventions.

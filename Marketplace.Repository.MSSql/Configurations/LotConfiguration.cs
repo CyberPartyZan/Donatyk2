@@ -9,74 +9,54 @@ namespace Marketplace.Repository.MSSql
         {
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.Stage)
-                   .HasConversion<string>();
-
-            builder.Property(x => x.Type)
-                   .HasConversion<string>();
+            builder.Property(x => x.Stage).HasConversion<string>();
+            builder.Property(x => x.Type).HasConversion<string>();
 
             builder.HasOne(x => x.Seller);
-
             builder.HasOne(x => x.Category);
 
-            builder.Property(x => x.Name)
-                   .IsRequired()
-                   .HasMaxLength(200);
+            builder.HasMany(x => x.Tickets)
+                .WithOne(x => x.Lot)
+                .HasForeignKey(x => x.LotId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Property(x => x.Description)
-                .IsRequired();
+            builder.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            builder.Property(x => x.Description).IsRequired();
 
             builder.Property(x => x.CreatedAt)
-                   .ValueGeneratedOnAdd()
-                   .HasDefaultValueSql("GETUTCDATE()");
+                .ValueGeneratedOnAdd()
+                .HasDefaultValueSql("GETUTCDATE()");
 
-            builder.Property(x => x.IsActive)
-                   .HasDefaultValue(true);
-
-            builder.Property(x => x.DeclineReason)
-                   .HasMaxLength(1024);
+            builder.Property(x => x.IsActive).HasDefaultValue(true);
+            builder.Property(x => x.IsDrawn).HasDefaultValue(false);
+            builder.Property(x => x.DeclineReason).HasMaxLength(1024);
 
             builder.OwnsOne(x => x.Price, moneyBuilder =>
             {
-                moneyBuilder.Property(m => m.Amount)
-                            .IsRequired();
-                moneyBuilder.Property(m => m.Currency)
-                            .HasConversion<string>()
-                            .IsRequired()
-                            .HasMaxLength(3);
+                moneyBuilder.Property(m => m.Amount).IsRequired();
+                moneyBuilder.Property(m => m.Currency).HasConversion<string>().IsRequired().HasMaxLength(3);
             });
 
             builder.OwnsOne(x => x.Compensation, moneyBuilder =>
             {
-                moneyBuilder.Property(m => m.Amount)
-                            .IsRequired();
-                moneyBuilder.Property(m => m.Currency)
-                            .HasConversion<string>()
-                            .IsRequired()
-                            .HasMaxLength(3);
+                moneyBuilder.Property(m => m.Amount).IsRequired();
+                moneyBuilder.Property(m => m.Currency).HasConversion<string>().IsRequired().HasMaxLength(3);
             });
 
             builder.OwnsOne(x => x.DiscountedPrice, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount);
-                moneyBuilder.Property(m => m.Currency)
-                            .HasConversion<string>()
-                            .HasMaxLength(3);
+                moneyBuilder.Property(m => m.Currency).HasConversion<string>().HasMaxLength(3);
             });
             builder.Navigation(x => x.DiscountedPrice).IsRequired(false);
 
             builder.OwnsOne(x => x.TicketPrice, moneyBuilder =>
             {
-                moneyBuilder.Property(m => m.Amount)
-                            .IsRequired();
-                moneyBuilder.Property(m => m.Currency)
-                            .HasConversion<string>()
-                            .IsRequired()
-                            .HasMaxLength(3);
+                moneyBuilder.Property(m => m.Amount).IsRequired();
+                moneyBuilder.Property(m => m.Currency).HasConversion<string>().IsRequired().HasMaxLength(3);
             });
 
-            builder.Property(x => x.TicketsSold)
-                   .IsRequired(false);
+            builder.Property(x => x.TicketsSold).IsRequired(false);
         }
     }
 }

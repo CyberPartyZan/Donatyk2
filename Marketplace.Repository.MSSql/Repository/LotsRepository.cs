@@ -136,7 +136,8 @@ namespace Marketplace.Repository.MSSql
                 AuctionStepPercent = (lot is AuctionLot a2) ? a2.AuctionStepPercent : null,
                 TicketPrice = (lot is DrawLot dl) ? dl.TicketPrice : null,
                 TicketsSold = (lot is DrawLot dl2) ? dl2.TicketsSold : null,
-                IsDeleted = false
+                IsDeleted = false,
+                IsDrawn = (lot is DrawLot dl3) && dl3.IsDrawn,
             };
 
             _db.Lots.Add(entity);
@@ -177,6 +178,7 @@ namespace Marketplace.Repository.MSSql
             existing.AuctionStepPercent = (lot is AuctionLot a2) ? a2.AuctionStepPercent : null;
             existing.TicketPrice = (lot is DrawLot dl) ? dl.TicketPrice : existing.TicketPrice;
             existing.TicketsSold = (lot is DrawLot dl2) ? dl2.TicketsSold : existing.TicketsSold;
+            existing.IsDrawn = (lot is DrawLot dlu) ? dlu.IsDrawn : existing.IsDrawn;
 
             if (lot.Seller is not null)
             {
@@ -336,7 +338,9 @@ namespace Marketplace.Repository.MSSql
                     entity.TicketPrice ?? throw new ArgumentNullException(nameof(entity.TicketPrice)),
                     ticketsSold: entity.TicketsSold ?? 0,
                     category,
-                    entity.DeclineReason),
+                    entity.DeclineReason,
+                    tickets: null,
+                    isDrawn: entity.IsDrawn),
 
                 _ => throw new InvalidOperationException($"Unsupported LotType: {entity.Type}")
             };
