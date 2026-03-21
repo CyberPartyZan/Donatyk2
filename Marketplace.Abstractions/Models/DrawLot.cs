@@ -109,6 +109,11 @@
             return winner;
         }
 
+        public override void Sell(int quantity)
+        {
+            throw new InvalidOperationException("Draw lot is sold through draw tickets, not stock selling.");
+        }
+
         private static int CalculateTotalTickets(Money price, Money ticketPrice)
         {
             if (ticketPrice.Amount <= 0)

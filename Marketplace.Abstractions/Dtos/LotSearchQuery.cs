@@ -11,6 +11,7 @@
         public int? MaxDiscount { get; set; }
         public Guid? CategoryId { get; set; }
         public bool? GetDeleted { get; set; }
+        public bool? GetExhausted { get; set; }
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 20;
 
@@ -21,7 +22,8 @@
                 && MaxPrice is null
                 && MinDiscount is null
                 && MaxDiscount is null
-                && GetDeleted is null;
+                && GetDeleted is null
+                && GetExhausted is null;
         }
 
         public string ToCacheKey()

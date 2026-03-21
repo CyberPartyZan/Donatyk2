@@ -16,17 +16,9 @@
         {
             get
             {
-                if (Price.Amount <= 0)
-                {
-                    return 0d;
-                }
-
+                if (Price.Amount <= 0) return 0d;
                 var discountedAmount = DiscountedPrice?.Amount ?? Price.Amount;
-                if (discountedAmount >= Price.Amount)
-                {
-                    return 0d;
-                }
-
+                if (discountedAmount >= Price.Amount) return 0d;
                 var discountAmount = Price.Amount - discountedAmount;
                 return (double)(discountAmount / Price.Amount * 100m);
             }
@@ -131,6 +123,16 @@
             IsCompensationPaid = isCompensationPaid;
             DeclineReason = declineReason;
             Category = category;
+        }
+
+        public virtual void Sell(int quantity)
+        {
+            if (quantity <= 0)
+                throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
+            if (StockCount < quantity)
+                throw new InvalidOperationException("Not enough stock.");
+
+            StockCount -= quantity;
         }
     }
 }

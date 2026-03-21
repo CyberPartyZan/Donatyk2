@@ -20,6 +20,11 @@ namespace Marketplace.Repository.MSSql
                 .HasForeignKey(x => x.LotId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasMany(x => x.BidHistory)
+                .WithOne(x => x.Auction)
+                .HasForeignKey(x => x.AuctionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Property(x => x.Name).IsRequired().HasMaxLength(200);
             builder.Property(x => x.Description).IsRequired();
 

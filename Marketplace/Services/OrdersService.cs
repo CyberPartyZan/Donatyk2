@@ -1,5 +1,4 @@
 using Marketplace.Abstractions;
-using Marketplace.Notification;
 using Marketplace.Repository;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,6 @@ namespace Marketplace
         private readonly ILotsRepository _lotsRepository;
         private readonly IOrdersRepository _ordersRepository;
         private readonly IPaymentGateway _paymentGateway;
-        private readonly INotificationService _notificationService;
         private readonly ILogger<OrdersService> _logger;
         private readonly IPublishEndpoint _publishEndpoint;
 
@@ -25,7 +23,6 @@ namespace Marketplace
             ILotsRepository lotsRepository,
             IOrdersRepository ordersRepository,
             IPaymentGateway paymentGateway,
-            INotificationService notificationService,
             IPublishEndpoint publishEndpoint,
             ILogger<OrdersService> logger)
         {
@@ -34,7 +31,6 @@ namespace Marketplace
             _lotsRepository = lotsRepository;
             _ordersRepository = ordersRepository;
             _paymentGateway = paymentGateway;
-            _notificationService = notificationService;
             _logger = logger;
             _publishEndpoint = publishEndpoint;
         }
@@ -65,14 +61,25 @@ namespace Marketplace
                 var lot = await _lotsRepository.GetLotById(cartItem.Lot.Id)
                     ?? throw new KeyNotFoundException($"Lot with id '{cartItem.Lot.Id}' not found.");
 
-                if (lot.StockCount < cartItem.Quantity)
-                {
-                    throw new InvalidOperationException($"Lot '{lot.Name}' does not have enough stock.");
-                }
-
                 if (!lot.Price.Equals(cartItem.Lot.Price))
                 {
                     throw new InvalidOperationException($"Price for lot '{lot.Name}' has changed. Please refresh your cart.");
+                }
+
+                switch (lot)
+                {
+                    case DrawLot:
+                        throw new InvalidOperationException(
+                            $"Draw lot '{lot.Name}' cannot be checked out from cart. Create tickets via Tickets API.");
+
+                    case AuctionLot:
+                        throw new InvalidOperationException(
+                            $"Auction lot '{lot.Name}' cannot be checked out from cart. Place bids via Bids API.");
+
+                    default:
+                        lot.Sell(cartItem.Quantity);
+                        await _lotsRepository.UpdateLot(lot.Id, lot);
+                        break;
                 }
 
                 pricedItems.Add(PricedItem.FromLot(lot, cartItem.Quantity, paymentInfo.TaxRate));
@@ -109,7 +116,7 @@ namespace Marketplace
                 return;
             }
 
-            var userId = await _ordersRepository.MarkPaid(request.OrderId, request.Provider, request.Reference);
+            await _ordersRepository.MarkPaid(request.OrderId, request.Provider, request.Reference);
 
             await _publishEndpoint.Publish(new PaymentProcessed(request.OrderId, true));
         }

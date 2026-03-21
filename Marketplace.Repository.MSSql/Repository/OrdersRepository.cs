@@ -18,47 +18,9 @@ namespace Marketplace.Repository.MSSql
                 throw new ArgumentNullException(nameof(order));
             }
 
-            await using var transaction = await _db.Database.BeginTransactionAsync();
-
-            foreach (var item in order.Items)
-            {
-                var lot = await _db.Lots.FirstOrDefaultAsync(l => l.Id == item.LotId);
-
-                if (lot is null)
-                {
-                    throw new KeyNotFoundException($"Lot with id '{item.LotId}' not found.");
-                }
-
-                if (lot.StockCount < item.Quantity)
-                {
-                    throw new InvalidOperationException($"Lot '{lot.Name}' does not have enough stock to fulfill the order.");
-                }
-
-                if (lot.Type == LotType.Auction)
-                {
-                    lot.Price = item.UnitPrice;
-
-                    var bid = new BidEntity
-                    {
-                        Id = Guid.NewGuid(),
-                        AuctionId = lot.Id,
-                        BidderId = order.CustomerId,
-                        Amount = item.UnitPrice,
-                        PlacedAt = DateTime.UtcNow
-                    };
-
-                    _db.BidHistory.Add(bid);
-                }
-
-                lot.StockCount -= item.Quantity;
-                _db.Lots.Update(lot);
-            }
-
             var entity = Map(order);
             _db.Orders.Add(entity);
             await _db.SaveChangesAsync();
-
-            await transaction.CommitAsync();
 
             return order.Id;
         }

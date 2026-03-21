@@ -23,6 +23,7 @@
         public int? TicketsSold { get; set; }
         public bool IsDrawn { get; set; }
         public virtual ICollection<TicketEntity> Tickets { get; set; } = new List<TicketEntity>();
+        public virtual ICollection<BidEntity> BidHistory { get; set; } = new List<BidEntity>();
         public bool IsDeleted { get; set; }
     }
 }

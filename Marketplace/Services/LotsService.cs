@@ -1,7 +1,6 @@
 ﻿using System.Security.Claims;
 using Marketplace.Cache;
 using Marketplace.Repository;
-using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Marketplace
 {

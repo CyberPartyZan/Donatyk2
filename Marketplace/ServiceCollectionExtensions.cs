@@ -15,6 +15,8 @@ namespace Marketplace
             services.AddScoped<IOrdersService, OrdersService>();
             services.AddScoped<ICategoriesService, CategoryService>();
             services.AddScoped<ITicketsService, TicketsService>();
+            services.AddScoped<IBidsService, BidsService>();
+
             services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 
             services.AddMassTransit(x =>

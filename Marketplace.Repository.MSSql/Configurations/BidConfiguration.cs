@@ -13,7 +13,7 @@ namespace Marketplace.Repository.MSSql
                    .IsRequired();
 
             builder.HasOne(x => x.Auction)
-                   .WithMany()
+                   .WithMany(x => x.BidHistory)
                    .HasForeignKey(x => x.AuctionId)
                    .OnDelete(DeleteBehavior.Cascade);
 

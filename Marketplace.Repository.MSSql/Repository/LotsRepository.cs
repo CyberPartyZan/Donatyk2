@@ -16,7 +16,6 @@ namespace Marketplace.Repository.MSSql
             var q = _db.Lots
                 .Include(l => l.Seller)
                 .Include(l => l.Category)
-                .Where(l => !l.IsDeleted)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query?.SearchText))
@@ -72,6 +71,11 @@ namespace Marketplace.Repository.MSSql
             else
             {
                 q = q.Where(e => !e.IsDeleted && !e.Seller.IsDeleted);
+            }
+
+            if (query?.GetExhausted != true)
+            {
+                q = q.Where(e => e.StockCount > 0);
             }
 
             var pageNumber = query?.PageNumber > 0 ? query.PageNumber : 1;

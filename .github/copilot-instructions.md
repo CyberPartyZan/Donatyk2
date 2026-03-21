@@ -9,7 +9,9 @@
 ## Ticket Domain Rules
 - One user can have multiple tickets per lot.
 - Ticket creation supports count, and the repository create should accept collections.
-- `DrawLot` should produce tickets.
+- `DrawLot` should produce tickets through `ITicketsService`, but reject `DrawLot` and `AuctionLot` items in the cart; ticket creation must be performed via the `TicketsController` API.
+- `AuctionLot` should create a bid.
+- `Simple Lot` should reduce stock.
 
 ## Code Style
 - Use specific formatting rules.
