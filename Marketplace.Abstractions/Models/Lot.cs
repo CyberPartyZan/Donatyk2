@@ -23,11 +23,13 @@
                 return (double)(discountAmount / Price.Amount * 100m);
             }
         }
+
         public LotType Type { get; set; }
         public LotStage Stage { get; set; }
         public Seller Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }
+        public bool IsDeleted { get; private set; }
         public string? DeclineReason { get; set; }
         public Category Category { get; set; }
         public Money Profit => Price - Compensation;
@@ -46,65 +48,36 @@
             bool isActive,
             bool isCompensationPaid,
             Category category,
-            string? declineReason = null)
+            string? declineReason = null,
+            bool isDeleted = false)
         {
             if (string.IsNullOrWhiteSpace(name))
-            {
                 throw new ArgumentException("Lot name cannot be null or whitespace.", nameof(name));
-            }
-
             if (string.IsNullOrWhiteSpace(description))
-            {
                 throw new ArgumentException("Lot description cannot be null or whitespace.", nameof(description));
-            }
-
             if (price.Amount < 0)
-            {
                 throw new ArgumentOutOfRangeException(nameof(price), "Price cannot be negative.");
-            }
-
             if (compensation.Amount < 0)
-            {
                 throw new ArgumentOutOfRangeException(nameof(compensation), "Compensation cannot be negative.");
-            }
-
             if (stockCount < 0)
-            {
                 throw new ArgumentOutOfRangeException(nameof(stockCount), "Stock count cannot be negative.");
-            }
 
             if (discountedPrice is not null)
             {
                 if (discountedPrice.Amount < 0)
-                {
                     throw new ArgumentOutOfRangeException(nameof(discountedPrice), "Discounted price cannot be negative.");
-                }
-
                 if (discountedPrice.Currency != price.Currency)
-                {
                     throw new ArgumentException("Discounted price currency must match price currency.", nameof(discountedPrice));
-                }
-
                 if (discountedPrice > price)
-                {
                     throw new ArgumentOutOfRangeException(nameof(discountedPrice), "Discounted price cannot exceed price.");
-                }
             }
 
             if (seller == null)
-            {
                 throw new ArgumentNullException(nameof(seller), "Seller cannot be null.");
-            }
-
             if (category == null)
-            {
                 throw new ArgumentNullException(nameof(category), "Category cannot be null.");
-            }
-
             if (price < compensation)
-            {
                 throw new ArgumentException("Price cannot be less than Compensation.");
-            }
 
             Id = id;
             Name = name;
@@ -123,6 +96,7 @@
             IsCompensationPaid = isCompensationPaid;
             DeclineReason = declineReason;
             Category = category;
+            IsDeleted = isDeleted;
         }
 
         public virtual void Sell(int quantity)
@@ -133,6 +107,11 @@
                 throw new InvalidOperationException("Not enough stock.");
 
             StockCount -= quantity;
+        }
+
+        public virtual void Delete()
+        {
+            IsDeleted = true;
         }
     }
 }

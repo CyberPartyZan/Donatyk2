@@ -13,6 +13,7 @@
 - `AuctionLot` should create a bid.
 - `Simple Lot` should reduce stock.
 - `DrawLot` can be sold only after all tickets are sold and a winner ticket exists.
+- Lot deletion must be domain-driven via `Lot.Delete`; `DrawLot.Delete` is forbidden when tickets have been sold, and `AuctionLot.Delete` is forbidden when bid history exists. The repository `DeleteLot` should be removed.
 
 ## Code Style
 - Use specific formatting rules.

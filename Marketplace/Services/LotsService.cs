@@ -135,14 +135,22 @@ namespace Marketplace
                 seller: seller,
                 isActive: dto.IsActive,
                 isCompensationPaid: dto.IsCompensationPaid,
-                category: category);
+                category: category,
+                isDeleted: existing.IsDeleted);
 
             await _lotsRepository.UpdateLot(id, updated);
         }
 
         public async Task DeleteLot(Guid id)
         {
-            await _lotsRepository.DeleteLot(id);
+            var lot = await _lotsRepository.GetLotById(id);
+            if (lot is null)
+            {
+                return;
+            }
+
+            lot.Delete();
+            await _lotsRepository.UpdateLot(id, lot);
         }
 
         public async Task ApproveLot(Guid id)

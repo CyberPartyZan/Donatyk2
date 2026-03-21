@@ -28,8 +28,9 @@
             Category category = null!,
             string? declineReason = null,
             IReadOnlyCollection<Ticket>? tickets = null,
-            bool isDrawn = false)
-            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason)
+            bool isDrawn = false,
+            bool isDeleted = false)
+            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason, isDeleted)
         {
             if (ticketPrice is null || ticketPrice.Amount <= 0)
                 throw new ArgumentOutOfRangeException(nameof(ticketPrice), "Ticket price should be more than zero.");
@@ -120,13 +121,17 @@
             base.Sell(quantity);
         }
 
+        public override void Delete()
+        {
+            if (TicketsSold > 0)
+                throw new InvalidOperationException("Draw lot cannot be deleted when tickets were sold.");
+
+            base.Delete();
+        }
+
         private static int CalculateTotalTickets(Money price, Money ticketPrice)
         {
-            if (ticketPrice.Amount <= 0)
-            {
-                return 0;
-            }
-
+            if (ticketPrice.Amount <= 0) return 0;
             return (int)decimal.Floor(price.Amount / ticketPrice.Amount);
         }
     }

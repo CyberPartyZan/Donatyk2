@@ -95,6 +95,7 @@ namespace Marketplace.Repository.MSSql
             var entity = await _db.Lots
                 .Include(l => l.Seller)
                 .Include(l => l.Category)
+                .Include(l => l.BidHistory)
                 .FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
 
             return entity is null ? null : CreateFromEntity(entity);
@@ -140,7 +141,7 @@ namespace Marketplace.Repository.MSSql
                 AuctionStepPercent = (lot is AuctionLot a2) ? a2.AuctionStepPercent : null,
                 TicketPrice = (lot is DrawLot dl) ? dl.TicketPrice : null,
                 TicketsSold = (lot is DrawLot dl2) ? dl2.TicketsSold : null,
-                IsDeleted = false,
+                IsDeleted = lot.IsDeleted,
                 IsDrawn = (lot is DrawLot dl3) && dl3.IsDrawn,
             };
 
@@ -183,6 +184,7 @@ namespace Marketplace.Repository.MSSql
             existing.TicketPrice = (lot is DrawLot dl) ? dl.TicketPrice : existing.TicketPrice;
             existing.TicketsSold = (lot is DrawLot dl2) ? dl2.TicketsSold : existing.TicketsSold;
             existing.IsDrawn = (lot is DrawLot dlu) ? dlu.IsDrawn : existing.IsDrawn;
+            existing.IsDeleted = lot.IsDeleted;
 
             if (lot.Seller is not null)
             {
@@ -204,23 +206,6 @@ namespace Marketplace.Repository.MSSql
 
             _db.Lots.Update(existing);
             await _db.SaveChangesAsync();
-        }
-
-        public async Task DeleteLot(Guid id)
-        {
-            var existing = await _db.Lots.FindAsync(id);
-            if (existing is null)
-            {
-                // nothing to do
-                return;
-            }
-
-            if (!existing.IsDeleted)
-            {
-                existing.IsDeleted = true;
-                _db.Lots.Update(existing);
-                await _db.SaveChangesAsync();
-            }
         }
 
         public async Task ApproveLot(Guid id)
@@ -292,7 +277,8 @@ namespace Marketplace.Repository.MSSql
                     entity.IsActive,
                     entity.IsCompensationPaid,
                     category,
-                    entity.DeclineReason),
+                    entity.DeclineReason,
+                    entity.IsDeleted),
 
                 LotType.Auction => new AuctionLot(
                     entity.Id,
@@ -317,7 +303,11 @@ namespace Marketplace.Repository.MSSql
                     entity.EndOfAuction ?? throw new ArgumentNullException(nameof(entity.EndOfAuction)),
                     entity.AuctionStepPercent ?? throw new ArgumentNullException(nameof(entity.AuctionStepPercent)),
                     category,
-                    entity.DeclineReason),
+                    entity.DeclineReason,
+                    bidHistory: entity.BidHistory
+                        .Select(b => new Bid(b.Id, b.AuctionId, b.BidderId, b.Amount, b.PlacedAt))
+                        .ToList(),
+                    isDeleted: entity.IsDeleted),
 
                 LotType.Draw => new DrawLot(
                     entity.Id,
@@ -344,7 +334,8 @@ namespace Marketplace.Repository.MSSql
                     category,
                     entity.DeclineReason,
                     tickets: null,
-                    isDrawn: entity.IsDrawn),
+                    isDrawn: entity.IsDrawn,
+                    isDeleted: entity.IsDeleted),
 
                 _ => throw new InvalidOperationException($"Unsupported LotType: {entity.Type}")
             };

@@ -23,8 +23,9 @@
             int auctionStepPercent,
             Category category,
             string? declineReason = null,
-            IReadOnlyCollection<Bid>? bidHistory = null)
-            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason)
+            IReadOnlyCollection<Bid>? bidHistory = null,
+            bool isDeleted = false)
+            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason, isDeleted)
         {
             if (endOfAuction <= DateTime.UtcNow)
                 throw new ArgumentException("End of auction date should be in the future.", nameof(endOfAuction));
@@ -63,6 +64,14 @@
                 throw new InvalidOperationException("Auction lot can't be sold until the end of auction.");
 
             base.Sell(quantity);
+        }
+
+        public override void Delete()
+        {
+            if (BidHistory.Any())
+                throw new InvalidOperationException("Auction lot cannot be deleted when there is bid history.");
+
+            base.Delete();
         }
     }
 }
