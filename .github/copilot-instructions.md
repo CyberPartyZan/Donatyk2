@@ -12,6 +12,7 @@
 - `DrawLot` should produce tickets through `ITicketsService`, but reject `DrawLot` and `AuctionLot` items in the cart; ticket creation must be performed via the `TicketsController` API.
 - `AuctionLot` should create a bid.
 - `Simple Lot` should reduce stock.
+- `DrawLot` can be sold only after all tickets are sold and a winner ticket exists.
 
 ## Code Style
 - Use specific formatting rules.

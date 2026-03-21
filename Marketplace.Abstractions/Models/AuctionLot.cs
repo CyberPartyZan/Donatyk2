@@ -59,7 +59,10 @@
 
         public override void Sell(int quantity)
         {
-            throw new InvalidOperationException("Auction lot can't be sold until the end of auction.");
+            if (EndOfAuction > DateTime.UtcNow)
+                throw new InvalidOperationException("Auction lot can't be sold until the end of auction.");
+
+            base.Sell(quantity);
         }
     }
 }

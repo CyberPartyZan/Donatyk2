@@ -111,7 +111,13 @@
 
         public override void Sell(int quantity)
         {
-            throw new InvalidOperationException("Draw lot is sold through draw tickets, not stock selling.");
+            if (TicketsSold != TotalTickets)
+                throw new InvalidOperationException("Draw lot can be sold only when all tickets are sold.");
+
+            if (Tickets is null || !Tickets.Any(t => t.IsWinning))
+                throw new InvalidOperationException("Draw lot can be sold only when a winner ticket is present.");
+
+            base.Sell(quantity);
         }
 
         private static int CalculateTotalTickets(Money price, Money ticketPrice)
