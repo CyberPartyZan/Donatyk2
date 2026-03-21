@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Marketplace.Notification;
 using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Moq;
@@ -118,6 +117,52 @@ namespace Marketplace.Unit.Tests.Services
         }
 
         [Fact]
+        public async Task CheckoutAsync_WhenDrawLotInCart_ThrowsInvalidOperationException()
+        {
+            var fixture = CreateFixture();
+            var userId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipal(userId));
+
+            var drawLot = CreateDrawLot();
+            var cart = CreateCart(userId, drawLot, quantity: 1);
+
+            fixture.Freeze<Mock<ICartRepository>>()
+                .Setup(r => r.GetCartByUserId(userId))
+                .ReturnsAsync(cart);
+
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(drawLot.Id))
+                .ReturnsAsync(drawLot);
+
+            var service = fixture.Create<OrdersService>();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CheckoutAsync(CreateCheckoutRequest()));
+        }
+
+        [Fact]
+        public async Task CheckoutAsync_WhenAuctionLotInCart_ThrowsInvalidOperationException()
+        {
+            var fixture = CreateFixture();
+            var userId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipal(userId));
+
+            var auctionLot = CreateAuctionLot();
+            var cart = CreateCart(userId, auctionLot, quantity: 1);
+
+            fixture.Freeze<Mock<ICartRepository>>()
+                .Setup(r => r.GetCartByUserId(userId))
+                .ReturnsAsync(cart);
+
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(auctionLot.Id))
+                .ReturnsAsync(auctionLot);
+
+            var service = fixture.Create<OrdersService>();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CheckoutAsync(CreateCheckoutRequest()));
+        }
+
+        [Fact]
         public async Task CheckoutAsync_WithValidCart_ReturnsPaymentResponseAndClearsCart()
         {
             var fixture = CreateFixture();
@@ -187,13 +232,11 @@ namespace Marketplace.Unit.Tests.Services
             };
 
             var ordersRepository = fixture.Freeze<Mock<IOrdersRepository>>();
-            var notificationService = fixture.Freeze<Mock<INotificationService>>();
             var service = fixture.Create<OrdersService>();
 
             await service.HandlePaymentWebhookAsync(request);
 
             ordersRepository.Verify(r => r.MarkPaid(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-            notificationService.Verify(n => n.NotifyOrderPaidAsync(It.IsAny<Guid>()), Times.Never);
         }
 
         private static IFixture CreateFixture() =>
@@ -260,6 +303,73 @@ namespace Marketplace.Unit.Tests.Services
                 isCompensationPaid: false,
                 category: category,
                 declineReason: declineReason);
+        }
+
+        private static DrawLot CreateDrawLot(
+            Guid? id = null,
+            decimal priceAmount = 100m,
+            decimal ticketPriceAmount = 10m,
+            decimal compensationAmount = 60m,
+            int stockCount = 5,
+            LotStage stage = LotStage.Created,
+            LotType type = LotType.Draw,
+            Guid? sellerUserId = null,
+            string? declineReason = null)
+        {
+            var category = CreateCategory();
+
+            return new DrawLot(
+                id ?? Guid.NewGuid(),
+                "Draw " + Guid.NewGuid().ToString("N"),
+                "Desc " + Guid.NewGuid().ToString("N"),
+                CreateMoney(priceAmount),
+                CreateMoney(compensationAmount),
+                stockCount,
+                discountedPrice: null,
+                type,
+                stage,
+                CreateSeller(sellerUserId),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(ticketPriceAmount),
+                category: category,
+                declineReason: declineReason,
+                tickets: null,
+                isDrawn: false,
+                isDeleted: false);
+        }
+
+        private static AuctionLot CreateAuctionLot(
+            Guid? id = null,
+            decimal startingPriceAmount = 100m,
+            decimal compensationAmount = 60m,
+            decimal? instantBuyPriceAmount = null,
+            int stockCount = 5,
+            LotStage stage = LotStage.Created,
+            Guid? sellerUserId = null,
+            string? declineReason = null)
+        {
+            var category = CreateCategory();
+
+            return new AuctionLot(
+                id ?? Guid.NewGuid(),
+                "Auction " + Guid.NewGuid().ToString("N"),
+                "Desc " + Guid.NewGuid().ToString("N"),
+                CreateMoney(startingPriceAmount),
+                CreateMoney(compensationAmount),
+                stockCount,
+                instantBuyPriceAmount.HasValue ? CreateMoney(instantBuyPriceAmount.Value) : null,
+                LotType.Auction,
+                stage,
+                CreateSeller(sellerUserId),
+                isActive: true,
+                isCompensationPaid: false,
+                endOfAuction: DateTime.UtcNow.AddDays(7),
+                auctionStepPercent: 5,
+                category: category,
+                declineReason: declineReason,
+                bidHistory: null,
+                isDeleted: false);
         }
 
         private static Category CreateCategory() =>

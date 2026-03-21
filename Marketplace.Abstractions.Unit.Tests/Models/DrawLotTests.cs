@@ -136,6 +136,108 @@
                     category: CreateCategory()));
         }
 
+        [Fact]
+        public void Delete_WhenTicketsSold_ThrowsInvalidOperationException()
+        {
+            var lot = new DrawLot(
+                Guid.NewGuid(),
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 1,
+                category: CreateCategory());
+
+            Assert.Throws<InvalidOperationException>(() => lot.Delete());
+        }
+
+        [Fact]
+        public void Delete_WhenNoTicketsSold_SetsIsDeletedTrue()
+        {
+            var lot = new DrawLot(
+                Guid.NewGuid(),
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 0,
+                category: CreateCategory());
+
+            lot.Delete();
+
+            Assert.True(lot.IsDeleted);
+        }
+
+        [Fact]
+        public void Sell_WhenNotAllTicketsSold_ThrowsInvalidOperationException()
+        {
+            var lot = new DrawLot(
+                Guid.NewGuid(),
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 9,
+                category: CreateCategory());
+
+            Assert.Throws<InvalidOperationException>(() => lot.Sell(1));
+        }
+
+        [Fact]
+        public void Sell_WhenAllTicketsSoldAndWinnerExists_ReducesStock()
+        {
+            var tickets = Enumerable.Range(0, 10)
+                .Select(i => new Ticket(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), isWinning: i == 0))
+                .ToList();
+
+            var lot = new DrawLot(
+                Guid.NewGuid(),
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 3,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 10,
+                category: CreateCategory(),
+                tickets: tickets,
+                isDrawn: true);
+
+            lot.Sell(1);
+
+            Assert.Equal(2, lot.StockCount);
+        }
+
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         private static Seller CreateSeller() =>

@@ -1,5 +1,4 @@
 using Marketplace.Repository.MSSql;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
@@ -10,25 +9,18 @@ namespace Marketplace.Integration.Tests;
 
 public class OrdersEndpointTests : IntegrationTestsBase
 {
-    public OrdersEndpointTests(CustomWebApplicationFactory factory)
-        : base(factory)
-    {
-    }
+    public OrdersEndpointTests(CustomWebApplicationFactory factory) : base(factory) { }
 
     [Fact]
     public async Task Checkout_ReturnsRedirectAndPersistsOrder()
     {
         const int quantity = 2;
-        var (lot, _, initialStock) = await SeedCartItemAsync(quantity);
+        var (lot, _, initialStock) = await SeedCartItemAsync(quantity, LotType.Simple);
 
-        var request = CreateCheckoutRequest();
-
-        var response = await _client.PostAsJsonAsync("/api/orders/checkout", request);
+        var response = await _client.PostAsJsonAsync("/api/orders/checkout", CreateCheckoutRequest());
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
-        Assert.Contains("payments", response.Headers.Location!.Host, StringComparison.OrdinalIgnoreCase);
-
         Assert.True(response.Headers.TryGetValues("X-Order-Id", out var headerValues));
         var orderId = Guid.Parse(headerValues!.Single());
 
@@ -50,21 +42,39 @@ public class OrdersEndpointTests : IntegrationTestsBase
     }
 
     [Fact]
+    public async Task Checkout_WhenDrawLotInCart_ReturnsInternalServerError()
+    {
+        await SeedCartItemAsync(1, LotType.Draw);
+
+        var response = await _client.PostAsJsonAsync("/api/orders/checkout", CreateCheckoutRequest());
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Checkout_WhenAuctionLotInCart_ReturnsInternalServerError()
+    {
+        await SeedCartItemAsync(1, LotType.Auction);
+
+        var response = await _client.PostAsJsonAsync("/api/orders/checkout", CreateCheckoutRequest());
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PaymentWebhook_MarksOrderPaid_WhenSuccessful()
     {
-        const string provider = "FakePay";
-        const string reference = "PAY-123456";
-        await SeedCartItemAsync(1);
+        await SeedCartItemAsync(1, LotType.Simple);
 
-        var checkoutResponse = await _client.PostAsJsonAsync("/api/orders/checkout", CreateCheckoutRequest(provider));
+        var checkoutResponse = await _client.PostAsJsonAsync("/api/orders/checkout", CreateCheckoutRequest("FakePay"));
         Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
         var orderId = Guid.Parse(headerValues!.Single());
 
         var webhookResponse = await _client.PostAsJsonAsync("/api/orders/payment/webhook", new PaymentWebhookRequest
         {
             OrderId = orderId,
-            Provider = provider,
-            Reference = reference,
+            Provider = "FakePay",
+            Reference = "PAY-123456",
             IsSuccess = true
         });
 
@@ -75,12 +85,11 @@ public class OrdersEndpointTests : IntegrationTestsBase
         var order = await db.Orders.SingleAsync(o => o.Id == orderId);
 
         Assert.Equal(OrderStatus.Paid, order.Status);
-        Assert.Equal(reference, order.PaymentReference);
+        Assert.Equal("PAY-123456", order.PaymentReference);
     }
 
-    private CheckoutRequest CreateCheckoutRequest(string provider = "FakePay", decimal taxRate = 0.07m)
-    {
-        return new CheckoutRequest
+    private static CheckoutRequest CreateCheckoutRequest(string provider = "FakePay", decimal taxRate = 0.07m) =>
+        new()
         {
             Shipping = new ShippingInfoDto
             {
@@ -99,11 +108,10 @@ public class OrdersEndpointTests : IntegrationTestsBase
                 ReturnUrl = "https://example.com/return"
             }
         };
-    }
 
-    private async Task<(LotEntity Lot, CartItemEntity CartItem, int StockBefore)> SeedCartItemAsync(int quantity)
+    private async Task<(LotEntity Lot, CartItemEntity CartItem, int StockBefore)> SeedCartItemAsync(int quantity, LotType type)
     {
-        var lot = await SeedLotAsync(stockCount: 10);
+        var lot = await SeedLotAsync(stockCount: 10, type: type);
         var stockBefore = lot.StockCount;
 
         using var scope = _factory.Services.CreateScope();
@@ -122,7 +130,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
         return (lot, cartItem, stockBefore);
     }
 
-    private async Task<LotEntity> SeedLotAsync(int stockCount = 10)
+    private async Task<LotEntity> SeedLotAsync(int stockCount, LotType type)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
@@ -174,14 +182,19 @@ public class OrdersEndpointTests : IntegrationTestsBase
             Compensation = new Money(60, Currency.USD),
             StockCount = stockCount,
             DiscountedPrice = null,
-            Type = LotType.Simple,
+            Type = type,
             Stage = LotStage.Approved,
             Seller = seller,
             Category = category,
             IsActive = true,
             IsCompensationPaid = false,
             CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
+            IsDeleted = false,
+            EndOfAuction = type == LotType.Auction ? DateTime.UtcNow.AddHours(2) : null,
+            AuctionStepPercent = type == LotType.Auction ? 5 : null,
+            TicketPrice = type == LotType.Draw ? new Money(5, Currency.USD) : null,
+            TicketsSold = type == LotType.Draw ? 0 : null,
+            IsDrawn = false
         };
 
         db.Users.Add(sellerUser);

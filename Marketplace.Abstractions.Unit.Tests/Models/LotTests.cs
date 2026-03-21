@@ -153,6 +153,54 @@
                 new Lot(Guid.NewGuid(), "Valid", "Valid", CreateMoney(50m), CreateMoney(60m), 1, CreateMoney(50m), LotType.Simple, LotStage.Created, seller, true, false, category: CreateCategory()));
         }
 
+        [Fact]
+        public void Delete_SetsIsDeletedTrue()
+        {
+            var lot = new Lot(
+                Guid.NewGuid(),
+                "Lot",
+                "Description",
+                CreateMoney(100m),
+                CreateMoney(60m),
+                stockCount: 3,
+                discountedPrice: null,
+                LotType.Simple,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                category: CreateCategory());
+
+            Assert.False(lot.IsDeleted);
+
+            lot.Delete();
+
+            Assert.True(lot.IsDeleted);
+        }
+
+        [Fact]
+        public void Sell_WithEnoughStock_ReducesStock()
+        {
+            var lot = new Lot(
+                Guid.NewGuid(),
+                "Lot",
+                "Description",
+                CreateMoney(100m),
+                CreateMoney(60m),
+                stockCount: 5,
+                discountedPrice: null,
+                LotType.Simple,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                category: CreateCategory());
+
+            lot.Sell(2);
+
+            Assert.Equal(3, lot.StockCount);
+        }
+
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         private static Seller CreateSeller() =>

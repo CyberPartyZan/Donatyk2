@@ -98,6 +98,87 @@
                     category));
         }
 
+        [Fact]
+        public void Delete_WhenBidHistoryExists_ThrowsInvalidOperationException()
+        {
+            var bidHistory = new List<Bid>
+            {
+                new Bid(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), CreateMoney(350m), DateTime.UtcNow)
+            };
+
+            var lot = new AuctionLot(
+                Guid.NewGuid(),
+                "Auction lot",
+                "Auction description",
+                CreateMoney(300m),
+                CreateMoney(150m),
+                stockCount: 1,
+                discountedPrice: null,
+                LotType.Auction,
+                LotStage.PendingApproval,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                DateTime.UtcNow.AddHours(2),
+                auctionStepPercent: 5,
+                category: CreateCategory(),
+                bidHistory: bidHistory);
+
+            Assert.Throws<InvalidOperationException>(() => lot.Delete());
+        }
+
+        [Fact]
+        public void Delete_WhenNoBidHistory_SetsIsDeletedTrue()
+        {
+            var lot = new AuctionLot(
+                Guid.NewGuid(),
+                "Auction lot",
+                "Auction description",
+                CreateMoney(300m),
+                CreateMoney(150m),
+                stockCount: 1,
+                discountedPrice: null,
+                LotType.Auction,
+                LotStage.PendingApproval,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                DateTime.UtcNow.AddHours(2),
+                auctionStepPercent: 5,
+                category: CreateCategory());
+
+            lot.Delete();
+
+            Assert.True(lot.IsDeleted);
+        }
+
+        [Fact]
+        public void Sell_WhenAuctionEnded_ReducesStock()
+        {
+            var lot = new AuctionLot(
+                Guid.NewGuid(),
+                "Auction lot",
+                "Auction description",
+                CreateMoney(300m),
+                CreateMoney(150m),
+                stockCount: 2,
+                discountedPrice: null,
+                LotType.Auction,
+                LotStage.PendingApproval,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                DateTime.UtcNow.AddHours(1),
+                auctionStepPercent: 5,
+                category: CreateCategory());
+
+            lot.EndOfAuction = DateTime.UtcNow.AddMinutes(-1);
+
+            lot.Sell(1);
+
+            Assert.Equal(1, lot.StockCount);
+        }
+
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         private static Seller CreateSeller() =>
