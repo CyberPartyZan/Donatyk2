@@ -2,8 +2,8 @@
 {
     public class DrawLot : Lot
     {
-        public Money TicketPrice { get; set; }
-        public int TicketsSold { get; set; }
+        public Money TicketPrice { get; private set; }
+        public int TicketsSold { get; private set; }
         public int TotalTickets => CalculateTotalTickets(Price, TicketPrice);
         public int TicketsLeft => Math.Max(0, TotalTickets - TicketsSold);
 

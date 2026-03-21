@@ -208,18 +208,26 @@ namespace Marketplace.Unit.Tests.Services
         }
 
         [Fact]
-        public async Task DeleteLot_InvokesRepository()
+        public async Task DeleteLot_WhenLotExists_UpdatesLotAsDeleted()
         {
             var fixture = CreateFixture();
             fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
 
-            var repo = fixture.Freeze<Mock<ILotsRepository>>();
-            var service = fixture.Create<LotsService>();
             var id = fixture.Create<Guid>();
+            var lot = CreateLot();
+
+            var repo = fixture.Freeze<Mock<ILotsRepository>>();
+            repo.Setup(r => r.GetLotById(id))
+                .ReturnsAsync(lot);
+
+            var service = fixture.Create<LotsService>();
 
             await service.DeleteLot(id);
 
-            repo.Verify(r => r.DeleteLot(id), Times.Once);
+            repo.Verify(r => r.UpdateLot(
+                    id,
+                    It.Is<Lot>(l => l.IsDeleted)),
+                Times.Once);
         }
 
         [Fact]
