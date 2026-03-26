@@ -25,6 +25,26 @@ namespace Marketplace.Repository.MSSql
             return order.Id;
         }
 
+        public async Task<Guid> MarkPaid(Guid orderId)
+        {
+            var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (entity is null)
+            {
+                throw new KeyNotFoundException($"Order '{orderId}' not found.");
+            }
+
+            if (entity.Status == OrderStatus.Paid)
+            {
+                return entity.CustomerId;
+            }
+
+            entity.Status = OrderStatus.Paid;
+            await _db.SaveChangesAsync();
+
+            return entity.CustomerId;
+        }
+
         // TODO: Provider should be enum
         public async Task<Guid> MarkPaid(Guid orderId, string provider, string paymentReference)
         {

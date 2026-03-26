@@ -10,6 +10,12 @@
         public IReadOnlyCollection<Ticket>? Tickets { get; private set; }
         public bool IsDrawn { get; private set; }
 
+        public bool ReadyToDraw =>
+            Tickets is not null &&
+            TicketsSold == TotalTickets &&
+            Tickets.Count == TicketsSold &&
+            Tickets.All(t => t.IsPayed);
+
         public DrawLot(
             Guid id,
             string name,
@@ -83,14 +89,11 @@
             if (Tickets is null)
                 throw new InvalidOperationException("Tickets must be loaded before finding a winner.");
 
-            if (TicketsSold != TotalTickets)
-                throw new InvalidOperationException("Winner can be found only when all tickets are sold.");
-
-            if (Tickets.Count != TicketsSold)
-                throw new InvalidOperationException("Loaded tickets count must match TicketsSold.");
-
             if (Tickets.Count == 0)
                 throw new InvalidOperationException("No tickets available.");
+
+            if (!ReadyToDraw)
+                throw new InvalidOperationException("Winner can be found only when all tickets are sold and paid.");
 
             if (IsDrawn)
             {

@@ -121,7 +121,7 @@ namespace Marketplace.Unit.Tests.Services
             var drawLot = CreateDrawLot(id: lotId, ticketsSold: 10);
 
             var tickets = Enumerable.Range(0, 10)
-                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId))
+                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed())
                 .ToList()
                 .AsReadOnly();
 
@@ -137,6 +137,31 @@ namespace Marketplace.Unit.Tests.Services
 
             ticketsRepo.Verify(r => r.MarkAsWinning(lotId, winner.Id), Times.Once);
             lotsRepo.Verify(r => r.UpdateLot(lotId, It.Is<Lot>(l => l is DrawLot)), Times.Once);
+        }
+
+        [Fact]
+        public async Task FindWinner_WhenTicketsAreNotAllPayed_ThrowsInvalidOperationException()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
+
+            var lotId = fixture.Create<Guid>();
+            var drawLot = CreateDrawLot(id: lotId, ticketsSold: 10);
+
+            var tickets = Enumerable.Range(0, 10)
+                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId))
+                .ToList()
+                .AsReadOnly();
+
+            var lotsRepo = fixture.Freeze<Mock<ILotsRepository>>();
+            lotsRepo.Setup(r => r.GetLotById(lotId)).ReturnsAsync(drawLot);
+
+            var ticketsRepo = fixture.Freeze<Mock<ITicketsRepository>>();
+            ticketsRepo.Setup(r => r.GetAll(lotId)).ReturnsAsync(tickets);
+
+            var service = fixture.Create<TicketsService>();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.FindWinner(lotId));
         }
 
         [Fact]

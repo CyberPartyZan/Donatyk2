@@ -137,6 +137,126 @@
         }
 
         [Fact]
+        public void ReadyToDraw_WhenTicketsNotLoaded_ReturnsFalse()
+        {
+            var lot = new DrawLot(
+                Guid.NewGuid(),
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 10,
+                category: CreateCategory());
+
+            Assert.False(lot.ReadyToDraw);
+        }
+
+        [Fact]
+        public void ReadyToDraw_WhenAllTicketsSoldAndPayed_ReturnsTrue()
+        {
+            var lotId = Guid.NewGuid();
+            var tickets = Enumerable.Range(0, 10)
+                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed())
+                .ToList();
+
+            var lot = new DrawLot(
+                lotId,
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 10,
+                category: CreateCategory(),
+                tickets: tickets);
+
+            Assert.True(lot.ReadyToDraw);
+        }
+
+        [Fact]
+        public void FindWinner_WhenNotAllTicketsPayed_ThrowsInvalidOperationException()
+        {
+            var lotId = Guid.NewGuid();
+
+            var payedTickets = Enumerable.Range(0, 9)
+                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed());
+
+            var mixedTickets = payedTickets
+                .Append(Ticket.Create(Guid.NewGuid(), lotId))
+                .ToList();
+
+            var lot = new DrawLot(
+                lotId,
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 10,
+                category: CreateCategory());
+
+            lot.LoadTickets(mixedTickets);
+
+            Assert.Throws<InvalidOperationException>(() => lot.FindWinner());
+        }
+
+        [Fact]
+        public void FindWinner_WhenAllTicketsPayed_ReturnsWinnerAndSetsIsDrawn()
+        {
+            var lotId = Guid.NewGuid();
+            var tickets = Enumerable.Range(0, 10)
+                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed())
+                .ToList();
+
+            var lot = new DrawLot(
+                lotId,
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 10,
+                category: CreateCategory());
+
+            lot.LoadTickets(tickets);
+
+            var winner = lot.FindWinner();
+
+            Assert.True(lot.IsDrawn);
+            Assert.True(winner.IsWinning);
+            Assert.True(winner.IsPayed);
+        }
+
+        [Fact]
         public void Delete_WhenTicketsSold_ThrowsInvalidOperationException()
         {
             var lot = new DrawLot(
@@ -210,12 +330,13 @@
         [Fact]
         public void Sell_WhenAllTicketsSoldAndWinnerExists_ReducesStock()
         {
+            var lotId = Guid.NewGuid();
             var tickets = Enumerable.Range(0, 10)
-                .Select(i => new Ticket(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), isWinning: i == 0))
+                .Select(i => new Ticket(Guid.NewGuid(), Guid.NewGuid(), lotId, isWinning: i == 0))
                 .ToList();
 
             var lot = new DrawLot(
-                Guid.NewGuid(),
+                lotId,
                 "Draw",
                 "Description",
                 CreateMoney(50m),

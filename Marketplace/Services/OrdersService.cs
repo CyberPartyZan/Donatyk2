@@ -270,5 +270,15 @@ namespace Marketplace
 
             return Guid.Parse(sub);
         }
+
+        public async Task<Guid> MarkPaid(Guid orderId)
+        {
+            if (orderId == Guid.Empty)
+            {
+                throw new ArgumentException("Order id must be provided.", nameof(orderId));
+            }
+
+            return await _ordersRepository.MarkPaid(orderId);
+        }
     }
 }
