@@ -157,6 +157,50 @@ public class OrdersEndpointTests : IntegrationTestsBase
         Assert.Equal(Currency.USD, lotAfter.Price.Currency);
     }
 
+    [Fact]
+    public async Task PaymentWebhook_ForDrawCheckout_MarksTicketsAsPayed()
+    {
+        var lot = await SeedLotAsync(stockCount: 1, type: LotType.Draw);
+
+        var checkoutResponse = await _client.PostAsJsonAsync(
+            "/api/orders/checkout/draw",
+            CreateCheckoutDrawRequest(lot.Id, ticketsCount: 2, provider: "FakePay"));
+
+        Assert.Equal(HttpStatusCode.Redirect, checkoutResponse.StatusCode);
+        Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
+        var orderId = Guid.Parse(headerValues!.Single());
+
+        var webhookResponse = await _client.PostAsJsonAsync("/api/orders/payment/webhook", new PaymentWebhookRequest
+        {
+            OrderId = orderId,
+            Provider = "FakePay",
+            Reference = "DRAW-PAY-001",
+            IsSuccess = true
+        });
+
+        Assert.Equal(HttpStatusCode.OK, webhookResponse.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        await WaitUntilAsync(async () =>
+            await db.Tickets
+                .Where(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId)
+                .AnyAsync() &&
+            await db.Tickets
+                .Where(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId)
+                .AllAsync(t => t.IsPayed),
+            timeout: TimeSpan.FromSeconds(10),
+            delay: TimeSpan.FromMilliseconds(250));
+
+        var paidTickets = await db.Tickets
+            .Where(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId)
+            .ToListAsync();
+
+        Assert.Equal(2, paidTickets.Count);
+        Assert.All(paidTickets, t => Assert.True(t.IsPayed));
+    }
+
     private static CheckoutRequest CreateCheckoutRequest(string provider = "FakePay", decimal taxRate = 0.07m) =>
         new()
         {
@@ -327,5 +371,25 @@ public class OrdersEndpointTests : IntegrationTestsBase
         await db.SaveChangesAsync();
 
         return lot;
+    }
+
+    private static async Task WaitUntilAsync(
+        Func<Task<bool>> condition,
+        TimeSpan timeout,
+        TimeSpan delay)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await condition())
+            {
+                return;
+            }
+
+            await Task.Delay(delay);
+        }
+
+        Assert.True(await condition());
     }
 }

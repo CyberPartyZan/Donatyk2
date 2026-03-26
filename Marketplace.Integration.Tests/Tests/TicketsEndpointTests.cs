@@ -29,6 +29,29 @@ public class TicketsEndpointTests : IntegrationTestsBase
         Assert.Equal(2, updatedLot.TicketsSold);
     }
 
+    [Fact]
+    public async Task CreateTickets_SetsCreatedAtAndIsPayedDefaults()
+    {
+        var lot = await SeedDrawLotAsync();
+
+        var response = await _client.PostAsync($"/api/tickets/{lot.Id}?count=2", null);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var tickets = await db.Tickets
+            .Where(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId)
+            .ToListAsync();
+
+        Assert.Equal(2, tickets.Count);
+        Assert.All(tickets, t =>
+        {
+            Assert.False(t.IsPayed);
+            Assert.True(t.CreatedAt > DateTime.UtcNow.AddMinutes(-5));
+        });
+    }
+
     private async Task<LotEntity> SeedDrawLotAsync()
     {
         using var scope = _factory.Services.CreateScope();

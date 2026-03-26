@@ -5,6 +5,7 @@
 - Move JWT/Identity options to extension methods or utilize the options pattern for improved clarity.
 - Remove redundant scoped `ClaimsPrincipal` if `IHttpContextAccessor` suffices to streamline the code.
 - Ensure that the `Category` in the model and mappings is not nullable to maintain data integrity.
+- Always fix or add appropriate unit and integration tests for every code change.
 
 ## Ticket Domain Rules
 - One user can have multiple tickets per lot.

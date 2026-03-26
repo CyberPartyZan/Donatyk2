@@ -139,6 +139,34 @@ namespace Marketplace.Unit.Tests.Services
             lotsRepo.Verify(r => r.UpdateLot(lotId, It.Is<Lot>(l => l is DrawLot)), Times.Once);
         }
 
+        [Fact]
+        public async Task MarkAsPayedByOrderId_WithEmptyOrderId_ThrowsArgumentException()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
+
+            var service = fixture.Create<TicketsService>();
+
+            await Assert.ThrowsAsync<ArgumentException>(() => service.MarkAsPayedByOrderId(Guid.Empty));
+        }
+
+        [Fact]
+        public async Task MarkAsPayedByOrderId_ForwardsToRepository()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
+
+            var orderId = fixture.Create<Guid>();
+            var repo = fixture.Freeze<Mock<ITicketsRepository>>();
+            repo.Setup(r => r.MarkAsPayedByOrderId(orderId)).Returns(Task.CompletedTask);
+
+            var service = fixture.Create<TicketsService>();
+
+            await service.MarkAsPayedByOrderId(orderId);
+
+            repo.Verify(r => r.MarkAsPayedByOrderId(orderId), Times.Once);
+        }
+
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 
