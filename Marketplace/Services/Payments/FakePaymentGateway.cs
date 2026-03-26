@@ -28,9 +28,9 @@ namespace Marketplace
             return Task.FromResult(url);
         }
 
-        public Task<string> CreatePaymentHoldUrlAsync(Order order, PaymentInfo paymentInfo, Money holdAmount, CancellationToken cancellationToken = default)
+        public Task<string> CreatePaymentHoldUrlAsync(Order order, PaymentInfo paymentInfo, CancellationToken cancellationToken = default)
         {
-            var url = $"{_baseUrl.TrimEnd('/')}/hold?orderId={order.Id}&amount={holdAmount.Amount}&currency={holdAmount.Currency}";
+            var url = $"{_baseUrl.TrimEnd('/')}/hold?orderId={order.Id}&amount={order.Total.Amount}&currency={order.Total.Currency}";
 
             if (!string.IsNullOrWhiteSpace(paymentInfo.ReturnUrl))
             {

@@ -202,7 +202,7 @@ namespace Marketplace
 
             await _ordersRepository.Create(order);
 
-            var paymentUrl = await _paymentGateway.CreatePaymentHoldUrlAsync(order, paymentInfo, bid.Amount);
+            var paymentUrl = await _paymentGateway.CreatePaymentHoldUrlAsync(order, paymentInfo);
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 

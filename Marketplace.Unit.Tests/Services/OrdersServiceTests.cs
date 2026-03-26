@@ -546,15 +546,12 @@ namespace Marketplace.Unit.Tests.Services
                 .Callback<Order>(o => storedOrder = o)
                 .ReturnsAsync(() => storedOrder!.Id);
 
-            Money? holdAmount = null;
             const string holdUrl = "https://pay.test/auction-hold";
             fixture.Freeze<Mock<IPaymentGateway>>()
                 .Setup(pg => pg.CreatePaymentHoldUrlAsync(
                     It.IsAny<Order>(),
                     It.IsAny<PaymentInfo>(),
-                    It.IsAny<Money>(),
                     It.IsAny<CancellationToken>()))
-                .Callback<Order, PaymentInfo, Money, CancellationToken>((_, _, amount, _) => holdAmount = amount)
                 .ReturnsAsync(holdUrl);
 
             var cartRepository = fixture.Freeze<Mock<ICartRepository>>();
@@ -568,8 +565,6 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Single(storedOrder.Items);
             Assert.Equal(auctionLot.Id, storedOrder.Items.Single().LotId);
             Assert.Equal(1, storedOrder.Items.Single().Quantity);
-            Assert.Equal(request.Amount.Amount, holdAmount!.Amount);
-            Assert.Equal(request.Amount.Currency, holdAmount.Currency);
 
             bidsService.Verify(s => s.PlaceBid(auctionLot.Id, request.Amount), Times.Once);
             ordersRepository.Verify(r => r.Create(It.IsAny<Order>()), Times.Once);

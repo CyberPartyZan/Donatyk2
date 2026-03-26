@@ -22,5 +22,8 @@
 ## Pricing Logic
 - If `DiscountedPrice` is null, treat it as the original `Price` and apply no discount. User prefers `DiscountedPrice` to be nullable, where null means no discount is applied (use base `Price`).
 
+## Payment Logic
+- For auction payment hold URL generation, use `order.Total` for the amount/currency instead of the explicit `holdAmount` argument.
+
 ## Assistant Interaction
 - When asked the assistant's name, respond with "GitHub Copilot".
