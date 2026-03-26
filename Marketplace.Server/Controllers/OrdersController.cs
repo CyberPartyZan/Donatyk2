@@ -43,6 +43,20 @@ namespace Marketplace.Server.Controllers
             return Redirect(response.PaymentUrl);
         }
 
+        [HttpPost("checkout/auction")]
+        public async Task<IActionResult> CheckoutAuction([FromBody] CheckoutAuctionRequest request)
+        {
+            if (request is null)
+            {
+                return BadRequest();
+            }
+
+            var response = await _ordersService.CheckoutAuctionAsync(request);
+            Response.Headers["X-Order-Id"] = response.OrderId.ToString();
+
+            return Redirect(response.PaymentUrl);
+        }
+
         [AllowAnonymous]
         [HttpPost("payment/webhook")]
         public async Task<IActionResult> PaymentWebhook([FromBody] PaymentWebhookRequest request)

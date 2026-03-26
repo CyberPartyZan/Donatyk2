@@ -483,5 +483,120 @@ namespace Marketplace.Unit.Tests.Services
                     ReturnUrl = "https://example.com/return"
                 }
             };
+
+        [Fact]
+        public async Task CheckoutAuctionAsync_WithNullRequest_ThrowsArgumentNullException()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var service = fixture.Create<OrdersService>();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CheckoutAuctionAsync(null!));
+        }
+
+        [Fact]
+        public async Task CheckoutAuctionAsync_WhenLotMissing_ThrowsKeyNotFoundException()
+        {
+            var fixture = CreateFixture();
+            var userId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipal(userId));
+
+            var lotId = fixture.Create<Guid>();
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(lotId))
+                .ReturnsAsync((Lot?)null);
+
+            var service = fixture.Create<OrdersService>();
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+                service.CheckoutAuctionAsync(CreateCheckoutAuctionRequest(lotId, CreateMoney(120m)))
+            );
+        }
+
+        [Fact]
+        public async Task CheckoutAuctionAsync_WithValidRequest_PlacesBidAndReturnsPaymentHoldResponse()
+        {
+            var fixture = CreateFixture();
+            var userId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipal(userId));
+
+            var auctionLot = CreateAuctionLot(startingPriceAmount: 100m);
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(auctionLot.Id))
+                .ReturnsAsync(auctionLot);
+
+            var request = CreateCheckoutAuctionRequest(auctionLot.Id, CreateMoney(125m));
+
+            var bid = new Bid(
+                Guid.NewGuid(),
+                auctionLot.Id,
+                userId,
+                request.Amount,
+                DateTime.UtcNow);
+
+            var bidsService = fixture.Freeze<Mock<IBidsService>>();
+            bidsService
+                .Setup(s => s.PlaceBid(auctionLot.Id, request.Amount))
+                .ReturnsAsync(bid);
+
+            Order? storedOrder = null;
+            var ordersRepository = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepository.Setup(r => r.Create(It.IsAny<Order>()))
+                .Callback<Order>(o => storedOrder = o)
+                .ReturnsAsync(() => storedOrder!.Id);
+
+            Money? holdAmount = null;
+            const string holdUrl = "https://pay.test/auction-hold";
+            fixture.Freeze<Mock<IPaymentGateway>>()
+                .Setup(pg => pg.CreatePaymentHoldUrlAsync(
+                    It.IsAny<Order>(),
+                    It.IsAny<PaymentInfo>(),
+                    It.IsAny<Money>(),
+                    It.IsAny<CancellationToken>()))
+                .Callback<Order, PaymentInfo, Money, CancellationToken>((_, _, amount, _) => holdAmount = amount)
+                .ReturnsAsync(holdUrl);
+
+            var cartRepository = fixture.Freeze<Mock<ICartRepository>>();
+            var service = fixture.Create<OrdersService>();
+
+            var response = await service.CheckoutAuctionAsync(request);
+
+            Assert.NotNull(storedOrder);
+            Assert.Equal(storedOrder!.Id, response.OrderId);
+            Assert.Equal(holdUrl, response.PaymentUrl);
+            Assert.Single(storedOrder.Items);
+            Assert.Equal(auctionLot.Id, storedOrder.Items.Single().LotId);
+            Assert.Equal(1, storedOrder.Items.Single().Quantity);
+            Assert.Equal(request.Amount.Amount, holdAmount!.Amount);
+            Assert.Equal(request.Amount.Currency, holdAmount.Currency);
+
+            bidsService.Verify(s => s.PlaceBid(auctionLot.Id, request.Amount), Times.Once);
+            ordersRepository.Verify(r => r.Create(It.IsAny<Order>()), Times.Once);
+            cartRepository.Verify(r => r.ClearCart(It.IsAny<Guid>()), Times.Never);
+        }
+
+        private static CheckoutAuctionRequest CreateCheckoutAuctionRequest(Guid lotId, Money amount) =>
+            new()
+            {
+                LotId = lotId,
+                Amount = amount,
+                Shipping = new ShippingInfoDto
+                {
+                    RecipientName = "Alice",
+                    Line1 = "123 Main",
+                    City = "Kyiv",
+                    State = "Kyivska",
+                    PostalCode = "01001",
+                    Country = "Ukraine",
+                    Phone = "+380441234567"
+                },
+                Payment = new PaymentInfoDto
+                {
+                    Provider = "Stripe",
+                    TaxRate = 0.2m,
+                    ReturnUrl = "https://example.com/return"
+                }
+            };
     }
 }

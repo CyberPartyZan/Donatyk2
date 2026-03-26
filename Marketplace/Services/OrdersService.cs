@@ -14,6 +14,7 @@ namespace Marketplace
         private readonly ILotsRepository _lotsRepository;
         private readonly IOrdersRepository _ordersRepository;
         private readonly ITicketsService _ticketsService;
+        private readonly IBidsService _bidsService;
         private readonly IPaymentGateway _paymentGateway;
         private readonly ILogger<OrdersService> _logger;
         private readonly IPublishEndpoint _publishEndpoint;
@@ -24,6 +25,7 @@ namespace Marketplace
             ILotsRepository lotsRepository,
             IOrdersRepository ordersRepository,
             ITicketsService ticketsService,
+            IBidsService bidsService,
             IPaymentGateway paymentGateway,
             IPublishEndpoint publishEndpoint,
             ILogger<OrdersService> logger)
@@ -33,6 +35,7 @@ namespace Marketplace
             _lotsRepository = lotsRepository;
             _ordersRepository = ordersRepository;
             _ticketsService = ticketsService;
+            _bidsService = bidsService;
             _paymentGateway = paymentGateway;
             _logger = logger;
             _publishEndpoint = publishEndpoint;
@@ -146,7 +149,60 @@ namespace Marketplace
 
             await _ordersRepository.Create(order);
 
+            // TODO: Remove tickets from the lot if payment is not completed within a certain time frame
             var paymentUrl = await _paymentGateway.CreatePaymentUrlAsync(order, paymentInfo);
+
+            await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
+
+            return new CheckoutResponse
+            {
+                OrderId = order.Id,
+                PaymentUrl = paymentUrl
+            };
+        }
+
+        public async Task<CheckoutResponse> CheckoutAuctionAsync(CheckoutAuctionRequest request)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            if (request.LotId == Guid.Empty)
+            {
+                throw new ArgumentException("Lot id must be provided.", nameof(request.LotId));
+            }
+
+            if (request.Amount is null)
+            {
+                throw new ArgumentNullException(nameof(request.Amount));
+            }
+
+            var userId = GetCurrentUserIdOrThrow();
+
+            var lot = await _lotsRepository.GetLotById(request.LotId)
+                ?? throw new KeyNotFoundException($"Lot with id '{request.LotId}' not found.");
+
+            var auctionLot = lot as AuctionLot
+                ?? throw new InvalidOperationException($"Lot '{lot.Name}' is not an auction lot.");
+
+            var shippingInfo = ToShippingInfo(request.Shipping);
+            var paymentInfo = ToPaymentInfo(request.Payment);
+
+            var bid = await _bidsService.PlaceBid(auctionLot.Id, request.Amount);
+
+            var pricedItem = PricedItem.FromCustomPrice(
+                auctionLot.Id,
+                $"{auctionLot.Name} bid hold",
+                bid.Amount,
+                quantity: 1,
+                taxRate: 0m);
+
+            var order = Order.Create(userId, shippingInfo, paymentInfo, new[] { pricedItem });
+
+            await _ordersRepository.Create(order);
+
+            var paymentUrl = await _paymentGateway.CreatePaymentHoldUrlAsync(order, paymentInfo, bid.Amount);
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 

@@ -122,6 +122,41 @@ public class OrdersEndpointTests : IntegrationTestsBase
         Assert.Equal(ticketsCount, lotAfter.TicketsSold);
     }
 
+    [Fact]
+    public async Task CheckoutAuction_ReturnsRedirectAndPersistsOrderAndBid()
+    {
+        var lot = await SeedLotAsync(stockCount: 1, type: LotType.Auction);
+        var request = CreateCheckoutAuctionRequest(lot.Id, new Money(125m, Currency.USD));
+
+        var response = await _client.PostAsJsonAsync("/api/orders/checkout/auction", request);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.NotNull(response.Headers.Location);
+        Assert.True(response.Headers.TryGetValues("X-Order-Id", out var headerValues));
+        var orderId = Guid.Parse(headerValues!.Single());
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var order = await db.Orders.Include(o => o.Items).SingleAsync(o => o.Id == orderId);
+        Assert.Equal(TestAuthHandler.UserId, order.CustomerId);
+        Assert.Equal(OrderStatus.Created, order.Status);
+        Assert.Single(order.Items);
+
+        var orderItem = order.Items.Single();
+        Assert.Equal(lot.Id, orderItem.LotId);
+        Assert.Equal(1, orderItem.Quantity);
+        Assert.Equal(125m, orderItem.UnitPrice.Amount);
+
+        var bid = await db.BidHistory.SingleAsync(b => b.AuctionId == lot.Id && b.BidderId == TestAuthHandler.UserId);
+        Assert.Equal(125m, bid.Amount.Amount);
+        Assert.Equal(Currency.USD, bid.Amount.Currency);
+
+        var lotAfter = await db.Lots.SingleAsync(l => l.Id == lot.Id);
+        Assert.Equal(125m, lotAfter.Price.Amount);
+        Assert.Equal(Currency.USD, lotAfter.Price.Currency);
+    }
+
     private static CheckoutRequest CreateCheckoutRequest(string provider = "FakePay", decimal taxRate = 0.07m) =>
         new()
         {
@@ -152,6 +187,33 @@ public class OrdersEndpointTests : IntegrationTestsBase
         {
             LotId = lotId,
             TicketsCount = ticketsCount,
+            Shipping = new ShippingInfoDto
+            {
+                RecipientName = "Test Buyer",
+                Line1 = "123 Test Street",
+                City = "Testville",
+                State = "TS",
+                PostalCode = "12345",
+                Country = "US",
+                Phone = "+15555551234"
+            },
+            Payment = new PaymentInfoDto
+            {
+                Provider = provider,
+                TaxRate = taxRate,
+                ReturnUrl = "https://example.com/return"
+            }
+        };
+
+    private static CheckoutAuctionRequest CreateCheckoutAuctionRequest(
+        Guid lotId,
+        Money amount,
+        string provider = "FakePay",
+        decimal taxRate = 0.07m) =>
+        new()
+        {
+            LotId = lotId,
+            Amount = amount,
             Shipping = new ShippingInfoDto
             {
                 RecipientName = "Test Buyer",

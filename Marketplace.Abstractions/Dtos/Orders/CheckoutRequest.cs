@@ -12,6 +12,12 @@ namespace Marketplace
         public int TicketsCount { get; set; }
     }
 
+    public sealed class CheckoutAuctionRequest : CheckoutRequest
+    {
+        public Guid LotId { get; set; }
+        public Money Amount { get; set; } = null!;
+    }
+
     public class ShippingInfoDto
     {
         public string RecipientName { get; set; } = string.Empty;
