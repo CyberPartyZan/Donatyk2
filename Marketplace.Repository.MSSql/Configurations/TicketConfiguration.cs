@@ -11,7 +11,15 @@ namespace Marketplace.Repository.MSSql
 
             builder.HasKey(x => x.Id);
 
+            builder.Property(x => x.CreatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("GETUTCDATE()");
+
             builder.Property(x => x.IsWinning)
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            builder.Property(x => x.IsPayed)
                 .IsRequired()
                 .HasDefaultValue(false);
 

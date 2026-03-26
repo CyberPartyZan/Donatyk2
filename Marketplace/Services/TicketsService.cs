@@ -55,6 +55,14 @@ namespace Marketplace
             return winner;
         }
 
+        public Task MarkAsPayedByOrderId(Guid orderId)
+        {
+            if (orderId == Guid.Empty)
+                throw new ArgumentException("Order id must be provided.", nameof(orderId));
+
+            return _ticketsRepository.MarkAsPayedByOrderId(orderId);
+        }
+
         private Guid GetCurrentUserIdOrThrow()
         {
             var userIdValue =

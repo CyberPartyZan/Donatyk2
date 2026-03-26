@@ -10,6 +10,8 @@ namespace Marketplace.Repository.MSSql
         public Guid LotId { get; set; }
         public virtual LotEntity Lot { get; set; } = null!;
 
+        public DateTime CreatedAt { get; set; }
         public bool IsWinning { get; set; }
+        public bool IsPayed { get; set; }
     }
 }
