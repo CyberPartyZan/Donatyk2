@@ -29,6 +29,20 @@ namespace Marketplace.Server.Controllers
             return Redirect(response.PaymentUrl);
         }
 
+        [HttpPost("checkout/draw")]
+        public async Task<IActionResult> CheckoutDraw([FromBody] CheckoutDrawRequest request)
+        {
+            if (request is null)
+            {
+                return BadRequest();
+            }
+
+            var response = await _ordersService.CheckoutDrawAsync(request);
+            Response.Headers["X-Order-Id"] = response.OrderId.ToString();
+
+            return Redirect(response.PaymentUrl);
+        }
+
         [AllowAnonymous]
         [HttpPost("payment/webhook")]
         public async Task<IActionResult> PaymentWebhook([FromBody] PaymentWebhookRequest request)

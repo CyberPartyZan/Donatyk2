@@ -76,5 +76,54 @@ namespace Marketplace
                 taxMoney,
                 unitMoney);
         }
+
+        public static PricedItem FromCustomPrice(Guid lotId, string name, Money unitBasePrice, int quantity, decimal taxRate)
+        {
+            if (lotId == Guid.Empty)
+            {
+                throw new ArgumentException("Lot id must be provided.", nameof(lotId));
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Name must be provided.", nameof(name));
+            }
+
+            if (unitBasePrice is null)
+            {
+                throw new ArgumentNullException(nameof(unitBasePrice));
+            }
+
+            if (unitBasePrice.Amount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(unitBasePrice), "Unit base price cannot be negative.");
+            }
+
+            if (quantity <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
+            }
+
+            if (taxRate < 0 || taxRate > 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(taxRate), "Tax rate must be between 0 and 1.");
+            }
+
+            var taxAmount = unitBasePrice.Amount * taxRate;
+            var finalUnitAmount = unitBasePrice.Amount + taxAmount;
+
+            Money RoundMoney(decimal amount) => new(decimal.Round(amount, 2, MidpointRounding.AwayFromZero), unitBasePrice.Currency);
+
+            return new PricedItem(
+                lotId,
+                name,
+                unitBasePrice,
+                discountPercent: 0,
+                taxRate,
+                quantity,
+                discountPerUnit: RoundMoney(0),
+                taxPerUnit: RoundMoney(taxAmount),
+                unitPrice: RoundMoney(finalUnitAmount));
+        }
     }
 }

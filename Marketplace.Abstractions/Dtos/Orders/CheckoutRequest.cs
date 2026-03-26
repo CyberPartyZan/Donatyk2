@@ -6,6 +6,12 @@ namespace Marketplace
         public PaymentInfoDto Payment { get; set; } = new();
     }
 
+    public sealed class CheckoutDrawRequest : CheckoutRequest
+    {
+        public Guid LotId { get; set; }
+        public int TicketsCount { get; set; }
+    }
+
     public class ShippingInfoDto
     {
         public string RecipientName { get; set; } = string.Empty;

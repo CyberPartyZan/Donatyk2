@@ -88,9 +88,70 @@ public class OrdersEndpointTests : IntegrationTestsBase
         Assert.Equal("PAY-123456", order.PaymentReference);
     }
 
+    [Fact]
+    public async Task CheckoutDraw_ReturnsRedirectAndPersistsOrderAndTickets()
+    {
+        const int ticketsCount = 3;
+        var lot = await SeedLotAsync(stockCount: 1, type: LotType.Draw);
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/orders/checkout/draw",
+            CreateCheckoutDrawRequest(lot.Id, ticketsCount));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.NotNull(response.Headers.Location);
+        Assert.True(response.Headers.TryGetValues("X-Order-Id", out var headerValues));
+        var orderId = Guid.Parse(headerValues!.Single());
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var order = await db.Orders.Include(o => o.Items).SingleAsync(o => o.Id == orderId);
+        Assert.Equal(TestAuthHandler.UserId, order.CustomerId);
+        Assert.Equal(OrderStatus.Created, order.Status);
+        Assert.Single(order.Items);
+
+        var orderItem = order.Items.Single();
+        Assert.Equal(lot.Id, orderItem.LotId);
+        Assert.Equal(ticketsCount, orderItem.Quantity);
+
+        var ticketsCountInDb = await db.Tickets.CountAsync(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId);
+        Assert.Equal(ticketsCount, ticketsCountInDb);
+
+        var lotAfter = await db.Lots.SingleAsync(l => l.Id == lot.Id);
+        Assert.Equal(ticketsCount, lotAfter.TicketsSold);
+    }
+
     private static CheckoutRequest CreateCheckoutRequest(string provider = "FakePay", decimal taxRate = 0.07m) =>
         new()
         {
+            Shipping = new ShippingInfoDto
+            {
+                RecipientName = "Test Buyer",
+                Line1 = "123 Test Street",
+                City = "Testville",
+                State = "TS",
+                PostalCode = "12345",
+                Country = "US",
+                Phone = "+15555551234"
+            },
+            Payment = new PaymentInfoDto
+            {
+                Provider = provider,
+                TaxRate = taxRate,
+                ReturnUrl = "https://example.com/return"
+            }
+        };
+
+    private static CheckoutDrawRequest CreateCheckoutDrawRequest(
+        Guid lotId,
+        int ticketsCount,
+        string provider = "FakePay",
+        decimal taxRate = 0.07m) =>
+        new()
+        {
+            LotId = lotId,
+            TicketsCount = ticketsCount,
             Shipping = new ShippingInfoDto
             {
                 RecipientName = "Test Buyer",

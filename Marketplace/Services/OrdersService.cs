@@ -13,6 +13,7 @@ namespace Marketplace
         private readonly ICartRepository _cartRepository;
         private readonly ILotsRepository _lotsRepository;
         private readonly IOrdersRepository _ordersRepository;
+        private readonly ITicketsService _ticketsService;
         private readonly IPaymentGateway _paymentGateway;
         private readonly ILogger<OrdersService> _logger;
         private readonly IPublishEndpoint _publishEndpoint;
@@ -22,6 +23,7 @@ namespace Marketplace
             ICartRepository cartRepository,
             ILotsRepository lotsRepository,
             IOrdersRepository ordersRepository,
+            ITicketsService ticketsService,
             IPaymentGateway paymentGateway,
             IPublishEndpoint publishEndpoint,
             ILogger<OrdersService> logger)
@@ -30,6 +32,7 @@ namespace Marketplace
             _cartRepository = cartRepository;
             _lotsRepository = lotsRepository;
             _ordersRepository = ordersRepository;
+            _ticketsService = ticketsService;
             _paymentGateway = paymentGateway;
             _logger = logger;
             _publishEndpoint = publishEndpoint;
@@ -92,6 +95,58 @@ namespace Marketplace
             var paymentUrl = await _paymentGateway.CreatePaymentUrlAsync(order, paymentInfo);
 
             await _cartRepository.ClearCart(userId);
+
+            await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
+
+            return new CheckoutResponse
+            {
+                OrderId = order.Id,
+                PaymentUrl = paymentUrl
+            };
+        }
+
+        public async Task<CheckoutResponse> CheckoutDrawAsync(CheckoutDrawRequest request)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            if (request.LotId == Guid.Empty)
+            {
+                throw new ArgumentException("Lot id must be provided.", nameof(request.LotId));
+            }
+
+            if (request.TicketsCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(request.TicketsCount), "Tickets count must be greater than zero.");
+            }
+
+            var userId = GetCurrentUserIdOrThrow();
+
+            var lot = await _lotsRepository.GetLotById(request.LotId)
+                ?? throw new KeyNotFoundException($"Lot with id '{request.LotId}' not found.");
+
+            var drawLot = lot as DrawLot
+                ?? throw new InvalidOperationException($"Lot '{lot.Name}' is not a draw lot.");
+
+            var shippingInfo = ToShippingInfo(request.Shipping);
+            var paymentInfo = ToPaymentInfo(request.Payment);
+
+            await _ticketsService.Create(drawLot.Id, request.TicketsCount);
+
+            var pricedItem = PricedItem.FromCustomPrice(
+                drawLot.Id,
+                $"{drawLot.Name} ticket",
+                drawLot.TicketPrice,
+                request.TicketsCount,
+                paymentInfo.TaxRate);
+
+            var order = Order.Create(userId, shippingInfo, paymentInfo, new[] { pricedItem });
+
+            await _ordersRepository.Create(order);
+
+            var paymentUrl = await _paymentGateway.CreatePaymentUrlAsync(order, paymentInfo);
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 

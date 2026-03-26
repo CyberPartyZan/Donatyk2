@@ -379,5 +379,109 @@ namespace Marketplace.Unit.Tests.Services
             new(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, userId ?? Guid.NewGuid());
 
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
+
+        [Fact]
+        public async Task CheckoutDrawAsync_WithNullRequest_ThrowsArgumentNullException()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var service = fixture.Create<OrdersService>();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.CheckoutDrawAsync(null!));
+        }
+
+        [Fact]
+        public async Task CheckoutDrawAsync_WhenLotMissing_ThrowsKeyNotFoundException()
+        {
+            var fixture = CreateFixture();
+            var userId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipal(userId));
+
+            var lotId = fixture.Create<Guid>();
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(lotId))
+                .ReturnsAsync((Lot?)null);
+
+            var service = fixture.Create<OrdersService>();
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.CheckoutDrawAsync(CreateCheckoutDrawRequest(lotId, 2)));
+        }
+
+        [Fact]
+        public async Task CheckoutDrawAsync_WithValidRequest_CreatesTicketsAndReturnsPaymentResponse()
+        {
+            var fixture = CreateFixture();
+            var userId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipal(userId));
+
+            var drawLot = CreateDrawLot(ticketPriceAmount: 5m);
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(drawLot.Id))
+                .ReturnsAsync(drawLot);
+
+            var ticketsService = fixture.Freeze<Mock<ITicketsService>>();
+            ticketsService
+                .Setup(s => s.Create(drawLot.Id, 3))
+                .ReturnsAsync(new[]
+                {
+                    Ticket.Create(userId, drawLot.Id),
+                    Ticket.Create(userId, drawLot.Id),
+                    Ticket.Create(userId, drawLot.Id)
+                });
+
+            Order? storedOrder = null;
+            var ordersRepository = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepository.Setup(r => r.Create(It.IsAny<Order>()))
+                .Callback<Order>(o => storedOrder = o)
+                .ReturnsAsync(() => storedOrder!.Id);
+
+            const string paymentUrl = "https://pay.test/draw-checkout";
+            fixture.Freeze<Mock<IPaymentGateway>>()
+                .Setup(pg => pg.CreatePaymentUrlAsync(
+                    It.IsAny<Order>(),
+                    It.IsAny<PaymentInfo>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(paymentUrl);
+
+            var cartRepository = fixture.Freeze<Mock<ICartRepository>>();
+            var service = fixture.Create<OrdersService>();
+
+            var response = await service.CheckoutDrawAsync(CreateCheckoutDrawRequest(drawLot.Id, 3));
+
+            Assert.NotNull(storedOrder);
+            Assert.Equal(storedOrder!.Id, response.OrderId);
+            Assert.Equal(paymentUrl, response.PaymentUrl);
+            Assert.Single(storedOrder.Items);
+            Assert.Equal(drawLot.Id, storedOrder.Items.Single().LotId);
+            Assert.Equal(3, storedOrder.Items.Single().Quantity);
+
+            ticketsService.Verify(s => s.Create(drawLot.Id, 3), Times.Once);
+            ordersRepository.Verify(r => r.Create(It.IsAny<Order>()), Times.Once);
+            cartRepository.Verify(r => r.ClearCart(It.IsAny<Guid>()), Times.Never);
+        }
+
+        private static CheckoutDrawRequest CreateCheckoutDrawRequest(Guid lotId, int ticketsCount) =>
+            new()
+            {
+                LotId = lotId,
+                TicketsCount = ticketsCount,
+                Shipping = new ShippingInfoDto
+                {
+                    RecipientName = "Alice",
+                    Line1 = "123 Main",
+                    City = "Kyiv",
+                    State = "Kyivska",
+                    PostalCode = "01001",
+                    Country = "Ukraine",
+                    Phone = "+380441234567"
+                },
+                Payment = new PaymentInfoDto
+                {
+                    Provider = "Stripe",
+                    TaxRate = 0.2m,
+                    ReturnUrl = "https://example.com/return"
+                }
+            };
     }
 }
