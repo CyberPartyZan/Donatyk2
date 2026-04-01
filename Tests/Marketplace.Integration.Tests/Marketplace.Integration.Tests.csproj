@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Marketplace.Repository.MSSql\Marketplace.Repository.MSSql.csproj" />
-    <ProjectReference Include="..\Marketplace.Server\Marketplace.Server.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Marketplace.Repository.MSSql\Marketplace.Repository.MSSql.csproj" />
+    <ProjectReference Include="..\..\WebApi\Marketplace.Server\Marketplace.Server.csproj" />
   </ItemGroup>
 
 </Project>

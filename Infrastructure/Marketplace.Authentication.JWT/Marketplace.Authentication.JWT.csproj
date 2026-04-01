@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Marketplace.Authentication.Interfaces\Marketplace.Authentication.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Application\Marketplace.Authentication.Interfaces\Marketplace.Authentication.Interfaces.csproj" />
     <ProjectReference Include="..\Marketplace.Repository.MSSql\Marketplace.Repository.MSSql.csproj" />
   </ItemGroup>
 

@@ -18,10 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
-    <ProjectReference Include="..\Marketplace.Authentication.Interfaces\Marketplace.Authentication.Interfaces.csproj" />
-    <ProjectReference Include="..\Marketplace.Notification.Interfaces\Marketplace.Notification.Interfaces.csproj" />
-    <ProjectReference Include="..\Marketplace.Repository.Interfaces\Marketplace.Repository.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Application\Marketplace.Authentication.Interfaces\Marketplace.Authentication.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Application\Marketplace.Notification.Interfaces\Marketplace.Notification.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Application\Marketplace.Repository.Interfaces\Marketplace.Repository.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Domain\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

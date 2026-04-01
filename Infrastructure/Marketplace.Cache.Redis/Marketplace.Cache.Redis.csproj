@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Marketplace.Cache.Interfaces\Marketplace.Cache.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Application\Marketplace.Cache.Interfaces\Marketplace.Cache.Interfaces.csproj" />
   </ItemGroup>
 
 </Project>

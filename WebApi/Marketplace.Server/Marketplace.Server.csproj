@@ -27,14 +27,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Marketplace.Cache.Redis\Marketplace.Cache.Redis.csproj" />
+    <ProjectReference Include="..\..\Application\Marketplace\Marketplace.csproj" />
+    <ProjectReference Include="..\..\Domain\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Marketplace.Authentication.JWT\Marketplace.Authentication.JWT.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Marketplace.Cache.Redis\Marketplace.Cache.Redis.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Marketplace.Notification\Marketplace.Notification.csproj" />
     <ProjectReference Include="..\marketplace.client\marketplace.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
-    <ProjectReference Include="..\Marketplace.Authentication.JWT\Marketplace.Authentication.JWT.csproj" />
-    <ProjectReference Include="..\Marketplace.Notification\Marketplace.Notification.csproj" />
-    <ProjectReference Include="..\Marketplace\Marketplace.csproj" />
   </ItemGroup>
 
 </Project>
