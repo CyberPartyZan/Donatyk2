@@ -234,7 +234,7 @@ namespace Marketplace.Unit.Tests.Services
             var order = Order.Create(
                 Guid.NewGuid(),
                 new ShippingInfo("John", "Doe", "john@example.com", "+12345678901", "123 St", "City", "12345", "US"),
-                new PaymentInfo(returnUrl: null),
+                new PaymentInfo("TestProvider", 0m, returnUrl: null),
                 new[] { item });
             order.MarkPaid();
             return order;
