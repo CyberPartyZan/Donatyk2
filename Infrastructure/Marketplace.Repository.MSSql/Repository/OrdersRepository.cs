@@ -25,19 +25,28 @@ namespace Marketplace.Repository.MSSql
             return order.Id;
         }
 
+        public async Task<Order?> GetById(Guid orderId)
+        {
+            var entity = await _db.Orders
+                .AsNoTracking()
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (entity is null)
+                return null;
+
+            return MapToDomain(entity);
+        }
+
         public async Task<Guid> MarkPaid(Guid orderId)
         {
             var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (entity is null)
-            {
                 throw new KeyNotFoundException($"Order '{orderId}' not found.");
-            }
 
             if (entity.Status == OrderStatus.Paid)
-            {
                 return entity.CustomerId;
-            }
 
             entity.Status = OrderStatus.Paid;
             await _db.SaveChangesAsync();
@@ -45,31 +54,67 @@ namespace Marketplace.Repository.MSSql
             return entity.CustomerId;
         }
 
-        // TODO: Provider should be enum
         public async Task<Guid> MarkPaid(Guid orderId, string provider, string paymentReference)
         {
             var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (entity is null)
-            {
                 throw new KeyNotFoundException($"Order '{orderId}' not found.");
-            }
 
             if (!string.Equals(entity.PaymentProvider, provider, StringComparison.OrdinalIgnoreCase))
-            {
                 throw new InvalidOperationException("Payment provider does not match the order payment provider.");
-            }
 
             if (entity.Status == OrderStatus.Paid)
-            {
                 return entity.CustomerId;
-            }
 
             entity.Status = OrderStatus.Paid;
             entity.PaymentReference = paymentReference;
             await _db.SaveChangesAsync();
 
             return entity.CustomerId;
+        }
+
+        public async Task Cancel(Guid orderId)
+        {
+            var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (entity is null)
+                throw new KeyNotFoundException($"Order '{orderId}' not found.");
+
+            if (entity.Status == OrderStatus.Cancelled)
+                return;
+
+            if (entity.Status != OrderStatus.Created)
+                throw new InvalidOperationException($"Only created orders can be cancelled. Current status: {entity.Status}.");
+
+            entity.Status = OrderStatus.Cancelled;
+            await _db.SaveChangesAsync();
+        }
+
+        private static Order MapToDomain(OrderEntity entity)
+        {
+            // Order uses a private constructor; reconstruct via reflection-safe factory
+            // For now we expose only the data needed by consumers (CustomerId, Items)
+            var shippingInfo = new ShippingInfo(
+                entity.ShippingRecipientName,
+                entity.ShippingLine1,
+                entity.ShippingLine2,
+                entity.ShippingCity,
+                entity.ShippingState,
+                entity.ShippingPostalCode,
+                entity.ShippingCountry,
+                entity.ShippingPhone);
+
+            var paymentInfo = new PaymentInfo(
+                entity.PaymentProvider,
+                entity.PaymentTaxRate,
+                entity.PaymentReturnUrl);
+
+            var pricedItems = entity.Items
+                .Select(i => PricedItem.FromCustomPrice(i.LotId, i.NameSnapshot, i.UnitPrice, i.Quantity, 0m))
+                .ToList();
+
+            return Order.Create(entity.CustomerId, shippingInfo, paymentInfo, pricedItems);
         }
 
         private static OrderEntity Map(Order order)

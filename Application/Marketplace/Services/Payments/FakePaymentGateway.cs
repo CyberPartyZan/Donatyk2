@@ -28,7 +28,7 @@ namespace Marketplace
             return Task.FromResult(url);
         }
 
-        public Task<string> CreatePaymentHoldUrlAsync(Order order, PaymentInfo paymentInfo, CancellationToken cancellationToken = default)
+        public Task<string> CreatePaymentAuctionUrlAsync(Order order, PaymentInfo paymentInfo, CancellationToken cancellationToken = default)
         {
             var url = $"{_baseUrl.TrimEnd('/')}/hold?orderId={order.Id}&amount={order.Total.Amount}&currency={order.Total.Currency}";
 
@@ -38,6 +38,20 @@ namespace Marketplace
             }
 
             _logger.LogInformation("Generated payment hold url {Url} for order {OrderId}", url, order.Id);
+
+            return Task.FromResult(url);
+        }
+
+        public Task<string> CreatePaymentDrawUrlAsync(Order order, PaymentInfo paymentInfo, CancellationToken cancellationToken = default)
+        {
+            var url = $"{_baseUrl.TrimEnd('/')}/draw-checkout?orderId={order.Id}&amount={order.Total.Amount}&currency={order.Total.Currency}";
+
+            if (!string.IsNullOrWhiteSpace(paymentInfo.ReturnUrl))
+            {
+                url += $"&returnUrl={Uri.EscapeDataString(paymentInfo.ReturnUrl)}";
+            }
+
+            _logger.LogInformation("Generated draw payment url {Url} for order {OrderId}", url, order.Id);
 
             return Task.FromResult(url);
         }

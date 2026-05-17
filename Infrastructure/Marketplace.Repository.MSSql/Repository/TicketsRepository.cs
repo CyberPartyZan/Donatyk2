@@ -118,5 +118,18 @@ namespace Marketplace.Repository.MSSql
 
             await _db.SaveChangesAsync();
         }
+
+        public async Task DeleteTickets(IReadOnlyCollection<Guid> ticketIds)
+        {
+            ArgumentNullException.ThrowIfNull(ticketIds);
+            if (ticketIds.Count == 0) return;
+
+            var entities = await _db.Tickets
+                .Where(t => ticketIds.Contains(t.Id))
+                .ToListAsync();
+
+            _db.Tickets.RemoveRange(entities);
+            await _db.SaveChangesAsync();
+        }
     }
 }

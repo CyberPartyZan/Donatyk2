@@ -12,5 +12,6 @@ namespace Marketplace.Notification
             string email,
             string confirmationToken,
             string? confirmationUrl = null);
+        Task NotifyDrawWinnerAsync(Guid userId, Guid lotId, Guid winningTicketId);
     }
 }

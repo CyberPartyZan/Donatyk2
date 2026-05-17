@@ -1,6 +1,7 @@
 using Marketplace.Abstractions;
 using Marketplace.Repository;
 using MassTransit;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
@@ -18,6 +19,7 @@ namespace Marketplace
         private readonly IPaymentGateway _paymentGateway;
         private readonly ILogger<OrdersService> _logger;
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly string _apiBaseUrl;
 
         public OrdersService(
             ClaimsPrincipal user,
@@ -28,6 +30,7 @@ namespace Marketplace
             IBidsService bidsService,
             IPaymentGateway paymentGateway,
             IPublishEndpoint publishEndpoint,
+            IConfiguration configuration,
             ILogger<OrdersService> logger)
         {
             _user = user;
@@ -39,14 +42,13 @@ namespace Marketplace
             _paymentGateway = paymentGateway;
             _logger = logger;
             _publishEndpoint = publishEndpoint;
+            _apiBaseUrl = configuration.GetValue<string>("Api:BaseUrl") ?? "https://api.local";
         }
 
         public async Task<CheckoutResponse> CheckoutAsync(CheckoutRequest request)
         {
             if (request is null)
-            {
                 throw new ArgumentNullException(nameof(request));
-            }
 
             var userId = GetCurrentUserIdOrThrow();
 
@@ -54,9 +56,7 @@ namespace Marketplace
             var cartItems = cart.Items.ToList();
 
             if (cartItems.Count == 0)
-            {
                 throw new InvalidOperationException("Cart is empty.");
-            }
 
             var shippingInfo = ToShippingInfo(request.Shipping);
             var paymentInfo = ToPaymentInfo(request.Payment);
@@ -68,9 +68,7 @@ namespace Marketplace
                     ?? throw new KeyNotFoundException($"Lot with id '{cartItem.Lot.Id}' not found.");
 
                 if (!lot.Price.Equals(cartItem.Lot.Price))
-                {
                     throw new InvalidOperationException($"Price for lot '{lot.Name}' has changed. Please refresh your cart.");
-                }
 
                 switch (lot)
                 {
@@ -101,29 +99,19 @@ namespace Marketplace
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 
-            return new CheckoutResponse
-            {
-                OrderId = order.Id,
-                PaymentUrl = paymentUrl
-            };
+            return new CheckoutResponse { OrderId = order.Id, PaymentUrl = paymentUrl };
         }
 
         public async Task<CheckoutResponse> CheckoutDrawAsync(CheckoutDrawRequest request)
         {
             if (request is null)
-            {
                 throw new ArgumentNullException(nameof(request));
-            }
 
             if (request.LotId == Guid.Empty)
-            {
                 throw new ArgumentException("Lot id must be provided.", nameof(request.LotId));
-            }
 
             if (request.TicketsCount <= 0)
-            {
                 throw new ArgumentOutOfRangeException(nameof(request.TicketsCount), "Tickets count must be greater than zero.");
-            }
 
             var userId = GetCurrentUserIdOrThrow();
 
@@ -134,7 +122,9 @@ namespace Marketplace
                 ?? throw new InvalidOperationException($"Lot '{lot.Name}' is not a draw lot.");
 
             var shippingInfo = ToShippingInfo(request.Shipping);
-            var paymentInfo = ToPaymentInfo(request.Payment);
+
+            var drawWebhookReturnUrl = $"{_apiBaseUrl.TrimEnd('/')}/api/orders/payment/draw/webhook?lotId={drawLot.Id}";
+            var paymentInfo = new PaymentInfo(request.Payment.Provider, request.Payment.TaxRate, drawWebhookReturnUrl);
 
             await _ticketsService.Create(drawLot.Id, request.TicketsCount);
 
@@ -149,34 +139,23 @@ namespace Marketplace
 
             await _ordersRepository.Create(order);
 
-            // TODO: Remove tickets from the lot if payment is not completed within a certain time frame
-            var paymentUrl = await _paymentGateway.CreatePaymentUrlAsync(order, paymentInfo);
+            var paymentUrl = await _paymentGateway.CreatePaymentDrawUrlAsync(order, paymentInfo);
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 
-            return new CheckoutResponse
-            {
-                OrderId = order.Id,
-                PaymentUrl = paymentUrl
-            };
+            return new CheckoutResponse { OrderId = order.Id, PaymentUrl = paymentUrl };
         }
 
         public async Task<CheckoutResponse> CheckoutAuctionAsync(CheckoutAuctionRequest request)
         {
             if (request is null)
-            {
                 throw new ArgumentNullException(nameof(request));
-            }
 
             if (request.LotId == Guid.Empty)
-            {
                 throw new ArgumentException("Lot id must be provided.", nameof(request.LotId));
-            }
 
             if (request.Amount is null)
-            {
                 throw new ArgumentNullException(nameof(request.Amount));
-            }
 
             var userId = GetCurrentUserIdOrThrow();
 
@@ -202,23 +181,17 @@ namespace Marketplace
 
             await _ordersRepository.Create(order);
 
-            var paymentUrl = await _paymentGateway.CreatePaymentHoldUrlAsync(order, paymentInfo);
+            var paymentUrl = await _paymentGateway.CreatePaymentAuctionUrlAsync(order, paymentInfo);
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 
-            return new CheckoutResponse
-            {
-                OrderId = order.Id,
-                PaymentUrl = paymentUrl
-            };
+            return new CheckoutResponse { OrderId = order.Id, PaymentUrl = paymentUrl };
         }
 
         public async Task HandlePaymentWebhookAsync(PaymentWebhookRequest request)
         {
             if (request is null)
-            {
                 throw new ArgumentNullException(nameof(request));
-            }
 
             if (!request.IsSuccess)
             {
@@ -232,12 +205,65 @@ namespace Marketplace
             await _publishEndpoint.Publish(new PaymentProcessed(request.OrderId, true));
         }
 
+        public async Task HandleDrawPaymentWebhookAsync(DrawPaymentWebhookRequest request)
+        {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
+
+            if (!request.IsSuccess)
+            {
+                var order = await _ordersRepository.GetById(request.OrderId)
+                    ?? throw new KeyNotFoundException($"Order '{request.OrderId}' not found.");
+
+                foreach (var item in order.Items)
+                {
+                    await _ticketsService.CancelTicketsForUserOnLot(item.LotId, order.CustomerId, item.Quantity);
+                }
+
+                await _ordersRepository.Cancel(request.OrderId);
+
+                _logger.LogWarning(
+                    "Draw payment failed for order {OrderId}. Tickets and order cancelled.",
+                    request.OrderId);
+                return;
+            }
+
+            await _ordersRepository.MarkPaid(request.OrderId);
+            await _ticketsService.MarkAsPayedByOrderId(request.OrderId);
+
+            _logger.LogInformation(
+                "Draw payment succeeded for order {OrderId}. Checking if lot {LotId} is ready to draw.",
+                request.OrderId, request.LotId);
+
+            var lot = await _lotsRepository.GetLotById(request.LotId);
+            if (lot is DrawLot drawLot)
+            {
+                var tickets = await _ticketsService.GetAll(drawLot.Id);
+                drawLot.LoadTickets(tickets);
+
+                if (drawLot.ReadyToDraw)
+                {
+                    await _publishEndpoint.Publish(new DrawLaunched(drawLot.Id));
+
+                    _logger.LogInformation(
+                        "Draw lot {LotId} is ready to draw. DrawLaunched event published.",
+                        drawLot.Id);
+                }
+            }
+        }
+
+        public async Task<Guid> MarkPaid(Guid orderId)
+        {
+            if (orderId == Guid.Empty)
+                throw new ArgumentException("Order id must be provided.", nameof(orderId));
+
+            return await _ordersRepository.MarkPaid(orderId);
+        }
+
         private static ShippingInfo ToShippingInfo(ShippingInfoDto dto)
         {
             if (dto is null)
-            {
                 throw new ArgumentNullException(nameof(dto));
-            }
 
             return new ShippingInfo(
                 dto.RecipientName,
@@ -253,9 +279,7 @@ namespace Marketplace
         private static PaymentInfo ToPaymentInfo(PaymentInfoDto dto)
         {
             if (dto is null)
-            {
                 throw new ArgumentNullException(nameof(dto));
-            }
 
             return new PaymentInfo(dto.Provider, dto.TaxRate, dto.ReturnUrl);
         }
@@ -264,21 +288,9 @@ namespace Marketplace
         {
             var sub = _user.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (string.IsNullOrWhiteSpace(sub))
-            {
                 throw new InvalidOperationException("User id is not available in the current principal.");
-            }
 
             return Guid.Parse(sub);
-        }
-
-        public async Task<Guid> MarkPaid(Guid orderId)
-        {
-            if (orderId == Guid.Empty)
-            {
-                throw new ArgumentException("Order id must be provided.", nameof(orderId));
-            }
-
-            return await _ordersRepository.MarkPaid(orderId);
         }
     }
 }

@@ -63,6 +63,30 @@ namespace Marketplace
             return _ticketsRepository.MarkAsPayedByOrderId(orderId);
         }
 
+        public async Task CancelTicketsForUserOnLot(Guid lotId, Guid userId, int count)
+        {
+            if (lotId == Guid.Empty)
+                throw new ArgumentException("Lot id must be provided.", nameof(lotId));
+
+            if (userId == Guid.Empty)
+                throw new ArgumentException("User id must be provided.", nameof(userId));
+
+            if (count <= 0)
+                throw new ArgumentOutOfRangeException(nameof(count), "Count must be greater than zero.");
+
+            var lot = await _lotsRepository.GetLotById(lotId);
+            var drawLot = lot as DrawLot
+                ?? throw new InvalidOperationException("Tickets can only be cancelled for draw lots.");
+
+            var tickets = await _ticketsRepository.GetAll(lotId);
+            drawLot.LoadTickets(tickets);
+
+            var cancelledIds = drawLot.CancelTickets(userId, count);
+
+            await _ticketsRepository.DeleteTickets(cancelledIds);
+            await _lotsRepository.UpdateLot(lotId, drawLot);
+        }
+
         private Guid GetCurrentUserIdOrThrow()
         {
             var userIdValue =

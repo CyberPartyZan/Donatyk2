@@ -69,5 +69,27 @@ namespace Marketplace.Server.Controllers
             await _ordersService.HandlePaymentWebhookAsync(request);
             return Ok();
         }
+
+        [AllowAnonymous]
+        [HttpPost("payment/draw/webhook")]
+        public async Task<IActionResult> DrawPaymentWebhook(
+            [FromBody] DrawPaymentWebhookRequest request,
+            [FromQuery] Guid lotId)
+        {
+            if (request is null)
+            {
+                return BadRequest();
+            }
+
+            if (lotId == Guid.Empty)
+            {
+                return BadRequest("Lot id is required.");
+            }
+
+            request.LotId = lotId;
+
+            await _ordersService.HandleDrawPaymentWebhookAsync(request);
+            return Ok();
+        }
     }
 }

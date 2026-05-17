@@ -6,5 +6,6 @@ namespace Marketplace
         Task<IReadOnlyCollection<Ticket>> Create(Guid lotId, int count);
         Task<Ticket> FindWinner(Guid lotId);
         Task MarkAsPayedByOrderId(Guid orderId);
+        Task CancelTicketsForUserOnLot(Guid lotId, Guid userId, int count);
     }
 }

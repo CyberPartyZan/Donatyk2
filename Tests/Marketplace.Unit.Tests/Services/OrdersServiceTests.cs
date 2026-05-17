@@ -548,7 +548,7 @@ namespace Marketplace.Unit.Tests.Services
 
             const string holdUrl = "https://pay.test/auction-hold";
             fixture.Freeze<Mock<IPaymentGateway>>()
-                .Setup(pg => pg.CreatePaymentHoldUrlAsync(
+                .Setup(pg => pg.CreatePaymentAuctionUrlAsync(
                     It.IsAny<Order>(),
                     It.IsAny<PaymentInfo>(),
                     It.IsAny<CancellationToken>()))

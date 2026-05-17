@@ -84,6 +84,47 @@
             return produced.AsReadOnly();
         }
 
+        /// <summary>
+        /// Cancels unpaid tickets for the given user, removing them from the lot and decrementing TicketsSold.
+        /// Tickets must be loaded via <see cref="LoadTickets"/> before calling this method.
+        /// </summary>
+        /// <returns>The IDs of the tickets that were cancelled and must be deleted by the repository.</returns>
+        public IReadOnlyCollection<Guid> CancelTickets(Guid userId, int count)
+        {
+            if (userId == Guid.Empty)
+                throw new ArgumentException("UserId cannot be empty.", nameof(userId));
+
+            if (count <= 0)
+                throw new ArgumentOutOfRangeException(nameof(count), "Count must be greater than zero.");
+
+            if (Tickets is null)
+                throw new InvalidOperationException("Tickets must be loaded before cancelling.");
+
+            if (IsDrawn)
+                throw new InvalidOperationException("Cannot cancel tickets after the draw has completed.");
+
+            var toCancel = Tickets
+                .Where(t => t.UserId == userId && !t.IsPayed)
+                .OrderByDescending(t => t.CreatedAt)
+                .Take(count)
+                .ToList();
+
+            if (toCancel.Count < count)
+                throw new InvalidOperationException(
+                    $"Not enough unpaid tickets to cancel for user '{userId}'. Requested: {count}, available: {toCancel.Count}.");
+
+            var cancelledIds = toCancel.Select(t => t.Id).ToHashSet();
+
+            Tickets = Tickets
+                .Where(t => !cancelledIds.Contains(t.Id))
+                .ToList()
+                .AsReadOnly();
+
+            TicketsSold -= toCancel.Count;
+
+            return cancelledIds.ToList().AsReadOnly();
+        }
+
         public Ticket FindWinner()
         {
             if (Tickets is null)

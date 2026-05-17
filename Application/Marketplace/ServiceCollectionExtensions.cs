@@ -26,6 +26,7 @@ namespace Marketplace
                 x.AddConsumer<ShipmentServicePaymentProcessedConsumer>();
                 x.AddConsumer<MarketplacePaymentProcessedConsumer>();
                 x.AddConsumer<ShipmentCreatedConsumer>();
+                x.AddConsumer<DrawLaunchedConsumer>();
 
                 //x.AddEntityFrameworkOutbox<AppDbContext>();
 

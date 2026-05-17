@@ -5,6 +5,7 @@
         Created,
         Paid,
         Shipped,
-        Completed
+        Completed,
+        Cancelled
     }
 }

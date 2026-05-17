@@ -80,5 +80,17 @@ namespace Marketplace.Notification
 
             return Task.CompletedTask;
         }
+
+        public Task NotifyDrawWinnerAsync(Guid userId, Guid lotId, Guid winningTicketId)
+        {
+            // TODO: Implement SendGrid or SMTP email sending here.
+            _logger.LogInformation(
+                "User {UserId} has won the draw for lot {LotId} with ticket {WinningTicketId}.",
+                userId,
+                lotId,
+                winningTicketId);
+
+            return Task.CompletedTask;
+        }
     }
 }
