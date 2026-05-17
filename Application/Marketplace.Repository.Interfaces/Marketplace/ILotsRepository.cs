@@ -8,5 +8,6 @@
         Task UpdateLot(Guid id, Lot lot);
         Task ApproveLot(Guid id);
         Task DeclineLot(Guid id, string declineReason);
+        Task<IEnumerable<AuctionLot>> GetEndedAuctionLots(CancellationToken cancellationToken = default);
     }
 }

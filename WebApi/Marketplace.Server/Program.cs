@@ -14,6 +14,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Hangfire;
 
 namespace Marketplace.Server
 {
@@ -38,7 +39,6 @@ namespace Marketplace.Server
                 .AddOptions<AdminUserOptions>()
                 .Bind(builder.Configuration.GetSection("AdminUser"));
 
-            // read allowed origins from configuration (Spa:AllowedOrigins)
             var allowedOrigins = builder.Configuration
                 .GetSection("Spa:AllowedOrigins")
                 .Get<string[]>() ?? Array.Empty<string>();
@@ -47,7 +47,6 @@ namespace Marketplace.Server
             {
                 options.AddPolicy("spa", policy =>
                 {
-                    // if configured as ["*"] then allow any origin (cannot use AllowCredentials with AllowAnyOrigin)
                     if (allowedOrigins.Length == 1 && allowedOrigins[0] == "*")
                     {
                         policy.AllowAnyOrigin()
@@ -63,7 +62,6 @@ namespace Marketplace.Server
                     }
                     else
                     {
-                        // fallback: conservative default (no origins) - change as appropriate
                         policy.DisallowCredentials()
                               .AllowAnyHeader()
                               .AllowAnyMethod();
@@ -76,6 +74,11 @@ namespace Marketplace.Server
             builder.Services.AddNotificationServices();
             builder.Services.AddCacheServices(builder.Configuration);
             builder.Services.AddMarketplaceServices();
+
+            // Hangfire — using in-memory storage (swap to SQL Server in production via Hangfire.SqlServer)
+            builder.Services.AddHangfire(config =>
+                config.UseInMemoryStorage());
+            builder.Services.AddHangfireServer();
 
             builder.Logging.AddOpenTelemetry(options =>
             {
@@ -99,11 +102,9 @@ namespace Marketplace.Server
                     .AddOtlpExporter(exporter => exporter.Endpoint = otlpEndpointUri));
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // TODO: Use options pattern to bind JWT settings
             builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>>(sp =>
                 new ConfigureNamedOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
@@ -127,9 +128,7 @@ namespace Marketplace.Server
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer();
 
-            // Ensure HttpContext is available to services that depend on ClaimsPrincipal
             builder.Services.AddHttpContextAccessor();
-            // Provide ClaimsPrincipal via DI (scoped) so services can accept it in constructors
             builder.Services.AddScoped<ClaimsPrincipal>(sp =>
                 sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.User ?? new ClaimsPrincipal());
 
@@ -153,6 +152,14 @@ namespace Marketplace.Server
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            // Register recurring Hangfire job — every 5 minutes
+            RecurringJob.AddOrUpdate<CheckAuctionEndedJob>(
+                "check-auction-ended",
+                job => job.ExecuteAsync(CancellationToken.None),
+                "*/5 * * * *");
+
+            app.UseHangfireDashboard("/hangfire");
 
             app.MapControllers();
 

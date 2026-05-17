@@ -38,6 +38,23 @@ namespace Marketplace.Repository.MSSql
             return MapToDomain(entity);
         }
 
+        /// <summary>
+        /// Returns the most recent Paid order whose items reference the given lot.
+        /// This is the winning bid hold order that needs to be captured.
+        /// </summary>
+        public async Task<Order?> GetPaidOrderByLotId(Guid lotId, CancellationToken cancellationToken = default)
+        {
+            var entity = await _db.Orders
+                .AsNoTracking()
+                .Include(o => o.Items)
+                .Where(o => o.Status == OrderStatus.Paid
+                            && o.Items.Any(i => i.LotId == lotId))
+                .OrderByDescending(o => o.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return entity is null ? null : MapToDomain(entity);
+        }
+
         public async Task<Guid> MarkPaid(Guid orderId)
         {
             var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
@@ -93,8 +110,6 @@ namespace Marketplace.Repository.MSSql
 
         private static Order MapToDomain(OrderEntity entity)
         {
-            // Order uses a private constructor; reconstruct via reflection-safe factory
-            // For now we expose only the data needed by consumers (CustomerId, Items)
             var shippingInfo = new ShippingInfo(
                 entity.ShippingRecipientName,
                 entity.ShippingLine1,

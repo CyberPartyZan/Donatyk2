@@ -9,15 +9,21 @@ namespace Marketplace
         private readonly ClaimsPrincipal _user;
         private readonly ILotsRepository _lotsRepository;
         private readonly IBidsRepository _bidsRepository;
+        private readonly IOrdersRepository _ordersRepository;
+        private readonly IPaymentGateway _paymentGateway;
 
         public BidsService(
             ClaimsPrincipal user,
             ILotsRepository lotsRepository,
-            IBidsRepository bidsRepository)
+            IBidsRepository bidsRepository,
+            IOrdersRepository ordersRepository,
+            IPaymentGateway paymentGateway)
         {
             _user = user;
             _lotsRepository = lotsRepository;
             _bidsRepository = bidsRepository;
+            _ordersRepository = ordersRepository;
+            _paymentGateway = paymentGateway;
         }
 
         public Task<IReadOnlyCollection<Bid>> LoadBidHistory(Guid lotId)
@@ -38,6 +44,13 @@ namespace Marketplace
 
             var bidderId = GetCurrentUserIdOrThrow();
             var bid = auction.Bid(bidderId, amount);
+
+            // Release the hold for the previously outbid bidder (if any paid hold order exists)
+            var previousHoldOrder = await _ordersRepository.GetPaidOrderByLotId(lotId);
+            if (previousHoldOrder is not null)
+            {
+                await _paymentGateway.ReleaseHoldAsync(previousHoldOrder);
+            }
 
             await _bidsRepository.PlaceBid(bid);
             await _lotsRepository.UpdateLot(lotId, auction);

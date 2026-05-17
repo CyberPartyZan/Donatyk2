@@ -19,6 +19,8 @@ namespace Marketplace
 
             services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 
+            services.AddScoped<CheckAuctionEndedJob>();
+
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<OrderCreatedConsumer>();
@@ -27,6 +29,7 @@ namespace Marketplace
                 x.AddConsumer<MarketplacePaymentProcessedConsumer>();
                 x.AddConsumer<ShipmentCreatedConsumer>();
                 x.AddConsumer<DrawLaunchedConsumer>();
+                x.AddConsumer<AuctionEndedConsumer>();
 
                 //x.AddEntityFrameworkOutbox<AppDbContext>();
 

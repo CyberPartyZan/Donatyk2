@@ -101,6 +101,27 @@ namespace Marketplace.Repository.MSSql
             return entity is null ? null : CreateFromEntity(entity);
         }
 
+        public async Task<IEnumerable<AuctionLot>> GetEndedAuctionLots(CancellationToken cancellationToken = default)
+        {
+            var now = DateTime.UtcNow;
+
+            var entities = await _db.Lots
+                .Include(l => l.Seller)
+                .Include(l => l.Category)
+                .Include(l => l.BidHistory)
+                .Where(l => l.Type == LotType.Auction
+                            && !l.IsDeleted
+                            && l.IsActive
+                            && l.EndOfAuction != null
+                            && l.EndOfAuction <= now
+                            && l.StockCount > 0)       // not yet sold/fulfilled
+                .ToListAsync(cancellationToken);
+
+            return entities
+                .Select(CreateFromEntity)
+                .OfType<AuctionLot>();
+        }
+
         public async Task<Guid> CreateLot(Lot lot)
         {
             if (lot is null) throw new ArgumentNullException(nameof(lot));

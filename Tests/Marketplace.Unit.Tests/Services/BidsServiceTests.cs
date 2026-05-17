@@ -101,6 +101,9 @@ namespace Marketplace.Unit.Tests.Services
             var bidsRepo = fixture.Freeze<Mock<IBidsRepository>>();
             bidsRepo.Setup(r => r.LoadBidHistory(lotId)).ReturnsAsync(Array.Empty<Bid>());
 
+            var ordersRepo = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepo.Setup(r => r.GetPaidOrderByLotId(lotId, default)).ReturnsAsync((Order?)null);
+
             Bid? capturedBid = null;
             bidsRepo.Setup(r => r.PlaceBid(It.IsAny<Bid>()))
                 .Callback<Bid>(b => capturedBid = b)
@@ -114,10 +117,67 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal(bidderId, capturedBid!.BidderId);
             Assert.Equal(lotId, capturedBid.AuctionId);
             Assert.Equal(120m, capturedBid.Amount.Amount);
-
             Assert.Equal(capturedBid.Id, placed.Id);
+
             bidsRepo.Verify(r => r.PlaceBid(It.IsAny<Bid>()), Times.Once);
             lotsRepo.Verify(r => r.UpdateLot(lotId, It.Is<Lot>(l => l is AuctionLot)), Times.Once);
+        }
+
+        [Fact]
+        public async Task PlaceBid_WhenPreviousHoldOrderExists_ReleasesHold()
+        {
+            var fixture = CreateFixture();
+            var bidderId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipalWithSub(bidderId));
+
+            var lotId = fixture.Create<Guid>();
+            var auction = CreateAuctionLot(id: lotId);
+
+            var lotsRepo = fixture.Freeze<Mock<ILotsRepository>>();
+            lotsRepo.Setup(r => r.GetLotById(lotId)).ReturnsAsync(auction);
+
+            var bidsRepo = fixture.Freeze<Mock<IBidsRepository>>();
+            bidsRepo.Setup(r => r.LoadBidHistory(lotId)).ReturnsAsync(Array.Empty<Bid>());
+
+            var previousOrder = CreatePaidAuctionOrder(lotId);
+            var ordersRepo = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepo.Setup(r => r.GetPaidOrderByLotId(lotId, default)).ReturnsAsync(previousOrder);
+
+            var paymentGateway = fixture.Freeze<Mock<IPaymentGateway>>();
+            paymentGateway.Setup(g => g.ReleaseHoldAsync(previousOrder, default)).Returns(Task.CompletedTask);
+
+            var service = fixture.Create<BidsService>();
+
+            await service.PlaceBid(lotId, new Money(120m, Currency.USD));
+
+            paymentGateway.Verify(g => g.ReleaseHoldAsync(previousOrder, default), Times.Once);
+        }
+
+        [Fact]
+        public async Task PlaceBid_WhenNoPreviousHoldOrder_DoesNotCallReleaseHold()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipalWithSub(fixture.Create<Guid>()));
+
+            var lotId = fixture.Create<Guid>();
+            var auction = CreateAuctionLot(id: lotId);
+
+            var lotsRepo = fixture.Freeze<Mock<ILotsRepository>>();
+            lotsRepo.Setup(r => r.GetLotById(lotId)).ReturnsAsync(auction);
+
+            var bidsRepo = fixture.Freeze<Mock<IBidsRepository>>();
+            bidsRepo.Setup(r => r.LoadBidHistory(lotId)).ReturnsAsync(Array.Empty<Bid>());
+
+            var ordersRepo = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepo.Setup(r => r.GetPaidOrderByLotId(lotId, default)).ReturnsAsync((Order?)null);
+
+            var paymentGateway = fixture.Freeze<Mock<IPaymentGateway>>();
+
+            var service = fixture.Create<BidsService>();
+
+            await service.PlaceBid(lotId, new Money(120m, Currency.USD));
+
+            paymentGateway.Verify(g => g.ReleaseHoldAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         private static IFixture CreateFixture() =>
@@ -166,6 +226,18 @@ namespace Marketplace.Unit.Tests.Services
                 endOfAuction: DateTime.UtcNow.AddHours(2),
                 auctionStepPercent: 5,
                 category: CreateCategory());
+        }
+
+        private static Order CreatePaidAuctionOrder(Guid lotId)
+        {
+            var item = PricedItem.FromCustomPrice(lotId, "Auction lot bid hold", new Money(100m, Currency.USD), 1, 0m);
+            var order = Order.Create(
+                Guid.NewGuid(),
+                new ShippingInfo("John", "Doe", "john@example.com", "+12345678901", "123 St", "City", "12345", "US"),
+                new PaymentInfo(returnUrl: null),
+                new[] { item });
+            order.MarkPaid();
+            return order;
         }
 
         private static Seller CreateSeller() =>
