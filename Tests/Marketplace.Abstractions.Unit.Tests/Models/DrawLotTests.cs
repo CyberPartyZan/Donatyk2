@@ -91,8 +91,6 @@
         [Fact]
         public void Constructor_WithNullTicketPrice_ThrowsArgumentOutOfRangeException()
         {
-            var seller = CreateSeller();
-
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new DrawLot(
                     Guid.NewGuid(),
@@ -104,7 +102,7 @@
                     discountedPrice: CreateMoney(45m),
                     LotType.Draw,
                     LotStage.PendingApproval,
-                    seller,
+                    CreateSeller(),
                     isActive: true,
                     isCompensationPaid: false,
                     ticketPrice: null!,
@@ -116,8 +114,6 @@
         [InlineData(-5)]
         public void Constructor_WithNonPositiveTicketPrice_ThrowsArgumentOutOfRangeException(decimal ticketPriceAmount)
         {
-            var seller = CreateSeller();
-
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new DrawLot(
                     Guid.NewGuid(),
@@ -129,7 +125,7 @@
                     discountedPrice: CreateMoney(45m),
                     LotType.Draw,
                     LotStage.PendingApproval,
-                    seller,
+                    CreateSeller(),
                     isActive: true,
                     isCompensationPaid: false,
                     new Money(ticketPriceAmount, Currency.USD),
@@ -358,6 +354,139 @@
 
             Assert.Equal(2, lot.StockCount);
         }
+
+        [Fact]
+        public void CancelTickets_WhenTicketsNotLoaded_ThrowsInvalidOperationException()
+        {
+            var lot = CreateDrawLot(ticketsSold: 3);
+
+            Assert.Throws<InvalidOperationException>(() => lot.CancelTickets(Guid.NewGuid(), 1));
+        }
+
+        [Fact]
+        public void CancelTickets_WithEmptyUserId_ThrowsArgumentException()
+        {
+            var lot = CreateDrawLot(ticketsSold: 0);
+            lot.LoadTickets(Array.Empty<Ticket>());
+
+            Assert.Throws<ArgumentException>(() => lot.CancelTickets(Guid.Empty, 1));
+        }
+
+        [Fact]
+        public void CancelTickets_WithZeroCount_ThrowsArgumentOutOfRangeException()
+        {
+            var lot = CreateDrawLot(ticketsSold: 0);
+            lot.LoadTickets(Array.Empty<Ticket>());
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => lot.CancelTickets(Guid.NewGuid(), 0));
+        }
+
+        [Fact]
+        public void CancelTickets_WhenDrawCompleted_ThrowsInvalidOperationException()
+        {
+            var lotId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+
+            var tickets = Enumerable.Range(0, 10)
+                .Select(_ => Ticket.Create(userId, lotId).MarkAsPayed())
+                .ToList();
+
+            var lot = new DrawLot(
+                lotId,
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 1,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: 10,
+                category: CreateCategory(),
+                tickets: tickets,
+                isDrawn: true);
+
+            Assert.Throws<InvalidOperationException>(() => lot.CancelTickets(userId, 1));
+        }
+
+        [Fact]
+        public void CancelTickets_WhenNotEnoughUnpaidTickets_ThrowsInvalidOperationException()
+        {
+            var lotId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+
+            // 1 unpaid ticket, trying to cancel 2
+            var tickets = new[] { Ticket.Create(userId, lotId) };
+            var lot = CreateDrawLot(lotId: lotId, ticketsSold: 1);
+            lot.LoadTickets(tickets);
+
+            Assert.Throws<InvalidOperationException>(() => lot.CancelTickets(userId, 2));
+        }
+
+        [Fact]
+        public void CancelTickets_WithValidData_RemovesTicketsAndDecrementsTicketsSold()
+        {
+            var lotId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            const int countToCancel = 2;
+
+            var userTickets = Enumerable.Range(0, 3)
+                .Select(_ => Ticket.Create(userId, lotId))
+                .ToList();
+
+            var otherTicket = Ticket.Create(Guid.NewGuid(), lotId);
+
+            var lot = CreateDrawLot(lotId: lotId, ticketsSold: 4);
+            lot.LoadTickets(userTickets.Append(otherTicket).ToList());
+
+            var cancelledIds = lot.CancelTickets(userId, countToCancel);
+
+            Assert.Equal(countToCancel, cancelledIds.Count);
+            Assert.Equal(2, lot.TicketsSold); // 4 - 2
+            Assert.Equal(2, lot.Tickets!.Count); // 4 total - 2 cancelled
+            Assert.All(cancelledIds, id => Assert.DoesNotContain(lot.Tickets, t => t.Id == id));
+        }
+
+        [Fact]
+        public void CancelTickets_OnlyCancelsUnpaidTickets()
+        {
+            var lotId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+
+            var paidTicket = Ticket.Create(userId, lotId).MarkAsPayed();
+            var unpaidTicket = Ticket.Create(userId, lotId);
+
+            var lot = CreateDrawLot(lotId: lotId, ticketsSold: 2);
+            lot.LoadTickets(new[] { paidTicket, unpaidTicket });
+
+            var cancelledIds = lot.CancelTickets(userId, 1);
+
+            Assert.Single(cancelledIds);
+            Assert.Equal(unpaidTicket.Id, cancelledIds.Single());
+            Assert.Equal(1, lot.TicketsSold);
+        }
+
+        private static DrawLot CreateDrawLot(Guid? lotId = null, int ticketsSold = 0) =>
+            new(
+                lotId ?? Guid.NewGuid(),
+                "Draw",
+                "Description",
+                CreateMoney(50m),
+                CreateMoney(25m),
+                stockCount: 10,
+                discountedPrice: null,
+                LotType.Draw,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(5m),
+                ticketsSold: ticketsSold,
+                category: CreateCategory());
 
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 

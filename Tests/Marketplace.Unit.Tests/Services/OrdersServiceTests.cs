@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using AutoFixture;
 using AutoFixture.AutoMoq;
+using Marketplace.Abstractions;
 using Marketplace.Repository;
+using MassTransit;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Moq;
 
@@ -194,7 +196,7 @@ namespace Marketplace.Unit.Tests.Services
                     It.IsAny<Order>(),
                     It.IsAny<PaymentInfo>(),
                     It.IsAny<CancellationToken>()))
-                .Callback<Order, PaymentInfo, CancellationToken>((o, p, _) => gatewayPaymentInfo = p)
+                .Callback<Order, PaymentInfo, CancellationToken>((_, p, _) => gatewayPaymentInfo = p)
                 .ReturnsAsync(paymentUrl);
 
             var service = fixture.Create<OrdersService>();
@@ -238,147 +240,6 @@ namespace Marketplace.Unit.Tests.Services
 
             ordersRepository.Verify(r => r.MarkPaid(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
-
-        private static IFixture CreateFixture() =>
-            new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
-
-        private static ClaimsPrincipal CreatePrincipal(Guid userId)
-        {
-            var identity = new ClaimsIdentity();
-            identity.AddClaim(new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()));
-            return new ClaimsPrincipal(identity);
-        }
-
-        private static CheckoutRequest CreateCheckoutRequest() =>
-            new()
-            {
-                Shipping = new ShippingInfoDto
-                {
-                    RecipientName = "Alice",
-                    Line1 = "123 Main",
-                    City = "Kyiv",
-                    State = "Kyivska",
-                    PostalCode = "01001",
-                    Country = "Ukraine",
-                    Phone = "+380441234567"
-                },
-                Payment = new PaymentInfoDto
-                {
-                    Provider = "Stripe",
-                    TaxRate = 0.2m,
-                    ReturnUrl = "https://example.com/return"
-                }
-            };
-
-        private static Cart CreateCart(Guid userId, Lot lotSnapshot, int quantity)
-        {
-            var cartItem = new CartItem(lotSnapshot, quantity, userId);
-            return new Cart(new[] { cartItem });
-        }
-
-        private static Lot CreateLot(
-            Guid? id = null,
-            decimal priceAmount = 100m,
-            decimal compensationAmount = 60m,
-            int stockCount = 5,
-            LotStage stage = LotStage.Created,
-            LotType type = LotType.Simple,
-            Guid? sellerUserId = null,
-            string? declineReason = null)
-        {
-            var category = CreateCategory();
-
-            return new Lot(
-                id ?? Guid.NewGuid(),
-                "Lot " + Guid.NewGuid().ToString("N"),
-                "Desc " + Guid.NewGuid().ToString("N"),
-                CreateMoney(priceAmount),
-                CreateMoney(compensationAmount),
-                stockCount,
-                discountedPrice: null,
-                type,
-                stage,
-                CreateSeller(sellerUserId),
-                isActive: true,
-                isCompensationPaid: false,
-                category: category,
-                declineReason: declineReason);
-        }
-
-        private static DrawLot CreateDrawLot(
-            Guid? id = null,
-            decimal priceAmount = 100m,
-            decimal ticketPriceAmount = 10m,
-            decimal compensationAmount = 60m,
-            int stockCount = 5,
-            LotStage stage = LotStage.Created,
-            LotType type = LotType.Draw,
-            Guid? sellerUserId = null,
-            string? declineReason = null)
-        {
-            var category = CreateCategory();
-
-            return new DrawLot(
-                id ?? Guid.NewGuid(),
-                "Draw " + Guid.NewGuid().ToString("N"),
-                "Desc " + Guid.NewGuid().ToString("N"),
-                CreateMoney(priceAmount),
-                CreateMoney(compensationAmount),
-                stockCount,
-                discountedPrice: null,
-                type,
-                stage,
-                CreateSeller(sellerUserId),
-                isActive: true,
-                isCompensationPaid: false,
-                ticketPrice: CreateMoney(ticketPriceAmount),
-                category: category,
-                declineReason: declineReason,
-                tickets: null,
-                isDrawn: false,
-                isDeleted: false);
-        }
-
-        private static AuctionLot CreateAuctionLot(
-            Guid? id = null,
-            decimal startingPriceAmount = 100m,
-            decimal compensationAmount = 60m,
-            decimal? instantBuyPriceAmount = null,
-            int stockCount = 5,
-            LotStage stage = LotStage.Created,
-            Guid? sellerUserId = null,
-            string? declineReason = null)
-        {
-            var category = CreateCategory();
-
-            return new AuctionLot(
-                id ?? Guid.NewGuid(),
-                "Auction " + Guid.NewGuid().ToString("N"),
-                "Desc " + Guid.NewGuid().ToString("N"),
-                CreateMoney(startingPriceAmount),
-                CreateMoney(compensationAmount),
-                stockCount,
-                instantBuyPriceAmount.HasValue ? CreateMoney(instantBuyPriceAmount.Value) : null,
-                LotType.Auction,
-                stage,
-                CreateSeller(sellerUserId),
-                isActive: true,
-                isCompensationPaid: false,
-                endOfAuction: DateTime.UtcNow.AddDays(7),
-                auctionStepPercent: 5,
-                category: category,
-                declineReason: declineReason,
-                bidHistory: null,
-                isDeleted: false);
-        }
-
-        private static Category CreateCategory() =>
-            new(Guid.NewGuid(), "Category name", "Category description");
-
-        private static Seller CreateSeller(Guid? userId = null) =>
-            new(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, userId ?? Guid.NewGuid());
-
-        private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         [Fact]
         public async Task CheckoutDrawAsync_WithNullRequest_ThrowsArgumentNullException()
@@ -438,7 +299,7 @@ namespace Marketplace.Unit.Tests.Services
 
             const string paymentUrl = "https://pay.test/draw-checkout";
             fixture.Freeze<Mock<IPaymentGateway>>()
-                .Setup(pg => pg.CreatePaymentUrlAsync(
+                .Setup(pg => pg.CreatePaymentDrawUrlAsync(
                     It.IsAny<Order>(),
                     It.IsAny<PaymentInfo>(),
                     It.IsAny<CancellationToken>()))
@@ -461,28 +322,203 @@ namespace Marketplace.Unit.Tests.Services
             cartRepository.Verify(r => r.ClearCart(It.IsAny<Guid>()), Times.Never);
         }
 
-        private static CheckoutDrawRequest CreateCheckoutDrawRequest(Guid lotId, int ticketsCount) =>
-            new()
+        [Fact]
+        public async Task HandleDrawPaymentWebhookAsync_WithNullRequest_ThrowsArgumentNullException()
+        {
+            var fixture = CreateFixture();
+            var service = fixture.Create<OrdersService>();
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => service.HandleDrawPaymentWebhookAsync(null!));
+        }
+
+        [Fact]
+        public async Task HandleDrawPaymentWebhookAsync_WhenPaymentFailed_CancelsTicketsAndOrder()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var orderId = fixture.Create<Guid>();
+            var lotId = fixture.Create<Guid>();
+            var userId = fixture.Create<Guid>();
+            const int quantity = 3;
+
+            var order = Order.Create(
+                userId,
+                CreateShippingInfo(),
+                CreatePaymentInfo(),
+                new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), quantity, 0m) });
+
+            var ordersRepository = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepository.Setup(r => r.GetById(orderId)).ReturnsAsync(order);
+
+            var ticketsService = fixture.Freeze<Mock<ITicketsService>>();
+            var service = fixture.Create<OrdersService>();
+
+            var request = new DrawPaymentWebhookRequest
             {
+                OrderId = orderId,
                 LotId = lotId,
-                TicketsCount = ticketsCount,
-                Shipping = new ShippingInfoDto
-                {
-                    RecipientName = "Alice",
-                    Line1 = "123 Main",
-                    City = "Kyiv",
-                    State = "Kyivska",
-                    PostalCode = "01001",
-                    Country = "Ukraine",
-                    Phone = "+380441234567"
-                },
-                Payment = new PaymentInfoDto
-                {
-                    Provider = "Stripe",
-                    TaxRate = 0.2m,
-                    ReturnUrl = "https://example.com/return"
-                }
+                IsSuccess = false
             };
+
+            await service.HandleDrawPaymentWebhookAsync(request);
+
+            ticketsService.Verify(s => s.CancelTicketsForUserOnLot(lotId, userId, quantity), Times.Once);
+            ordersRepository.Verify(r => r.Cancel(orderId), Times.Once);
+            ordersRepository.Verify(r => r.MarkPaid(It.IsAny<Guid>()), Times.Never);
+            ticketsService.Verify(s => s.MarkAsPayedByOrderId(It.IsAny<Guid>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task HandleDrawPaymentWebhookAsync_WhenPaymentFailed_AndOrderNotFound_ThrowsKeyNotFoundException()
+        {
+            var fixture = CreateFixture();
+
+            fixture.Freeze<Mock<IOrdersRepository>>()
+                .Setup(r => r.GetById(It.IsAny<Guid>()))
+                .ReturnsAsync((Order?)null);
+
+            var service = fixture.Create<OrdersService>();
+
+            var request = new DrawPaymentWebhookRequest
+            {
+                OrderId = Guid.NewGuid(),
+                LotId = Guid.NewGuid(),
+                IsSuccess = false
+            };
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.HandleDrawPaymentWebhookAsync(request));
+        }
+
+        [Fact]
+        public async Task HandleDrawPaymentWebhookAsync_WhenPaymentSucceeded_MarksOrderAndTicketsPaid()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var orderId = fixture.Create<Guid>();
+            var drawLot = CreateDrawLot(ticketPriceAmount: 10m);
+
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(drawLot.Id))
+                .ReturnsAsync(drawLot);
+
+            fixture.Freeze<Mock<ITicketsService>>()
+                .Setup(s => s.GetAll(drawLot.Id))
+                .ReturnsAsync(Array.Empty<Ticket>());
+
+            var ordersRepository = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepository.Setup(r => r.MarkPaid(orderId)).ReturnsAsync(Guid.NewGuid());
+
+            var ticketsService = fixture.Freeze<Mock<ITicketsService>>();
+            var publishEndpoint = fixture.Freeze<Mock<IPublishEndpoint>>();
+
+            var service = fixture.Create<OrdersService>();
+
+            var request = new DrawPaymentWebhookRequest
+            {
+                OrderId = orderId,
+                LotId = drawLot.Id,
+                IsSuccess = true
+            };
+
+            await service.HandleDrawPaymentWebhookAsync(request);
+
+            ordersRepository.Verify(r => r.MarkPaid(orderId), Times.Once);
+            ticketsService.Verify(s => s.MarkAsPayedByOrderId(orderId), Times.Once);
+        }
+
+        [Fact]
+        public async Task HandleDrawPaymentWebhookAsync_WhenPaymentSucceededAndLotReadyToDraw_PublishesDrawLaunched()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var orderId = fixture.Create<Guid>();
+            var lotId = Guid.NewGuid();
+
+            // 100 USD / 10 USD ticket = 10 total tickets
+            var drawLot = CreateDrawLot(id: lotId, priceAmount: 100m, ticketPriceAmount: 10m, ticketsSold: 10);
+
+            var allPaidTickets = Enumerable.Range(0, 10)
+                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed())
+                .ToList()
+                .AsReadOnly() as IReadOnlyCollection<Ticket>;
+
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(lotId))
+                .ReturnsAsync(drawLot);
+
+            fixture.Freeze<Mock<ITicketsService>>()
+                .Setup(s => s.GetAll(lotId))
+                .ReturnsAsync(allPaidTickets!);
+
+            fixture.Freeze<Mock<IOrdersRepository>>()
+                .Setup(r => r.MarkPaid(orderId))
+                .ReturnsAsync(Guid.NewGuid());
+
+            var publishEndpoint = fixture.Freeze<Mock<IPublishEndpoint>>();
+            var service = fixture.Create<OrdersService>();
+
+            var request = new DrawPaymentWebhookRequest
+            {
+                OrderId = orderId,
+                LotId = lotId,
+                IsSuccess = true
+            };
+
+            await service.HandleDrawPaymentWebhookAsync(request);
+
+            publishEndpoint.Verify(
+                p => p.Publish(It.Is<DrawLaunched>(e => e.LotId == lotId), It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task HandleDrawPaymentWebhookAsync_WhenPaymentSucceededAndLotNotReadyToDraw_DoesNotPublishDrawLaunched()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var orderId = fixture.Create<Guid>();
+            var lotId = Guid.NewGuid();
+
+            // 2 out of 10 tickets sold — not ready
+            var drawLot = CreateDrawLot(id: lotId, priceAmount: 100m, ticketPriceAmount: 10m, ticketsSold: 2);
+
+            var partialTickets = Enumerable.Range(0, 2)
+                .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed())
+                .ToList()
+                .AsReadOnly() as IReadOnlyCollection<Ticket>;
+
+            fixture.Freeze<Mock<ILotsRepository>>()
+                .Setup(r => r.GetLotById(lotId))
+                .ReturnsAsync(drawLot);
+
+            fixture.Freeze<Mock<ITicketsService>>()
+                .Setup(s => s.GetAll(lotId))
+                .ReturnsAsync(partialTickets!);
+
+            fixture.Freeze<Mock<IOrdersRepository>>()
+                .Setup(r => r.MarkPaid(orderId))
+                .ReturnsAsync(Guid.NewGuid());
+
+            var publishEndpoint = fixture.Freeze<Mock<IPublishEndpoint>>();
+            var service = fixture.Create<OrdersService>();
+
+            var request = new DrawPaymentWebhookRequest
+            {
+                OrderId = orderId,
+                LotId = lotId,
+                IsSuccess = true
+            };
+
+            await service.HandleDrawPaymentWebhookAsync(request);
+
+            publishEndpoint.Verify(
+                p => p.Publish(It.IsAny<DrawLaunched>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
 
         [Fact]
         public async Task CheckoutAuctionAsync_WithNullRequest_ThrowsArgumentNullException()
@@ -571,6 +607,60 @@ namespace Marketplace.Unit.Tests.Services
             cartRepository.Verify(r => r.ClearCart(It.IsAny<Guid>()), Times.Never);
         }
 
+        private static IFixture CreateFixture() =>
+            new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
+
+        private static ClaimsPrincipal CreatePrincipal(Guid userId)
+        {
+            var identity = new ClaimsIdentity();
+            identity.AddClaim(new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()));
+            return new ClaimsPrincipal(identity);
+        }
+
+        private static CheckoutRequest CreateCheckoutRequest(string provider = "Stripe") =>
+            new()
+            {
+                Shipping = new ShippingInfoDto
+                {
+                    RecipientName = "Alice",
+                    Line1 = "123 Main",
+                    City = "Kyiv",
+                    State = "Kyivska",
+                    PostalCode = "01001",
+                    Country = "Ukraine",
+                    Phone = "+380441234567"
+                },
+                Payment = new PaymentInfoDto
+                {
+                    Provider = provider,
+                    TaxRate = 0.2m,
+                    ReturnUrl = "https://example.com/return"
+                }
+            };
+
+        private static CheckoutDrawRequest CreateCheckoutDrawRequest(Guid lotId, int ticketsCount) =>
+            new()
+            {
+                LotId = lotId,
+                TicketsCount = ticketsCount,
+                Shipping = new ShippingInfoDto
+                {
+                    RecipientName = "Alice",
+                    Line1 = "123 Main",
+                    City = "Kyiv",
+                    State = "Kyivska",
+                    PostalCode = "01001",
+                    Country = "Ukraine",
+                    Phone = "+380441234567"
+                },
+                Payment = new PaymentInfoDto
+                {
+                    Provider = "Stripe",
+                    TaxRate = 0.2m,
+                    ReturnUrl = "https://example.com/return"
+                }
+            };
+
         private static CheckoutAuctionRequest CreateCheckoutAuctionRequest(Guid lotId, Money amount) =>
             new()
             {
@@ -593,5 +683,117 @@ namespace Marketplace.Unit.Tests.Services
                     ReturnUrl = "https://example.com/return"
                 }
             };
+
+        private static Cart CreateCart(Guid userId, Lot lotSnapshot, int quantity)
+        {
+            var cartItem = new CartItem(lotSnapshot, quantity, userId);
+            return new Cart(new[] { cartItem });
+        }
+
+        private static Lot CreateLot(
+            Guid? id = null,
+            decimal priceAmount = 100m,
+            decimal compensationAmount = 60m,
+            int stockCount = 5,
+            LotStage stage = LotStage.Created,
+            LotType type = LotType.Simple,
+            Guid? sellerUserId = null,
+            string? declineReason = null)
+        {
+            return new Lot(
+                id ?? Guid.NewGuid(),
+                "Lot " + Guid.NewGuid().ToString("N"),
+                "Desc " + Guid.NewGuid().ToString("N"),
+                CreateMoney(priceAmount),
+                CreateMoney(compensationAmount),
+                stockCount,
+                discountedPrice: null,
+                type,
+                stage,
+                CreateSeller(sellerUserId),
+                isActive: true,
+                isCompensationPaid: false,
+                category: CreateCategory(),
+                declineReason: declineReason);
+        }
+
+        private static DrawLot CreateDrawLot(
+            Guid? id = null,
+            decimal priceAmount = 100m,
+            decimal ticketPriceAmount = 10m,
+            decimal compensationAmount = 60m,
+            int stockCount = 5,
+            int ticketsSold = 0,
+            LotStage stage = LotStage.Created,
+            LotType type = LotType.Draw,
+            Guid? sellerUserId = null,
+            string? declineReason = null)
+        {
+            return new DrawLot(
+                id ?? Guid.NewGuid(),
+                "Draw " + Guid.NewGuid().ToString("N"),
+                "Desc " + Guid.NewGuid().ToString("N"),
+                CreateMoney(priceAmount),
+                CreateMoney(compensationAmount),
+                stockCount,
+                discountedPrice: null,
+                type,
+                stage,
+                CreateSeller(sellerUserId),
+                isActive: true,
+                isCompensationPaid: false,
+                ticketPrice: CreateMoney(ticketPriceAmount),
+                ticketsSold: ticketsSold,
+                category: CreateCategory(),
+                declineReason: declineReason,
+                tickets: null,
+                isDrawn: false,
+                isDeleted: false);
+        }
+
+        private static AuctionLot CreateAuctionLot(
+            Guid? id = null,
+            decimal startingPriceAmount = 100m,
+            decimal compensationAmount = 60m,
+            decimal? instantBuyPriceAmount = null,
+            int stockCount = 5,
+            LotStage stage = LotStage.Created,
+            Guid? sellerUserId = null,
+            string? declineReason = null)
+        {
+            return new AuctionLot(
+                id ?? Guid.NewGuid(),
+                "Auction " + Guid.NewGuid().ToString("N"),
+                "Desc " + Guid.NewGuid().ToString("N"),
+                CreateMoney(startingPriceAmount),
+                CreateMoney(compensationAmount),
+                stockCount,
+                instantBuyPriceAmount.HasValue ? CreateMoney(instantBuyPriceAmount.Value) : null,
+                LotType.Auction,
+                stage,
+                CreateSeller(sellerUserId),
+                isActive: true,
+                isCompensationPaid: false,
+                endOfAuction: DateTime.UtcNow.AddDays(7),
+                auctionStepPercent: 5,
+                category: CreateCategory(),
+                declineReason: declineReason,
+                bidHistory: null,
+                isDeleted: false);
+        }
+
+        private static Category CreateCategory() =>
+            new(Guid.NewGuid(), "Category name", "Category description");
+
+        private static Seller CreateSeller(Guid? userId = null) =>
+            new(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, userId ?? Guid.NewGuid());
+
+        private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
+
+        private static ShippingInfo CreateShippingInfo() =>
+            new("Alice", "123 Main", null, "Kyiv", "Kyivska", "01001", "Ukraine", "+380441234567");
+
+        private static PaymentInfo CreatePaymentInfo() =>
+            new("Stripe", 0.2m, "https://example.com/return");
     }
 }

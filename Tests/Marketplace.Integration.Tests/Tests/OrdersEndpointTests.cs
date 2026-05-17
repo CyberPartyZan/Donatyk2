@@ -158,6 +158,93 @@ public class OrdersEndpointTests : IntegrationTestsBase
     }
 
     [Fact]
+    public async Task DrawPaymentWebhook_WhenPaymentSucceeded_MarksOrderAndTicketsPaid()
+    {
+        const int ticketsCount = 2;
+        var lot = await SeedLotAsync(stockCount: 1, type: LotType.Draw);
+
+        var checkoutResponse = await _client.PostAsJsonAsync(
+            "/api/orders/checkout/draw",
+            CreateCheckoutDrawRequest(lot.Id, ticketsCount, provider: "FakePay"));
+
+        Assert.Equal(HttpStatusCode.Redirect, checkoutResponse.StatusCode);
+        Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
+        var orderId = Guid.Parse(headerValues!.Single());
+
+        var webhookResponse = await _client.PostAsJsonAsync(
+            $"/api/orders/payment/draw/webhook?lotId={lot.Id}",
+            new DrawPaymentWebhookRequest
+            {
+                OrderId = orderId,
+                LotId = lot.Id,
+                Provider = "FakePay",
+                Reference = "DRAW-PAY-001",
+                IsSuccess = true
+            });
+
+        Assert.Equal(HttpStatusCode.OK, webhookResponse.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var order = await db.Orders.SingleAsync(o => o.Id == orderId);
+        Assert.Equal(OrderStatus.Paid, order.Status);
+
+        var paidTickets = await db.Tickets
+            .Where(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId)
+            .ToListAsync();
+
+        Assert.Equal(ticketsCount, paidTickets.Count);
+        Assert.All(paidTickets, t => Assert.True(t.IsPayed));
+    }
+
+    [Fact]
+    public async Task DrawPaymentWebhook_WhenPaymentFailed_CancelsTicketsAndOrder()
+    {
+        const int ticketsCount = 3;
+        var lot = await SeedLotAsync(stockCount: 1, type: LotType.Draw);
+
+        var checkoutResponse = await _client.PostAsJsonAsync(
+            "/api/orders/checkout/draw",
+            CreateCheckoutDrawRequest(lot.Id, ticketsCount, provider: "FakePay"));
+
+        Assert.Equal(HttpStatusCode.Redirect, checkoutResponse.StatusCode);
+        Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
+        var orderId = Guid.Parse(headerValues!.Single());
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+            var ticketsBefore = await db.Tickets.CountAsync(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId);
+            Assert.Equal(ticketsCount, ticketsBefore);
+        }
+
+        var webhookResponse = await _client.PostAsJsonAsync(
+            $"/api/orders/payment/draw/webhook?lotId={lot.Id}",
+            new DrawPaymentWebhookRequest
+            {
+                OrderId = orderId,
+                LotId = lot.Id,
+                IsSuccess = false
+            });
+
+        Assert.Equal(HttpStatusCode.OK, webhookResponse.StatusCode);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var order = await verifyDb.Orders.SingleAsync(o => o.Id == orderId);
+        Assert.Equal(OrderStatus.Cancelled, order.Status);
+
+        var remainingTickets = await verifyDb.Tickets
+            .CountAsync(t => t.LotId == lot.Id && t.UserId == TestAuthHandler.UserId);
+        Assert.Equal(0, remainingTickets);
+
+        var lotAfter = await verifyDb.Lots.SingleAsync(l => l.Id == lot.Id);
+        Assert.Equal(0, lotAfter.TicketsSold);
+    }
+
+    [Fact]
     public async Task PaymentWebhook_ForDrawCheckout_MarksTicketsAsPayed()
     {
         var lot = await SeedLotAsync(stockCount: 1, type: LotType.Draw);
