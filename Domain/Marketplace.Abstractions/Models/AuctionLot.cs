@@ -27,8 +27,6 @@
             bool isDeleted = false)
             : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason, isDeleted)
         {
-            if (endOfAuction <= DateTime.UtcNow)
-                throw new ArgumentException("End of auction date should be in the future.", nameof(endOfAuction));
             if (auctionStepPercent <= 0)
                 throw new ArgumentOutOfRangeException(nameof(auctionStepPercent), "Auction step percent should be greater than zero.");
 

@@ -8,15 +8,18 @@ namespace Marketplace
     internal class AuctionEndedConsumer : IConsumer<AuctionEnded>
     {
         private readonly IOrdersRepository _ordersRepository;
+        private readonly ILotsRepository _lotsRepository;
         private readonly IPaymentGateway _paymentGateway;
         private readonly ILogger<AuctionEndedConsumer> _logger;
 
         public AuctionEndedConsumer(
             IOrdersRepository ordersRepository,
+            ILotsRepository lotsRepository,
             IPaymentGateway paymentGateway,
             ILogger<AuctionEndedConsumer> logger)
         {
             _ordersRepository = ordersRepository;
+            _lotsRepository = lotsRepository;
             _paymentGateway = paymentGateway;
             _logger = logger;
         }
@@ -43,6 +46,19 @@ namespace Marketplace
             _logger.LogInformation(
                 "Hold captured for order {OrderId} (lot {LotId}) via {CaptureUrl}.",
                 order.Id, lotId, captureUrl);
+
+            var lot = await _lotsRepository.GetLotById(lotId);
+
+            if (lot is null)
+            {
+                _logger.LogWarning("Lot {LotId} not found after capture. Skipping stock update.", lotId);
+                return;
+            }
+
+            lot.Sell(lot.StockCount);
+            await _lotsRepository.UpdateLot(lotId, lot);
+
+            _logger.LogInformation("Lot {LotId} stock set to 0 after auction capture.", lotId);
         }
     }
 }
