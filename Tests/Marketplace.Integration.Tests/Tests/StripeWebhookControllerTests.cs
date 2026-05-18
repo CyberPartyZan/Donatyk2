@@ -67,8 +67,7 @@ public class StripeWebhookControllerTests : IClassFixture<StripeWebhookWebApplic
         Assert.Equal("pi_test_001", order.PaymentReference);
     }
 
-    [Fact]
-    [Ignore] // Session expiration doesn't mean the order should be cancelled, it could be paid later. This test is here to document the current behavior but may need to be removed or reworked if we change this logic.
+    [Fact(Skip = "Session expiration doesn't mean the order should be cancelled; it could be paid later. Revisit if this logic changes.")]
     public async Task Webhook_CheckoutSessionExpired_CancelsOrder()
     {
         var (orderId, _) = await CreateSimpleOrderAsync();
