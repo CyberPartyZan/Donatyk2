@@ -7,17 +7,15 @@ namespace Marketplace.Payment
 {
     public class StripePaymentGateway : IPaymentGateway
     {
-        private readonly StripeSettings _settings;
+        private readonly IStripeClient _stripeClient;
         private readonly ILogger<StripePaymentGateway> _logger;
 
         public StripePaymentGateway(
-            IOptions<StripeSettings> settings,
+            IStripeClient stripeClient,
             ILogger<StripePaymentGateway> logger)
         {
-            _settings = settings.Value;
+            _stripeClient = stripeClient;
             _logger = logger;
-
-            StripeConfiguration.ApiKey = _settings.SecretKey;
         }
 
         public async Task<string> CreatePaymentUrlAsync(
@@ -82,7 +80,7 @@ namespace Marketplace.Payment
                 ?? throw new InvalidOperationException(
                     $"Order {order.Id} has no payment reference (PaymentIntent ID) to capture.");
 
-            var service = new PaymentIntentService();
+            var service = new PaymentIntentService(_stripeClient);
             var intent = await service.CaptureAsync(
                 paymentIntentId,
                 cancellationToken: cancellationToken);
@@ -102,7 +100,7 @@ namespace Marketplace.Payment
                 ?? throw new InvalidOperationException(
                     $"Order {order.Id} has no payment reference (PaymentIntent ID) to release.");
 
-            var service = new PaymentIntentService();
+            var service = new PaymentIntentService(_stripeClient);
             var intent = await service.CancelAsync(
                 paymentIntentId,
                 cancellationToken: cancellationToken);
@@ -161,7 +159,7 @@ namespace Marketplace.Payment
                 };
             }
 
-            var service = new SessionService();
+            var service = new SessionService(_stripeClient);
             return await service.CreateAsync(options, cancellationToken: cancellationToken);
         }
 

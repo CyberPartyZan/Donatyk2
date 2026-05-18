@@ -8,6 +8,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Respawn;
+using Stripe;
 using System.Data.Common;
 using Testcontainers.MsSql;
 using WireMock.Server;
@@ -83,8 +84,18 @@ public class StripeWebhookWebApplicationFactory
                         TestAuthHandler.Scheme,
                         _ => { });
 
-            // Point Stripe.net HttpClient to WireMock
-            Stripe.StripeConfiguration.ApiBase = WireMockServer.Urls[0];
+            // Point Stripe.net HttpClient to WireMock by replacing IStripeClient in DI
+            var stripeDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(IStripeClient));
+            if (stripeDescriptor != null)
+                services.Remove(stripeDescriptor);
+
+            services.AddSingleton<IStripeClient>(_ =>
+                new Stripe.StripeClient(
+                    apiKey: "sk_test_fakesecretkey",
+                    httpClient: null,
+                    apiBase: WireMockServer.Urls[0]
+                ));
         });
     }
 

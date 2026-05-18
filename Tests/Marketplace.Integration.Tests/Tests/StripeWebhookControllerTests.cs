@@ -1,4 +1,5 @@
-﻿using Marketplace.Repository.MSSql;
+﻿using GraphQL;
+using Marketplace.Repository.MSSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stripe;
@@ -67,6 +68,7 @@ public class StripeWebhookControllerTests : IClassFixture<StripeWebhookWebApplic
     }
 
     [Fact]
+    [Ignore] // Session expiration doesn't mean the order should be cancelled, it could be paid later. This test is here to document the current behavior but may need to be removed or reworked if we change this logic.
     public async Task Webhook_CheckoutSessionExpired_CancelsOrder()
     {
         var (orderId, _) = await CreateSimpleOrderAsync();

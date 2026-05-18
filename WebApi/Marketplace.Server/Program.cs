@@ -156,7 +156,8 @@ namespace Marketplace.Server
             app.UseAuthorization();
 
             // Register recurring Hangfire job — every 5 minutes
-            RecurringJob.AddOrUpdate<CheckAuctionEndedJob>(
+            var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+            recurringJobManager.AddOrUpdate<CheckAuctionEndedJob>(
                 "check-auction-ended",
                 job => job.ExecuteAsync(CancellationToken.None),
                 "*/5 * * * *");

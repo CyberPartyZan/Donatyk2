@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Marketplace
+namespace Marketplace.Payment
 {
     public class FakePaymentGateway : IPaymentGateway
     {

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Stripe;
 
 namespace Marketplace.Payment
 {
@@ -24,6 +26,11 @@ namespace Marketplace.Payment
 
             if (string.Equals(gatewayProvider, "Stripe", StringComparison.OrdinalIgnoreCase))
             {
+                services.AddSingleton<IStripeClient>(sp =>
+                {
+                    var settings = sp.GetRequiredService<IOptions<StripeSettings>>().Value;
+                    return new StripeClient(settings.SecretKey);
+                });
                 services.AddSingleton<IPaymentGateway, StripePaymentGateway>();
             }
             else
