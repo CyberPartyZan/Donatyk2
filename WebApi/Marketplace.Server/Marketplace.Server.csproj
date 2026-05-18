@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\Infrastructure\Marketplace.Authentication.JWT\Marketplace.Authentication.JWT.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Marketplace.Cache.Redis\Marketplace.Cache.Redis.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Marketplace.Notification\Marketplace.Notification.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Marketplace.Payment.ThirdParty\Marketplace.Payment.ThirdParty.csproj" />
     <ProjectReference Include="..\marketplace.client\marketplace.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

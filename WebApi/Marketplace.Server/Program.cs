@@ -15,6 +15,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Hangfire;
+using Marketplace.Payment;
 
 namespace Marketplace.Server
 {
@@ -74,6 +75,7 @@ namespace Marketplace.Server
             builder.Services.AddNotificationServices();
             builder.Services.AddCacheServices(builder.Configuration);
             builder.Services.AddMarketplaceServices();
+            builder.Services.AddPaymentServices(builder.Configuration);
 
             // Hangfire — using in-memory storage (swap to SQL Server in production via Hangfire.SqlServer)
             builder.Services.AddHangfire(config =>
