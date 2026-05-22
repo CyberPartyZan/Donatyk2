@@ -1,4 +1,5 @@
 using Marketplace.Abstractions;
+using Marketplace.Payment;
 using Marketplace.Repository;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +17,7 @@ namespace Marketplace
         private readonly IOrdersRepository _ordersRepository;
         private readonly ITicketsService _ticketsService;
         private readonly IBidsService _bidsService;
-        private readonly IPaymentGateway _paymentGateway;
+        private readonly IPaymentGatewayFactory _paymentGatewayFactory;
         private readonly ILogger<OrdersService> _logger;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly string _apiBaseUrl;
@@ -28,7 +29,7 @@ namespace Marketplace
             IOrdersRepository ordersRepository,
             ITicketsService ticketsService,
             IBidsService bidsService,
-            IPaymentGateway paymentGateway,
+            IPaymentGatewayFactory paymentGatewayFactory,
             IPublishEndpoint publishEndpoint,
             IConfiguration configuration,
             ILogger<OrdersService> logger)
@@ -39,7 +40,7 @@ namespace Marketplace
             _ordersRepository = ordersRepository;
             _ticketsService = ticketsService;
             _bidsService = bidsService;
-            _paymentGateway = paymentGateway;
+            _paymentGatewayFactory = paymentGatewayFactory;
             _logger = logger;
             _publishEndpoint = publishEndpoint;
             _apiBaseUrl = configuration.GetValue<string>("Api:BaseUrl") ?? "https://api.local";
@@ -93,7 +94,8 @@ namespace Marketplace
 
             await _ordersRepository.Create(order);
 
-            var paymentUrl = await _paymentGateway.CreatePaymentUrlAsync(order, paymentInfo);
+            var paymentUrl = await _paymentGatewayFactory.CreatePaymentGateway(paymentInfo.Provider)
+                .CreatePaymentUrlAsync(order, paymentInfo);
 
             await _cartRepository.ClearCart(userId);
 
@@ -139,7 +141,8 @@ namespace Marketplace
 
             await _ordersRepository.Create(order);
 
-            var paymentUrl = await _paymentGateway.CreatePaymentDrawUrlAsync(order, paymentInfo);
+            var paymentUrl = await _paymentGatewayFactory.CreatePaymentGateway(paymentInfo.Provider)
+                .CreatePaymentDrawUrlAsync(order, paymentInfo);
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 
@@ -181,7 +184,8 @@ namespace Marketplace
 
             await _ordersRepository.Create(order);
 
-            var paymentUrl = await _paymentGateway.CreatePaymentAuctionUrlAsync(order, paymentInfo);
+            var paymentUrl = await _paymentGatewayFactory.CreatePaymentGateway(paymentInfo.Provider)
+                .CreatePaymentAuctionUrlAsync(order, paymentInfo);
 
             await _publishEndpoint.Publish(new OrderCreated(order.Id, order.Total));
 

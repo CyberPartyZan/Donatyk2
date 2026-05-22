@@ -24,19 +24,12 @@ namespace Marketplace.Payment
                 .GetSection(PaymentGatewaySettings.SectionName)
                 .GetValue<string>("Provider") ?? "Fake";
 
-            if (string.Equals(gatewayProvider, "Stripe", StringComparison.OrdinalIgnoreCase))
+            services.AddSingleton<IStripeClient>(sp =>
             {
-                services.AddSingleton<IStripeClient>(sp =>
-                {
-                    var settings = sp.GetRequiredService<IOptions<StripeSettings>>().Value;
-                    return new StripeClient(settings.SecretKey);
-                });
-                services.AddSingleton<IPaymentGateway, StripePaymentGateway>();
-            }
-            else
-            {
-                services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
-            }
+                var settings = sp.GetRequiredService<IOptions<StripeSettings>>().Value;
+                return new StripeClient(settings.SecretKey);
+            });
+            services.AddSingleton<IPaymentGatewayFactory, PaymentGatewayFactory>();
 
             return services;
         }

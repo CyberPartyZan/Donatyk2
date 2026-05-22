@@ -1,4 +1,4 @@
-namespace Marketplace
+namespace Marketplace.Payment
 {
     public interface IPaymentGateway
     {
