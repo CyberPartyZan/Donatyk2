@@ -120,10 +120,6 @@ namespace Marketplace.Repository.MSSql
             entity.PaymentReturnUrl = mapped.PaymentReturnUrl;
             entity.PaymentReference = mapped.PaymentReference;
 
-            entity.Items.Clear();
-            foreach (var item in mapped.Items)
-                entity.Items.Add(item);
-
             await _db.SaveChangesAsync();
         }
 
