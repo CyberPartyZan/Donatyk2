@@ -109,6 +109,48 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             Assert.Throws<InvalidOperationException>(() => order.MarkPaid());
         }
 
+        [Fact]
+        public void Cancel_FromCreated_SetsStatusToCancelled()
+        {
+            var order = CreateOrder();
+
+            order.Cancel();
+
+            Assert.Equal(OrderStatus.Cancelled, order.Status);
+        }
+
+        [Fact]
+        public void Cancel_FromPaid_SetsStatusToCancelled()
+        {
+            var order = CreateOrder();
+            order.MarkPaid();
+
+            order.Cancel();
+
+            Assert.Equal(OrderStatus.Cancelled, order.Status);
+        }
+
+        [Fact]
+        public void Cancel_WhenAlreadyCancelled_ThrowsInvalidOperationException()
+        {
+            var order = CreateOrder();
+            order.Cancel();
+
+            Assert.Throws<InvalidOperationException>(() => order.Cancel());
+        }
+
+        [Fact]
+        public void Cancel_WhenCompleted_ThrowsInvalidOperationException()
+        {
+            var order = CreateOrder();
+            // Reflect completed status since there's no public Complete() method yet
+            typeof(Order)
+                .GetProperty(nameof(Order.Status))!
+                .SetValue(order, OrderStatus.Completed);
+
+            Assert.Throws<InvalidOperationException>(() => order.Cancel());
+        }
+
         private static Order CreateOrder()
         {
             var items = new[] { PricedItem.FromLot(CreateLot("Lot", 60m), 1, 0.05m) };

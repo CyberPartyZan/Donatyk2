@@ -7,6 +7,6 @@ namespace Marketplace.Repository
         Task<Order?> GetPaidOrderByLotId(Guid lotId, CancellationToken cancellationToken = default);
         Task<Guid> MarkPaid(Guid orderId, string provider, string paymentReference);
         Task<Guid> MarkPaid(Guid orderId);
-        Task Cancel(Guid orderId);
+        Task Update(Order order);
     }
 }

@@ -40,9 +40,6 @@ namespace Marketplace
             var auction = lot as AuctionLot
                 ?? throw new InvalidOperationException("Bid can be placed only for auction lot.");
 
-            var history = await _bidsRepository.LoadBidHistory(lotId);
-            auction.LoadBidHistory(history);
-
             var bidderId = GetCurrentUserIdOrThrow();
             var bid = auction.Bid(bidderId, amount);
 
@@ -52,6 +49,9 @@ namespace Marketplace
             {
                 await _paymentGatewayFactory.CreatePaymentGateway(previousHoldOrder.PaymentInfo.Provider)
                     .ReleaseHoldAsync(previousHoldOrder);
+
+                previousHoldOrder.Cancel();
+                await _ordersRepository.Update(previousHoldOrder);
             }
 
             await _bidsRepository.PlaceBid(bid);

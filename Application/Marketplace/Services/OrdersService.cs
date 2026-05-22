@@ -224,7 +224,8 @@ namespace Marketplace
                     await _ticketsService.CancelTicketsForUserOnLot(item.LotId, order.CustomerId, item.Quantity);
                 }
 
-                await _ordersRepository.Cancel(request.OrderId);
+                order.Cancel();
+                await _ordersRepository.Update(order);
 
                 _logger.LogWarning(
                     "Draw payment failed for order {OrderId}. Tickets and order cancelled.",

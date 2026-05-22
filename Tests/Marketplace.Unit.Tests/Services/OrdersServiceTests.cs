@@ -367,7 +367,7 @@ namespace Marketplace.Unit.Tests.Services
             await service.HandleDrawPaymentWebhookAsync(request);
 
             ticketsService.Verify(s => s.CancelTicketsForUserOnLot(lotId, userId, quantity), Times.Once);
-            ordersRepository.Verify(r => r.Cancel(orderId), Times.Once);
+            ordersRepository.Verify(r => r.Update(It.Is<Order>(o => o.Status == OrderStatus.Cancelled)), Times.Once);
             ordersRepository.Verify(r => r.MarkPaid(It.IsAny<Guid>()), Times.Never);
             ticketsService.Verify(s => s.MarkAsPayedByOrderId(It.IsAny<Guid>()), Times.Never);
         }

@@ -157,7 +157,42 @@ namespace Marketplace.Unit.Tests.Services
         }
 
         [Fact]
-        public async Task PlaceBid_WhenNoPreviousHoldOrder_DoesNotCallReleaseHold()
+        public async Task PlaceBid_WhenPreviousHoldOrderExists_ReleasesHoldAndCancelsPreviousOrder()
+        {
+            var fixture = CreateFixture();
+            var bidderId = fixture.Create<Guid>();
+            fixture.Inject(CreatePrincipalWithSub(bidderId));
+
+            var lotId = fixture.Create<Guid>();
+            var auction = CreateAuctionLot(id: lotId);
+
+            var lotsRepo = fixture.Freeze<Mock<ILotsRepository>>();
+            lotsRepo.Setup(r => r.GetLotById(lotId)).ReturnsAsync(auction);
+
+            var bidsRepo = fixture.Freeze<Mock<IBidsRepository>>();
+            bidsRepo.Setup(r => r.LoadBidHistory(lotId)).ReturnsAsync(Array.Empty<Bid>());
+
+            var previousOrder = CreatePaidAuctionOrder(lotId);
+            var ordersRepo = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepo.Setup(r => r.GetPaidOrderByLotId(lotId, default)).ReturnsAsync(previousOrder);
+            ordersRepo.Setup(r => r.Update(previousOrder)).Returns(Task.CompletedTask);
+
+            var paymentGatewayFactory = fixture.Freeze<Mock<IPaymentGatewayFactory>>();
+            var paymentGateway = fixture.Freeze<Mock<IPaymentGateway>>();
+            paymentGatewayFactory.Setup(f => f.CreatePaymentGateway(previousOrder.PaymentInfo.Provider)).Returns(paymentGateway.Object);
+            paymentGateway.Setup(g => g.ReleaseHoldAsync(previousOrder, default)).Returns(Task.CompletedTask);
+
+            var service = fixture.Create<BidsService>();
+
+            await service.PlaceBid(lotId, new Money(120m, Currency.USD));
+
+            paymentGateway.Verify(g => g.ReleaseHoldAsync(previousOrder, default), Times.Once);
+            ordersRepo.Verify(r => r.Update(previousOrder), Times.Once);
+            Assert.Equal(OrderStatus.Cancelled, previousOrder.Status);
+        }
+
+        [Fact]
+        public async Task PlaceBid_WhenNoPreviousHoldOrder_DoesNotCallReleaseHoldOrUpdate()
         {
             var fixture = CreateFixture();
             fixture.Inject(CreatePrincipalWithSub(fixture.Create<Guid>()));
@@ -181,6 +216,7 @@ namespace Marketplace.Unit.Tests.Services
             await service.PlaceBid(lotId, new Money(120m, Currency.USD));
 
             paymentGateway.Verify(g => g.ReleaseHoldAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
+            ordersRepo.Verify(r => r.Update(It.IsAny<Order>()), Times.Never);
         }
 
         private static IFixture CreateFixture() =>

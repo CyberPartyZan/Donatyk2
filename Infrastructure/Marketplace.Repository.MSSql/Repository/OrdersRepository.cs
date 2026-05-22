@@ -91,20 +91,39 @@ namespace Marketplace.Repository.MSSql
             return entity.CustomerId;
         }
 
-        public async Task Cancel(Guid orderId)
+        public async Task Update(Order order)
         {
-            var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+            if (order is null)
+                throw new ArgumentNullException(nameof(order));
+
+            var entity = await _db.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == order.Id);
 
             if (entity is null)
-                throw new KeyNotFoundException($"Order '{orderId}' not found.");
+                throw new KeyNotFoundException($"Order '{order.Id}' not found.");
 
-            if (entity.Status == OrderStatus.Cancelled)
-                return;
+            var mapped = Map(order);
 
-            if (entity.Status != OrderStatus.Created)
-                throw new InvalidOperationException($"Only created orders can be cancelled. Current status: {entity.Status}.");
+            entity.Status = mapped.Status;
+            entity.Total = mapped.Total;
+            entity.ShippingRecipientName = mapped.ShippingRecipientName;
+            entity.ShippingLine1 = mapped.ShippingLine1;
+            entity.ShippingLine2 = mapped.ShippingLine2;
+            entity.ShippingCity = mapped.ShippingCity;
+            entity.ShippingState = mapped.ShippingState;
+            entity.ShippingPostalCode = mapped.ShippingPostalCode;
+            entity.ShippingCountry = mapped.ShippingCountry;
+            entity.ShippingPhone = mapped.ShippingPhone;
+            entity.PaymentProvider = mapped.PaymentProvider;
+            entity.PaymentTaxRate = mapped.PaymentTaxRate;
+            entity.PaymentReturnUrl = mapped.PaymentReturnUrl;
+            entity.PaymentReference = mapped.PaymentReference;
 
-            entity.Status = OrderStatus.Cancelled;
+            entity.Items.Clear();
+            foreach (var item in mapped.Items)
+                entity.Items.Add(item);
+
             await _db.SaveChangesAsync();
         }
 

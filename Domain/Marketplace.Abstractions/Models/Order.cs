@@ -82,5 +82,20 @@
 
             Status = OrderStatus.Paid;
         }
+
+        public void Cancel()
+        {
+            if (Status == OrderStatus.Cancelled)
+            {
+                throw new InvalidOperationException("Order is already cancelled.");
+            }
+
+            if (Status == OrderStatus.Completed)
+            {
+                throw new InvalidOperationException("Completed orders cannot be cancelled.");
+            }
+
+            Status = OrderStatus.Cancelled;
+        }
     }
 }
