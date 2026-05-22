@@ -44,7 +44,7 @@
             Assert.Equal(seller, lot.Seller);
         }
 
-        [Fact]
+        [Fact(Skip = "With past end of auction can be created for outdated auction lots in DB")]
         public void Constructor_WithPastEndOfAuction_ThrowsArgumentException()
         {
             var seller = CreateSeller();

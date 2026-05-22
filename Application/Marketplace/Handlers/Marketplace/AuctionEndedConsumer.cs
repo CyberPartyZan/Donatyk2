@@ -1,4 +1,5 @@
 ﻿using Marketplace.Abstractions;
+using Marketplace.Payment;
 using Marketplace.Repository;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -9,18 +10,18 @@ namespace Marketplace
     {
         private readonly IOrdersRepository _ordersRepository;
         private readonly ILotsRepository _lotsRepository;
-        private readonly IPaymentGateway _paymentGateway;
+        private readonly IPaymentGatewayFactory _paymentGatewayFactory;
         private readonly ILogger<AuctionEndedConsumer> _logger;
 
         public AuctionEndedConsumer(
             IOrdersRepository ordersRepository,
             ILotsRepository lotsRepository,
-            IPaymentGateway paymentGateway,
+            IPaymentGatewayFactory paymentGatewayFactory,
             ILogger<AuctionEndedConsumer> logger)
         {
             _ordersRepository = ordersRepository;
             _lotsRepository = lotsRepository;
-            _paymentGateway = paymentGateway;
+            _paymentGatewayFactory = paymentGatewayFactory;
             _logger = logger;
         }
 
@@ -41,7 +42,8 @@ namespace Marketplace
             }
 
             // Server-to-server call: capture the previously held amount from the payment gateway
-            var captureUrl = await _paymentGateway.CaptureHoldAsync(order, context.CancellationToken);
+            var captureUrl = await _paymentGatewayFactory.CreatePaymentGateway(order.PaymentInfo.Provider)
+                .CaptureHoldAsync(order, context.CancellationToken);
 
             _logger.LogInformation(
                 "Hold captured for order {OrderId} (lot {LotId}) via {CaptureUrl}.",

@@ -66,14 +66,14 @@ public class OrdersEndpointTests : IntegrationTestsBase
     {
         await SeedCartItemAsync(1, LotType.Simple);
 
-        var checkoutResponse = await _client.PostAsJsonAsync("/api/orders/checkout", CreateCheckoutRequest("FakePay"));
+        var checkoutResponse = await _client.PostAsJsonAsync("/api/orders/checkout", CreateCheckoutRequest("Stripe"));
         Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
         var orderId = Guid.Parse(headerValues!.Single());
 
         var webhookResponse = await _client.PostAsJsonAsync("/api/orders/payment/webhook", new PaymentWebhookRequest
         {
             OrderId = orderId,
-            Provider = "FakePay",
+            Provider = "Stripe",
             Reference = "PAY-123456",
             IsSuccess = true
         });
@@ -165,7 +165,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
 
         var checkoutResponse = await _client.PostAsJsonAsync(
             "/api/orders/checkout/draw",
-            CreateCheckoutDrawRequest(lot.Id, ticketsCount, provider: "FakePay"));
+            CreateCheckoutDrawRequest(lot.Id, ticketsCount, provider: "Stripe"));
 
         Assert.Equal(HttpStatusCode.Redirect, checkoutResponse.StatusCode);
         Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
@@ -177,7 +177,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
             {
                 OrderId = orderId,
                 LotId = lot.Id,
-                Provider = "FakePay",
+                Provider = "Stripe",
                 Reference = "DRAW-PAY-001",
                 IsSuccess = true
             });
@@ -206,7 +206,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
 
         var checkoutResponse = await _client.PostAsJsonAsync(
             "/api/orders/checkout/draw",
-            CreateCheckoutDrawRequest(lot.Id, ticketsCount, provider: "FakePay"));
+            CreateCheckoutDrawRequest(lot.Id, ticketsCount, provider: "Stripe"));
 
         Assert.Equal(HttpStatusCode.Redirect, checkoutResponse.StatusCode);
         Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
@@ -251,7 +251,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
 
         var checkoutResponse = await _client.PostAsJsonAsync(
             "/api/orders/checkout/draw",
-            CreateCheckoutDrawRequest(lot.Id, ticketsCount: 2, provider: "FakePay"));
+            CreateCheckoutDrawRequest(lot.Id, ticketsCount: 2, provider: "Stripe"));
 
         Assert.Equal(HttpStatusCode.Redirect, checkoutResponse.StatusCode);
         Assert.True(checkoutResponse.Headers.TryGetValues("X-Order-Id", out var headerValues));
@@ -260,7 +260,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
         var webhookResponse = await _client.PostAsJsonAsync("/api/orders/payment/webhook", new PaymentWebhookRequest
         {
             OrderId = orderId,
-            Provider = "FakePay",
+            Provider = "Stripe",
             Reference = "DRAW-PAY-001",
             IsSuccess = true
         });
@@ -288,7 +288,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
         Assert.All(paidTickets, t => Assert.True(t.IsPayed));
     }
 
-    private static CheckoutRequest CreateCheckoutRequest(string provider = "FakePay", decimal taxRate = 0.07m) =>
+    private static CheckoutRequest CreateCheckoutRequest(string provider = "Stripe", decimal taxRate = 0.07m) =>
         new()
         {
             Shipping = new ShippingInfoDto
@@ -312,7 +312,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
     private static CheckoutDrawRequest CreateCheckoutDrawRequest(
         Guid lotId,
         int ticketsCount,
-        string provider = "FakePay",
+        string provider = "Stripe",
         decimal taxRate = 0.07m) =>
         new()
         {
@@ -339,7 +339,7 @@ public class OrdersEndpointTests : IntegrationTestsBase
     private static CheckoutAuctionRequest CreateCheckoutAuctionRequest(
         Guid lotId,
         Money amount,
-        string provider = "FakePay",
+        string provider = "Stripe",
         decimal taxRate = 0.07m) =>
         new()
         {

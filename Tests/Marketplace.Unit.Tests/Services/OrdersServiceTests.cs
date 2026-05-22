@@ -2,6 +2,7 @@ using System.Security.Claims;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using Marketplace.Abstractions;
+using Marketplace.Payment;
 using Marketplace.Repository;
 using MassTransit;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -191,11 +192,13 @@ namespace Marketplace.Unit.Tests.Services
 
             PaymentInfo? gatewayPaymentInfo = null;
             const string paymentUrl = "https://pay.test/checkout";
-            fixture.Freeze<Mock<IPaymentGateway>>()
-                .Setup(pg => pg.CreatePaymentUrlAsync(
-                    It.IsAny<Order>(),
-                    It.IsAny<PaymentInfo>(),
-                    It.IsAny<CancellationToken>()))
+            var paymentGatewayFactory = fixture.Freeze<Mock<IPaymentGatewayFactory>>();
+            var paymentGateway = fixture.Freeze<Mock<IPaymentGateway>>();
+            paymentGatewayFactory.Setup(f => f.CreatePaymentGateway(It.IsAny<string>())).Returns(paymentGateway.Object);
+            paymentGateway.Setup(pg => pg.CreatePaymentUrlAsync(
+                It.IsAny<Order>(),
+                It.IsAny<PaymentInfo>(),
+                It.IsAny<CancellationToken>()))
                 .Callback<Order, PaymentInfo, CancellationToken>((_, p, _) => gatewayPaymentInfo = p)
                 .ReturnsAsync(paymentUrl);
 

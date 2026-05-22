@@ -1,3 +1,4 @@
+using Marketplace.Payment;
 using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
@@ -10,20 +11,20 @@ namespace Marketplace
         private readonly ILotsRepository _lotsRepository;
         private readonly IBidsRepository _bidsRepository;
         private readonly IOrdersRepository _ordersRepository;
-        private readonly IPaymentGateway _paymentGateway;
+        private readonly IPaymentGatewayFactory _paymentGatewayFactory;
 
         public BidsService(
             ClaimsPrincipal user,
             ILotsRepository lotsRepository,
             IBidsRepository bidsRepository,
             IOrdersRepository ordersRepository,
-            IPaymentGateway paymentGateway)
+            IPaymentGatewayFactory paymentGatewayFactory)
         {
             _user = user;
             _lotsRepository = lotsRepository;
             _bidsRepository = bidsRepository;
             _ordersRepository = ordersRepository;
-            _paymentGateway = paymentGateway;
+            _paymentGatewayFactory = paymentGatewayFactory;
         }
 
         public Task<IReadOnlyCollection<Bid>> LoadBidHistory(Guid lotId)
@@ -49,7 +50,8 @@ namespace Marketplace
             var previousHoldOrder = await _ordersRepository.GetPaidOrderByLotId(lotId);
             if (previousHoldOrder is not null)
             {
-                await _paymentGateway.ReleaseHoldAsync(previousHoldOrder);
+                await _paymentGatewayFactory.CreatePaymentGateway(previousHoldOrder.PaymentInfo.Provider)
+                    .ReleaseHoldAsync(previousHoldOrder);
             }
 
             await _bidsRepository.PlaceBid(bid);

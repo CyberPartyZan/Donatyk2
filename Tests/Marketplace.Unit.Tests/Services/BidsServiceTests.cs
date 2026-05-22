@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AutoFixture;
 using AutoFixture.AutoMoq;
+using Marketplace.Payment;
 using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Moq;
@@ -143,7 +144,9 @@ namespace Marketplace.Unit.Tests.Services
             var ordersRepo = fixture.Freeze<Mock<IOrdersRepository>>();
             ordersRepo.Setup(r => r.GetPaidOrderByLotId(lotId, default)).ReturnsAsync(previousOrder);
 
+            var paymentGatewayFactory = fixture.Freeze<Mock<IPaymentGatewayFactory>>();
             var paymentGateway = fixture.Freeze<Mock<IPaymentGateway>>();
+            paymentGatewayFactory.Setup(f => f.CreatePaymentGateway(previousOrder.PaymentInfo.Provider)).Returns(paymentGateway.Object);
             paymentGateway.Setup(g => g.ReleaseHoldAsync(previousOrder, default)).Returns(Task.CompletedTask);
 
             var service = fixture.Create<BidsService>();

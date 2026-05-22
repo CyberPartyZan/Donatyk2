@@ -39,13 +39,14 @@ public class BidsEndpointTests : IntegrationTestsBase
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
 
+        var email = $"seller-{Guid.NewGuid():N}@example.com";
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
-            UserName = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedUserName = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            Email = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedEmail = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
+            UserName = email,
+            NormalizedUserName = email.ToUpperInvariant(),
+            Email = email,
+            NormalizedEmail = email.ToUpperInvariant(),
             EmailConfirmed = true,
             SecurityStamp = Guid.NewGuid().ToString("N"),
             ConcurrencyStamp = Guid.NewGuid().ToString("N"),
@@ -59,11 +60,13 @@ public class BidsEndpointTests : IntegrationTestsBase
             Id = Guid.NewGuid(),
             Name = "Seller",
             Description = "Seller",
-            Email = $"seller-{Guid.NewGuid():N}@example.com",
+            Email = email,
             PhoneNumber = "+15555550111",
+            AvatarImageUrl = string.Empty,
             UserId = user.Id,
             User = user,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsDeleted = false
         };
 
         var lot = new LotEntity
@@ -80,6 +83,7 @@ public class BidsEndpointTests : IntegrationTestsBase
             Category = category,
             IsActive = true,
             IsCompensationPaid = false,
+            IsDeleted = false,
             CreatedAt = DateTime.UtcNow,
             EndOfAuction = DateTime.UtcNow.AddHours(2),
             AuctionStepPercent = 5

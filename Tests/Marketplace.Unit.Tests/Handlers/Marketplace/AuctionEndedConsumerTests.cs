@@ -1,4 +1,5 @@
 ﻿using Marketplace.Abstractions;
+using Marketplace.Payment;
 using Marketplace.Repository;
 using MassTransit;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,10 +11,10 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
     {
         private readonly Mock<IOrdersRepository> _ordersRepository = new();
         private readonly Mock<ILotsRepository> _lotsRepository = new();
-        private readonly Mock<IPaymentGateway> _paymentGateway = new();
+        private readonly Mock<IPaymentGatewayFactory> _paymentGatewayFactory = new();
 
         private AuctionEndedConsumer CreateConsumer() =>
-            new(_ordersRepository.Object, _lotsRepository.Object, _paymentGateway.Object,
+            new(_ordersRepository.Object, _lotsRepository.Object, _paymentGatewayFactory.Object,
                 NullLogger<AuctionEndedConsumer>.Instance);
 
         private static ConsumeContext<AuctionEnded> CreateContext(Guid lotId)
@@ -33,7 +34,7 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
 
             await CreateConsumer().Consume(CreateContext(lotId));
 
-            _paymentGateway.Verify(g => g.CaptureHoldAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
+            _paymentGatewayFactory.Verify(f => f.CreatePaymentGateway(It.IsAny<string>()), Times.Never);
             _lotsRepository.Verify(r => r.UpdateLot(It.IsAny<Guid>(), It.IsAny<Lot>()), Times.Never);
         }
 
@@ -45,8 +46,8 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
 
             _ordersRepository.Setup(r => r.GetPaidOrderByLotId(lotId, CancellationToken.None))
                 .ReturnsAsync(order);
-            _paymentGateway.Setup(g => g.CaptureHoldAsync(order, CancellationToken.None))
-                .ReturnsAsync("https://capture-url");
+            _paymentGatewayFactory.Setup(f => f.CreatePaymentGateway(order.PaymentInfo.Provider))
+                .Returns(Mock.Of<IPaymentGateway>());
             _lotsRepository.Setup(r => r.GetLotById(lotId))
                 .ReturnsAsync((Lot?)null);
 
@@ -64,8 +65,8 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
 
             _ordersRepository.Setup(r => r.GetPaidOrderByLotId(lotId, CancellationToken.None))
                 .ReturnsAsync(order);
-            _paymentGateway.Setup(g => g.CaptureHoldAsync(order, CancellationToken.None))
-                .ReturnsAsync("https://capture-url");
+            _paymentGatewayFactory.Setup(f => f.CreatePaymentGateway(order.PaymentInfo.Provider))
+                .Returns(Mock.Of<IPaymentGateway>());
             _lotsRepository.Setup(r => r.GetLotById(lotId))
                 .ReturnsAsync(lot);
 
