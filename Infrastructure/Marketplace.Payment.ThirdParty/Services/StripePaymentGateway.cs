@@ -132,15 +132,15 @@ namespace Marketplace.Payment
                 Quantity = item.Quantity
             }).ToList();
 
+            var baseReturnUrl = paymentInfo.ReturnUrl ?? "https://payments.local";
+
             var options = new SessionCreateOptions
             {
                 PaymentMethodTypes = ["card"],
                 LineItems = lineItems,
                 Mode = "payment",
-                SuccessUrl = paymentInfo.ReturnUrl
-                    ?? "https://payments.local/success",
-                CancelUrl = paymentInfo.ReturnUrl
-                    ?? "https://payments.local/cancel",
+                SuccessUrl = $"{baseReturnUrl}?orderId={order.Id}&isSuccess=true",
+                CancelUrl  = $"{baseReturnUrl}?orderId={order.Id}&isSuccess=false",
                 Metadata = new Dictionary<string, string>
                 {
                     ["orderId"] = order.Id.ToString()
