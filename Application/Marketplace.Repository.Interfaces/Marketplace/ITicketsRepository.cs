@@ -4,7 +4,6 @@ namespace Marketplace.Repository
     {
         Task Create(IReadOnlyCollection<Ticket> tickets);
         Task<IReadOnlyCollection<Ticket>> GetAll(Guid lotId);
-        Task MarkAsWinning(Guid lotId, Guid ticketId);
         Task Update(IReadOnlyCollection<Ticket> tickets);
         Task DeleteTickets(IReadOnlyCollection<Guid> ticketIds);
     }

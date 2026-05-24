@@ -52,7 +52,7 @@ namespace Marketplace
 
             var winner = drawLot.FindWinner();
 
-            await _ticketsRepository.MarkAsWinning(lotId, winner.Id);
+            await _ticketsRepository.Update([winner]);
             await _lotsRepository.UpdateLot(lotId, drawLot);
 
             return winner;

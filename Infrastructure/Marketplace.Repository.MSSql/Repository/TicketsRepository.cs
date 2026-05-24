@@ -48,28 +48,6 @@ namespace Marketplace.Repository.MSSql
                 .ToList();
         }
 
-        public async Task MarkAsWinning(Guid lotId, Guid ticketId)
-        {
-            var entities = await _db.Tickets
-                .Where(x => x.LotId == lotId)
-                .ToListAsync();
-
-            if (entities.Count == 0)
-                throw new InvalidOperationException("No tickets found for this lot.");
-
-            var hasWinner = false;
-            foreach (var ticket in entities)
-            {
-                ticket.IsWinning = ticket.Id == ticketId;
-                if (ticket.IsWinning) hasWinner = true;
-            }
-
-            if (!hasWinner)
-                throw new KeyNotFoundException($"Winner ticket '{ticketId}' was not found for lot '{lotId}'.");
-
-            await _db.SaveChangesAsync();
-        }
-
         public async Task Update(IReadOnlyCollection<Ticket> tickets)
         {
             ArgumentNullException.ThrowIfNull(tickets);

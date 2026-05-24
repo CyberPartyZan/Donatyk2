@@ -131,11 +131,21 @@ namespace Marketplace.Unit.Tests.Services
             var ticketsRepo = fixture.Freeze<Mock<ITicketsRepository>>();
             ticketsRepo.Setup(r => r.GetAll(lotId)).ReturnsAsync(tickets);
 
+            IReadOnlyCollection<Ticket>? updatedTickets = null;
+            ticketsRepo.Setup(r => r.Update(It.IsAny<IReadOnlyCollection<Ticket>>()))
+                .Callback<IReadOnlyCollection<Ticket>>(x => updatedTickets = x)
+                .Returns(Task.CompletedTask);
+
             var service = fixture.Create<TicketsService>();
 
             var winner = await service.FindWinner(lotId);
 
-            ticketsRepo.Verify(r => r.MarkAsWinning(lotId, winner.Id), Times.Once);
+            Assert.NotNull(updatedTickets);
+            Assert.Single(updatedTickets.Where(t => t.IsWinning));
+            Assert.Equal(winner.Id, updatedTickets.Single(t => t.IsWinning).Id);
+
+            ticketsRepo.Verify(r => r.GetAll(lotId), Times.Once);
+            ticketsRepo.Verify(r => r.Update(It.IsAny<IReadOnlyCollection<Ticket>>()), Times.Once);
             lotsRepo.Verify(r => r.UpdateLot(lotId, It.Is<Lot>(l => l.GetType() == typeof(DrawLot))), Times.Once);
         }
 
