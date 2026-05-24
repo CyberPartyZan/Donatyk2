@@ -7,7 +7,7 @@ namespace Marketplace
         public string? ReturnUrl { get; }
         public string? Reference { get; private set; }
 
-        public PaymentInfo(string provider, decimal taxRate, string? returnUrl)
+        public PaymentInfo(string provider, decimal taxRate, string? returnUrl, string? reference = null)
         {
             if (string.IsNullOrWhiteSpace(provider))
             {
@@ -22,6 +22,7 @@ namespace Marketplace
             Provider = provider;
             TaxRate = taxRate;
             ReturnUrl = returnUrl;
+            Reference = reference;
         }
 
         public void AttachReference(string reference)

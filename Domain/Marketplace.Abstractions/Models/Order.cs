@@ -17,6 +17,62 @@
         {
         }
 
+        /// <summary>
+        /// Reconstructs an <see cref="Order"/> from persisted data, preserving the original Id,
+        /// Status, CreatedAt, and all other fields as stored in the database.
+        /// </summary>
+        public static Order Reconstruct(
+            Guid id,
+            Guid customerId,
+            OrderStatus status,
+            DateTime createdAt,
+            ShippingInfo shippingInfo,
+            PaymentInfo paymentInfo,
+            IReadOnlyList<PricedItem> items)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentException("Id must be provided.", nameof(id));
+
+            if (customerId == Guid.Empty)
+                throw new ArgumentException("CustomerId must be provided.", nameof(customerId));
+
+            if (shippingInfo is null)
+                throw new ArgumentNullException(nameof(shippingInfo));
+
+            if (paymentInfo is null)
+                throw new ArgumentNullException(nameof(paymentInfo));
+
+            if (items is null || items.Count == 0)
+                throw new ArgumentException("At least one item is required.", nameof(items));
+
+            var order = new Order
+            {
+                Id = id,
+                CustomerId = customerId,
+                Status = status,
+                CreatedAt = createdAt,
+                ShippingInfo = shippingInfo,
+                PaymentInfo = paymentInfo
+            };
+
+            var firstCurrency = items[0].UnitPrice.Currency;
+            var runningTotal = new Money(0m, firstCurrency);
+
+            foreach (var pricedItem in items)
+            {
+                if (pricedItem.UnitPrice.Currency != firstCurrency)
+                    throw new InvalidOperationException("All items in the order must use the same currency.");
+
+                var orderItem = OrderItem.From(pricedItem);
+                order._items.Add(orderItem);
+                runningTotal += orderItem.Total;
+            }
+
+            order.Total = runningTotal;
+
+            return order;
+        }
+
         public static Order Create(
             Guid userId,
             ShippingInfo shippingInfo,
@@ -24,24 +80,16 @@
             IReadOnlyList<PricedItem> items)
         {
             if (userId == Guid.Empty)
-            {
                 throw new ArgumentException("UserId must be provided.", nameof(userId));
-            }
 
             if (shippingInfo is null)
-            {
                 throw new ArgumentNullException(nameof(shippingInfo));
-            }
 
             if (paymentInfo is null)
-            {
                 throw new ArgumentNullException(nameof(paymentInfo));
-            }
 
             if (items is null || items.Count == 0)
-            {
                 throw new ArgumentException("At least one item is required to create an order.", nameof(items));
-            }
 
             var order = new Order
             {
@@ -59,9 +107,7 @@
             foreach (var pricedItem in items)
             {
                 if (pricedItem.UnitPrice.Currency != firstCurrency)
-                {
                     throw new InvalidOperationException("All items in the order must use the same currency.");
-                }
 
                 var orderItem = OrderItem.From(pricedItem);
                 order._items.Add(orderItem);
@@ -76,9 +122,7 @@
         public void MarkPaid()
         {
             if (Status != OrderStatus.Created)
-            {
                 throw new InvalidOperationException("Only created orders can be marked as paid.");
-            }
 
             Status = OrderStatus.Paid;
         }
@@ -86,14 +130,10 @@
         public void Cancel()
         {
             if (Status == OrderStatus.Cancelled)
-            {
                 throw new InvalidOperationException("Order is already cancelled.");
-            }
 
             if (Status == OrderStatus.Completed)
-            {
                 throw new InvalidOperationException("Completed orders cannot be cancelled.");
-            }
 
             Status = OrderStatus.Cancelled;
         }

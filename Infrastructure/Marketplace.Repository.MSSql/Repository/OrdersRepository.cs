@@ -55,49 +55,12 @@ namespace Marketplace.Repository.MSSql
             return entity is null ? null : MapToDomain(entity);
         }
 
-        public async Task<Guid> MarkPaid(Guid orderId)
-        {
-            var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-
-            if (entity is null)
-                throw new KeyNotFoundException($"Order '{orderId}' not found.");
-
-            if (entity.Status == OrderStatus.Paid)
-                return entity.CustomerId;
-
-            entity.Status = OrderStatus.Paid;
-            await _db.SaveChangesAsync();
-
-            return entity.CustomerId;
-        }
-
-        public async Task<Guid> MarkPaid(Guid orderId, string provider, string paymentReference)
-        {
-            var entity = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-
-            if (entity is null)
-                throw new KeyNotFoundException($"Order '{orderId}' not found.");
-
-            if (!string.Equals(entity.PaymentProvider, provider, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Payment provider does not match the order payment provider.");
-
-            if (entity.Status == OrderStatus.Paid)
-                return entity.CustomerId;
-
-            entity.Status = OrderStatus.Paid;
-            entity.PaymentReference = paymentReference;
-            await _db.SaveChangesAsync();
-
-            return entity.CustomerId;
-        }
-
         public async Task Update(Order order)
         {
             if (order is null)
                 throw new ArgumentNullException(nameof(order));
 
             var entity = await _db.Orders
-                .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == order.Id);
 
             if (entity is null)
@@ -138,13 +101,21 @@ namespace Marketplace.Repository.MSSql
             var paymentInfo = new PaymentInfo(
                 entity.PaymentProvider,
                 entity.PaymentTaxRate,
-                entity.PaymentReturnUrl);
+                entity.PaymentReturnUrl,
+                entity.PaymentReference);
 
             var pricedItems = entity.Items
                 .Select(i => PricedItem.FromCustomPrice(i.LotId, i.NameSnapshot, i.UnitPrice, i.Quantity, 0m))
                 .ToList();
 
-            return Order.Create(entity.CustomerId, shippingInfo, paymentInfo, pricedItems);
+            return Order.Reconstruct(
+                entity.Id,
+                entity.CustomerId,
+                entity.Status,
+                entity.CreatedAt,
+                shippingInfo,
+                paymentInfo,
+                pricedItems);
         }
 
         private static OrderEntity Map(Order order)

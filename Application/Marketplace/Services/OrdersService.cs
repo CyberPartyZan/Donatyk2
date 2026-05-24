@@ -204,7 +204,15 @@ namespace Marketplace
                 return;
             }
 
-            await _ordersRepository.MarkPaid(request.OrderId, request.Provider, request.Reference);
+            var order = await _ordersRepository.GetById(request.OrderId)
+                ?? throw new KeyNotFoundException($"Order '{request.OrderId}' not found.");
+
+            if (!string.Equals(order.PaymentInfo.Provider, request.Provider, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Payment provider does not match the order payment provider.");
+
+            order.PaymentInfo.AttachReference(request.Reference);
+            order.MarkPaid();
+            await _ordersRepository.Update(order);
 
             await _publishEndpoint.Publish(new PaymentProcessed(request.OrderId, true));
         }
@@ -233,7 +241,11 @@ namespace Marketplace
                 return;
             }
 
-            await _ordersRepository.MarkPaid(request.OrderId);
+            var paidOrder = await _ordersRepository.GetById(request.OrderId)
+                ?? throw new KeyNotFoundException($"Order '{request.OrderId}' not found.");
+
+            paidOrder.MarkPaid();
+            await _ordersRepository.Update(paidOrder);
             await _ticketsService.MarkAsPayedByOrderId(request.OrderId);
 
             _logger.LogInformation(
@@ -262,7 +274,13 @@ namespace Marketplace
             if (orderId == Guid.Empty)
                 throw new ArgumentException("Order id must be provided.", nameof(orderId));
 
-            return await _ordersRepository.MarkPaid(orderId);
+            var order = await _ordersRepository.GetById(orderId)
+                ?? throw new KeyNotFoundException($"Order '{orderId}' not found.");
+
+            order.MarkPaid();
+            await _ordersRepository.Update(order);
+
+            return order.CustomerId;
         }
 
         private static ShippingInfo ToShippingInfo(ShippingInfoDto dto)
