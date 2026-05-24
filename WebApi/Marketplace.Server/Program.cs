@@ -72,7 +72,7 @@ namespace Marketplace.Server
 
             builder.Services.AddMarketplaceRepositoryServices(builder.Configuration.GetConnectionString("DefaultConnection"));
             builder.Services.AddAuthenticationServices();
-            builder.Services.AddNotificationServices();
+            builder.Services.AddNotificationServices(builder.Configuration);
             builder.Services.AddCacheServices(builder.Configuration);
             builder.Services.AddMarketplaceServices();
             builder.Services.AddPaymentServices(builder.Configuration);
