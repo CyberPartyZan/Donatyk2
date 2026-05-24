@@ -211,7 +211,6 @@ namespace Marketplace
                 throw new InvalidOperationException("Payment provider does not match the order payment provider.");
 
             order.PaymentInfo.AttachReference(request.Reference);
-            order.MarkPaid();
             await _ordersRepository.Update(order);
 
             await _publishEndpoint.Publish(new PaymentProcessed(request.OrderId, true));

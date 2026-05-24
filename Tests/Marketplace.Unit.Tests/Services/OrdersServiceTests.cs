@@ -241,7 +241,10 @@ namespace Marketplace.Unit.Tests.Services
 
             await service.HandlePaymentWebhookAsync(request);
 
-            ordersRepository.Verify(r => r.MarkPaid(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            // Repository.Update should never be called with a Paid order
+            ordersRepository.Verify(
+                r => r.Update(It.Is<Order>(o => o.Status == OrderStatus.Paid)),
+                Times.Never);
         }
 
         [Fact]
@@ -301,12 +304,17 @@ namespace Marketplace.Unit.Tests.Services
                 .ReturnsAsync(() => storedOrder!.Id);
 
             const string paymentUrl = "https://pay.test/draw-checkout";
-            fixture.Freeze<Mock<IPaymentGateway>>()
+            var paymentGateway = fixture.Freeze<Mock<IPaymentGateway>>();
+            paymentGateway
                 .Setup(pg => pg.CreatePaymentDrawUrlAsync(
                     It.IsAny<Order>(),
                     It.IsAny<PaymentInfo>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(paymentUrl);
+
+            fixture.Freeze<Mock<IPaymentGatewayFactory>>()
+                .Setup(f => f.CreatePaymentGateway(It.IsAny<string>()))
+                .Returns(paymentGateway.Object);
 
             var cartRepository = fixture.Freeze<Mock<ICartRepository>>();
             var service = fixture.Create<OrdersService>();
@@ -368,7 +376,7 @@ namespace Marketplace.Unit.Tests.Services
 
             ticketsService.Verify(s => s.CancelTicketsForUserOnLot(lotId, userId, quantity), Times.Once);
             ordersRepository.Verify(r => r.Update(It.Is<Order>(o => o.Status == OrderStatus.Cancelled)), Times.Once);
-            ordersRepository.Verify(r => r.MarkPaid(It.IsAny<Guid>()), Times.Never);
+            ordersRepository.Verify(r => r.Update(It.Is<Order>(o => o.Status == OrderStatus.Paid)), Times.Never);
             ticketsService.Verify(s => s.MarkAsPayedByOrderId(It.IsAny<Guid>()), Times.Never);
         }
 
@@ -400,34 +408,41 @@ namespace Marketplace.Unit.Tests.Services
             fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
 
             var orderId = fixture.Create<Guid>();
-            var drawLot = CreateDrawLot(ticketPriceAmount: 10m);
+            var lotId = fixture.Create<Guid>();
+            var userId = fixture.Create<Guid>();
+
+            var order = Order.Create(
+                userId,
+                CreateShippingInfo(),
+                CreatePaymentInfo(),
+                new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), 1, 0m) });
+
+            var drawLot = CreateDrawLot(id: lotId, ticketPriceAmount: 10m);
+
+            var ordersRepository = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepository.Setup(r => r.GetById(orderId)).ReturnsAsync(order);
 
             fixture.Freeze<Mock<ILotsRepository>>()
-                .Setup(r => r.GetLotById(drawLot.Id))
+                .Setup(r => r.GetLotById(lotId))
                 .ReturnsAsync(drawLot);
 
             fixture.Freeze<Mock<ITicketsService>>()
-                .Setup(s => s.GetAll(drawLot.Id))
+                .Setup(s => s.GetAll(lotId))
                 .ReturnsAsync(Array.Empty<Ticket>());
 
-            var ordersRepository = fixture.Freeze<Mock<IOrdersRepository>>();
-            ordersRepository.Setup(r => r.MarkPaid(orderId)).ReturnsAsync(Guid.NewGuid());
-
             var ticketsService = fixture.Freeze<Mock<ITicketsService>>();
-            var publishEndpoint = fixture.Freeze<Mock<IPublishEndpoint>>();
-
             var service = fixture.Create<OrdersService>();
 
             var request = new DrawPaymentWebhookRequest
             {
                 OrderId = orderId,
-                LotId = drawLot.Id,
+                LotId = lotId,
                 IsSuccess = true
             };
 
             await service.HandleDrawPaymentWebhookAsync(request);
 
-            ordersRepository.Verify(r => r.MarkPaid(orderId), Times.Once);
+            ordersRepository.Verify(r => r.Update(It.Is<Order>(o => o.Status == OrderStatus.Paid)), Times.Once);
             ticketsService.Verify(s => s.MarkAsPayedByOrderId(orderId), Times.Once);
         }
 
@@ -439,14 +454,25 @@ namespace Marketplace.Unit.Tests.Services
 
             var orderId = fixture.Create<Guid>();
             var lotId = Guid.NewGuid();
+            var userId = fixture.Create<Guid>();
 
             // 100 USD / 10 USD ticket = 10 total tickets
             var drawLot = CreateDrawLot(id: lotId, priceAmount: 100m, ticketPriceAmount: 10m, ticketsSold: 10);
+
+            var order = Order.Create(
+                userId,
+                CreateShippingInfo(),
+                CreatePaymentInfo(),
+                new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), 10, 0m) });
 
             var allPaidTickets = Enumerable.Range(0, 10)
                 .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed())
                 .ToList()
                 .AsReadOnly() as IReadOnlyCollection<Ticket>;
+
+            fixture.Freeze<Mock<IOrdersRepository>>()
+                .Setup(r => r.GetById(orderId))
+                .ReturnsAsync(order);
 
             fixture.Freeze<Mock<ILotsRepository>>()
                 .Setup(r => r.GetLotById(lotId))
@@ -455,10 +481,6 @@ namespace Marketplace.Unit.Tests.Services
             fixture.Freeze<Mock<ITicketsService>>()
                 .Setup(s => s.GetAll(lotId))
                 .ReturnsAsync(allPaidTickets!);
-
-            fixture.Freeze<Mock<IOrdersRepository>>()
-                .Setup(r => r.MarkPaid(orderId))
-                .ReturnsAsync(Guid.NewGuid());
 
             var publishEndpoint = fixture.Freeze<Mock<IPublishEndpoint>>();
             var service = fixture.Create<OrdersService>();
@@ -485,14 +507,25 @@ namespace Marketplace.Unit.Tests.Services
 
             var orderId = fixture.Create<Guid>();
             var lotId = Guid.NewGuid();
+            var userId = fixture.Create<Guid>();
 
             // 2 out of 10 tickets sold — not ready
             var drawLot = CreateDrawLot(id: lotId, priceAmount: 100m, ticketPriceAmount: 10m, ticketsSold: 2);
+
+            var order = Order.Create(
+                userId,
+                CreateShippingInfo(),
+                CreatePaymentInfo(),
+                new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), 2, 0m) });
 
             var partialTickets = Enumerable.Range(0, 2)
                 .Select(_ => Ticket.Create(Guid.NewGuid(), lotId).MarkAsPayed())
                 .ToList()
                 .AsReadOnly() as IReadOnlyCollection<Ticket>;
+
+            fixture.Freeze<Mock<IOrdersRepository>>()
+                .Setup(r => r.GetById(orderId))
+                .ReturnsAsync(order);
 
             fixture.Freeze<Mock<ILotsRepository>>()
                 .Setup(r => r.GetLotById(lotId))
@@ -501,10 +534,6 @@ namespace Marketplace.Unit.Tests.Services
             fixture.Freeze<Mock<ITicketsService>>()
                 .Setup(s => s.GetAll(lotId))
                 .ReturnsAsync(partialTickets!);
-
-            fixture.Freeze<Mock<IOrdersRepository>>()
-                .Setup(r => r.MarkPaid(orderId))
-                .ReturnsAsync(Guid.NewGuid());
 
             var publishEndpoint = fixture.Freeze<Mock<IPublishEndpoint>>();
             var service = fixture.Create<OrdersService>();
@@ -586,12 +615,17 @@ namespace Marketplace.Unit.Tests.Services
                 .ReturnsAsync(() => storedOrder!.Id);
 
             const string holdUrl = "https://pay.test/auction-hold";
-            fixture.Freeze<Mock<IPaymentGateway>>()
+            var paymentGateway = fixture.Freeze<Mock<IPaymentGateway>>();
+            paymentGateway
                 .Setup(pg => pg.CreatePaymentAuctionUrlAsync(
                     It.IsAny<Order>(),
                     It.IsAny<PaymentInfo>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(holdUrl);
+
+            fixture.Freeze<Mock<IPaymentGatewayFactory>>()
+                .Setup(f => f.CreatePaymentGateway(It.IsAny<string>()))
+                .Returns(paymentGateway.Object);
 
             var cartRepository = fixture.Freeze<Mock<ICartRepository>>();
             var service = fixture.Create<OrdersService>();
