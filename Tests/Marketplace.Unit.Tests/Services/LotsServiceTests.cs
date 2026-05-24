@@ -258,11 +258,11 @@ namespace Marketplace.Unit.Tests.Services
 
             await service.ApproveLot(lot.Id);
 
-            repo.Verify(r => r.ApproveLot(It.IsAny<Guid>()), Times.Never);
+            repo.Verify(r => r.UpdateLot(It.IsAny<Guid>(), It.IsAny<Lot>()), Times.Never);
         }
 
         [Fact]
-        public async Task ApproveLot_WhenPending_CallsRepository()
+        public async Task ApproveLot_WhenPending_CallsRepositoryUpdate()
         {
             var fixture = CreateFixture();
             fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
@@ -275,7 +275,7 @@ namespace Marketplace.Unit.Tests.Services
 
             await service.ApproveLot(lot.Id);
 
-            repo.Verify(r => r.ApproveLot(lot.Id), Times.Once);
+            repo.Verify(r => r.UpdateLot(lot.Id, lot), Times.Once);
         }
 
         [Theory]
@@ -321,7 +321,7 @@ namespace Marketplace.Unit.Tests.Services
 
             await service.DeclineLot(lot.Id, "  duplicates  ");
 
-            repo.Verify(r => r.DeclineLot(It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
+            repo.Verify(r => r.UpdateLot(It.IsAny<Guid>(), It.IsAny<Lot>()), Times.Never);
         }
 
         [Fact]
@@ -338,7 +338,7 @@ namespace Marketplace.Unit.Tests.Services
 
             await service.DeclineLot(lot.Id, "  missing docs ");
 
-            repo.Verify(r => r.DeclineLot(lot.Id, "missing docs"), Times.Once);
+            repo.Verify(r => r.UpdateLot(lot.Id, lot), Times.Once);
         }
 
         private static IFixture CreateFixture() =>

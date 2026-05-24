@@ -155,13 +155,13 @@ namespace Marketplace
 
         public async Task ApproveLot(Guid id)
         {
-            // TODO: Remove double check for existence (GetLotById) and approval (Stage) - can be handled in repository with a single query and appropriate exception handling
             var existing = await _lotsRepository.GetLotById(id);
             if (existing is null) throw new KeyNotFoundException($"Lot with id '{id}' not found.");
 
             if (existing.Stage == LotStage.Approved) return;
 
-            await _lotsRepository.ApproveLot(id);
+            existing.Approve();
+            await _lotsRepository.UpdateLot(id, existing);
         }
 
         public async Task DeclineLot(Guid id, string reason)
@@ -180,7 +180,8 @@ namespace Marketplace
                 return;
             }
 
-            await _lotsRepository.DeclineLot(id, trimmedReason);
+            existing.Decline(trimmedReason);
+            await _lotsRepository.UpdateLot(id, existing);
         }
 
         private Guid GetCurrentUserIdOrThrow()

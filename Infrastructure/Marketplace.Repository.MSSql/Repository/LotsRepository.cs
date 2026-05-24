@@ -229,44 +229,6 @@ namespace Marketplace.Repository.MSSql
             await _db.SaveChangesAsync();
         }
 
-        public async Task ApproveLot(Guid id)
-        {
-            var existing = await _db.Lots.FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
-            if (existing is null)
-            {
-                throw new KeyNotFoundException($"Lot with id '{id}' not found.");
-            }
-
-            if (existing.Stage == LotStage.Approved)
-            {
-                return;
-            }
-
-            existing.Stage = LotStage.Approved;
-            existing.DeclineReason = null;
-            _db.Lots.Update(existing);
-            await _db.SaveChangesAsync();
-        }
-
-        public async Task DeclineLot(Guid id, string declineReason)
-        {
-            if (string.IsNullOrWhiteSpace(declineReason))
-            {
-                throw new ArgumentException("Decline reason is required.", nameof(declineReason));
-            }
-
-            var existing = await _db.Lots.FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
-            if (existing is null)
-            {
-                throw new KeyNotFoundException($"Lot with id '{id}' not found.");
-            }
-
-            existing.Stage = LotStage.Denied;
-            existing.DeclineReason = declineReason.Trim();
-            _db.Lots.Update(existing);
-            await _db.SaveChangesAsync();
-        }
-
         private static Lot CreateFromEntity(LotEntity entity)
         {
             if (entity is null) throw new ArgumentNullException(nameof(entity));

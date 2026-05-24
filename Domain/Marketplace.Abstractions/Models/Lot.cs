@@ -113,5 +113,22 @@
         {
             IsDeleted = true;
         }
+
+        public virtual void Approve()
+        {
+            Stage = LotStage.Approved;
+            DeclineReason = null;
+        }
+
+        public virtual void Decline(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                throw new ArgumentException("Decline reason is required.", nameof(reason));
+            }
+
+            Stage = LotStage.Denied;
+            DeclineReason = reason.Trim();
+        }
     }
 }
