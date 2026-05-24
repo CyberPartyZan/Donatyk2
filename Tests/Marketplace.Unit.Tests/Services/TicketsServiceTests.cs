@@ -176,112 +176,65 @@ namespace Marketplace.Unit.Tests.Services
         }
 
         [Fact]
-        public async Task MarkAsPayedByOrderId_ForwardsToRepository()
+        public async Task MarkAsPayedByOrderId_WhenOrderNotFound_ThrowsKeyNotFoundException()
         {
             var fixture = CreateFixture();
             fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
 
             var orderId = fixture.Create<Guid>();
-            var repo = fixture.Freeze<Mock<ITicketsRepository>>();
-            repo.Setup(r => r.MarkAsPayedByOrderId(orderId)).Returns(Task.CompletedTask);
+            fixture.Freeze<Mock<IOrdersRepository>>()
+                .Setup(r => r.GetById(orderId))
+                .ReturnsAsync((Order?)null);
 
             var service = fixture.Create<TicketsService>();
 
-            await service.MarkAsPayedByOrderId(orderId);
-
-            repo.Verify(r => r.MarkAsPayedByOrderId(orderId), Times.Once);
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.MarkAsPayedByOrderId(orderId));
         }
 
         [Fact]
-        public async Task CancelTicketsForUserOnLot_WithEmptyLotId_ThrowsArgumentException()
+        public async Task MarkAsPayedByOrderId_WithDrawOrder_MarksTicketsUsingDomainAndUpdatesRepository()
         {
             var fixture = CreateFixture();
             fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
 
-            var service = fixture.Create<TicketsService>();
-
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                service.CancelTicketsForUserOnLot(Guid.Empty, Guid.NewGuid(), 1));
-        }
-
-        [Fact]
-        public async Task CancelTicketsForUserOnLot_WithEmptyUserId_ThrowsArgumentException()
-        {
-            var fixture = CreateFixture();
-            fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
-
-            var service = fixture.Create<TicketsService>();
-
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                service.CancelTicketsForUserOnLot(Guid.NewGuid(), Guid.Empty, 1));
-        }
-
-        [Fact]
-        public async Task CancelTicketsForUserOnLot_WithZeroCount_ThrowsArgumentOutOfRangeException()
-        {
-            var fixture = CreateFixture();
-            fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
-
-            var service = fixture.Create<TicketsService>();
-
-            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-                service.CancelTicketsForUserOnLot(Guid.NewGuid(), Guid.NewGuid(), 0));
-        }
-
-        [Fact]
-        public async Task CancelTicketsForUserOnLot_WhenLotIsNotDrawLot_ThrowsInvalidOperationException()
-        {
-            var fixture = CreateFixture();
-            fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
-
-            var lotId = fixture.Create<Guid>();
-            fixture.Freeze<Mock<ILotsRepository>>()
-                .Setup(r => r.GetLotById(lotId))
-                .ReturnsAsync(CreateSimpleLot(id: lotId));
-
-            var service = fixture.Create<TicketsService>();
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                service.CancelTicketsForUserOnLot(lotId, Guid.NewGuid(), 1));
-        }
-
-        [Fact]
-        public async Task CancelTicketsForUserOnLot_WithValidData_DeletesTicketsAndUpdatesLot()
-        {
-            var fixture = CreateFixture();
-            fixture.Inject(CreatePrincipalWithNameIdentifier(fixture.Create<Guid>()));
-
-            var userId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
             var lotId = Guid.NewGuid();
-            const int count = 2;
+            var order = CreateOrder(customerId, (lotId, 2));
 
-            // 100 / 10 = 10 total tickets, 3 already sold
             var drawLot = CreateDrawLot(id: lotId, ticketsSold: 3);
 
-            var existingTickets = Enumerable.Range(0, 3)
-                .Select(_ => Ticket.Create(userId, lotId))
-                .ToList()
-                .AsReadOnly() as IReadOnlyCollection<Ticket>;
+            var t1 = new Ticket(Guid.NewGuid(), customerId, lotId, createdAt: DateTime.UtcNow.AddMinutes(-3), isPayed: false);
+            var t2 = new Ticket(Guid.NewGuid(), customerId, lotId, createdAt: DateTime.UtcNow.AddMinutes(-2), isPayed: false);
+            var t3 = new Ticket(Guid.NewGuid(), Guid.NewGuid(), lotId, createdAt: DateTime.UtcNow.AddMinutes(-1), isPayed: false);
+
+            var ordersRepo = fixture.Freeze<Mock<IOrdersRepository>>();
+            ordersRepo.Setup(r => r.GetById(order.Id)).ReturnsAsync(order);
 
             var lotsRepo = fixture.Freeze<Mock<ILotsRepository>>();
             lotsRepo.Setup(r => r.GetLotById(lotId)).ReturnsAsync(drawLot);
 
             var ticketsRepo = fixture.Freeze<Mock<ITicketsRepository>>();
-            ticketsRepo.Setup(r => r.GetAll(lotId)).ReturnsAsync(existingTickets!);
+            ticketsRepo.Setup(r => r.GetAll(lotId)).ReturnsAsync(new[] { t1, t2, t3 });
 
-            IReadOnlyCollection<Guid>? deletedIds = null;
-            ticketsRepo.Setup(r => r.DeleteTickets(It.IsAny<IReadOnlyCollection<Guid>>()))
-                .Callback<IReadOnlyCollection<Guid>>(ids => deletedIds = ids)
+            IReadOnlyCollection<Ticket>? updated = null;
+            ticketsRepo.Setup(r => r.Update(It.IsAny<IReadOnlyCollection<Ticket>>()))
+                .Callback<IReadOnlyCollection<Ticket>>(x => updated = x)
                 .Returns(Task.CompletedTask);
 
             var service = fixture.Create<TicketsService>();
 
-            await service.CancelTicketsForUserOnLot(lotId, userId, count);
+            await service.MarkAsPayedByOrderId(order.Id);
 
-            Assert.NotNull(deletedIds);
-            Assert.Equal(count, deletedIds!.Count);
-            ticketsRepo.Verify(r => r.DeleteTickets(It.IsAny<IReadOnlyCollection<Guid>>()), Times.Once);
-            lotsRepo.Verify(r => r.UpdateLot(lotId, It.Is<Lot>(l => l.GetType() == typeof(DrawLot) && ((DrawLot)l).TicketsSold == 1)), Times.Once);
+            Assert.NotNull(updated);
+            Assert.Equal(2, updated!.Count);
+            Assert.All(updated, x =>
+            {
+                Assert.Equal(customerId, x.UserId);
+                Assert.True(x.IsPayed);
+            });
+
+            ticketsRepo.Verify(r => r.GetAll(lotId), Times.Once);
+            ticketsRepo.Verify(r => r.Update(It.IsAny<IReadOnlyCollection<Ticket>>()), Times.Once);
         }
 
         private static IFixture CreateFixture() =>
@@ -337,5 +290,26 @@ namespace Marketplace.Unit.Tests.Services
 
         private static Category CreateCategory() =>
             new(Guid.NewGuid(), "Category", "Category description");
+
+        private static Order CreateOrder(Guid customerId, params (Guid LotId, int Quantity)[] items)
+        {
+            var shipping = new ShippingInfo(
+                "Buyer",
+                "Line1",
+                null,
+                "City",
+                "State",
+                "12345",
+                "US",
+                "+12345678901");
+
+            var payment = new PaymentInfo("Stripe", 0.07m, "https://example.com/return");
+
+            var pricedItems = items
+                .Select(i => PricedItem.FromCustomPrice(i.LotId, $"Lot-{i.LotId}", new Money(10m, Currency.USD), i.Quantity, 0m))
+                .ToList();
+
+            return Order.Create(customerId, shipping, payment, pricedItems);
+        }
     }
 }

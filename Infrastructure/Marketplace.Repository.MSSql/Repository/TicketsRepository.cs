@@ -70,50 +70,26 @@ namespace Marketplace.Repository.MSSql
             await _db.SaveChangesAsync();
         }
 
-        public async Task MarkAsPayedByOrderId(Guid orderId)
+        public async Task Update(IReadOnlyCollection<Ticket> tickets)
         {
-            var order = await _db.Orders
-                .Include(o => o.Items)
-                .SingleOrDefaultAsync(o => o.Id == orderId);
+            ArgumentNullException.ThrowIfNull(tickets);
+            if (tickets.Count == 0) return;
 
-            if (order is null)
-                throw new KeyNotFoundException($"Order '{orderId}' not found.");
+            var ticketById = tickets.ToDictionary(t => t.Id);
+            var ticketIds = ticketById.Keys.ToList();
 
-            if (order.Items.Count == 0)
-                return;
+            var entities = await _db.Tickets
+                .Where(t => ticketIds.Contains(t.Id))
+                .ToListAsync();
 
-            var lotIds = order.Items.Select(i => i.LotId).Distinct().ToList();
+            if (entities.Count != ticketIds.Count)
+                throw new KeyNotFoundException("One or more tickets to update were not found.");
 
-            var lotTypes = await _db.Lots
-                .Where(l => lotIds.Contains(l.Id))
-                .Select(l => new { l.Id, l.Type })
-                .ToDictionaryAsync(x => x.Id, x => x.Type);
-
-            var drawItems = order.Items
-                .Where(i => lotTypes.TryGetValue(i.LotId, out var type) && type == LotType.Draw)
-                .ToList();
-
-            if (drawItems.Count == 0)
-                return;
-
-            foreach (var item in drawItems)
+            foreach (var entity in entities)
             {
-                var ticketsToMark = await _db.Tickets
-                    .Where(t => t.LotId == item.LotId && t.UserId == order.CustomerId && !t.IsPayed)
-                    .OrderBy(t => t.CreatedAt)
-                    .Take(item.Quantity)
-                    .ToListAsync();
-
-                if (ticketsToMark.Count < item.Quantity)
-                {
-                    throw new InvalidOperationException(
-                        $"Not enough unpaid tickets to mark as paid for lot '{item.LotId}' and user '{order.CustomerId}'.");
-                }
-
-                foreach (var ticket in ticketsToMark)
-                {
-                    ticket.IsPayed = true;
-                }
+                var ticket = ticketById[entity.Id];
+                entity.IsWinning = ticket.IsWinning;
+                entity.IsPayed = ticket.IsPayed;
             }
 
             await _db.SaveChangesAsync();

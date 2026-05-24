@@ -8,16 +8,19 @@ namespace Marketplace
     {
         private readonly ITicketsRepository _ticketsRepository;
         private readonly ILotsRepository _lotsRepository;
+        private readonly IOrdersRepository _ordersRepository;
         private readonly ClaimsPrincipal _user;
 
         public TicketsService(
             ClaimsPrincipal user,
             ITicketsRepository ticketsRepository,
-            ILotsRepository lotsRepository)
+            ILotsRepository lotsRepository,
+            IOrdersRepository ordersRepository)
         {
             _user = user;
             _ticketsRepository = ticketsRepository;
             _lotsRepository = lotsRepository;
+            _ordersRepository = ordersRepository;
         }
 
         public Task<IReadOnlyCollection<Ticket>> GetAll(Guid lotId)
@@ -55,12 +58,41 @@ namespace Marketplace
             return winner;
         }
 
-        public Task MarkAsPayedByOrderId(Guid orderId)
+        public async Task MarkAsPayedByOrderId(Guid orderId)
         {
             if (orderId == Guid.Empty)
                 throw new ArgumentException("Order id must be provided.", nameof(orderId));
 
-            return _ticketsRepository.MarkAsPayedByOrderId(orderId);
+            var order = await _ordersRepository.GetById(orderId)
+                ?? throw new KeyNotFoundException($"Order '{orderId}' not found.");
+
+            if (order.Items.Count == 0)
+                return;
+
+            var drawItemsByLot = order.Items
+                .GroupBy(i => i.LotId)
+                .Select(g => new { LotId = g.Key, Quantity = g.Sum(i => i.Quantity) })
+                .ToList();
+
+            var changedTickets = new List<Ticket>();
+
+            foreach (var drawItem in drawItemsByLot)
+            {
+                var lot = await _lotsRepository.GetLotById(drawItem.LotId);
+                if (lot is not DrawLot drawLot)
+                    continue;
+
+                var lotTickets = await _ticketsRepository.GetAll(drawLot.Id);
+                drawLot.LoadTickets(lotTickets);
+
+                var markedAsPaid = drawLot.MarkTicketsAsPayed(order.CustomerId, drawItem.Quantity);
+                changedTickets.AddRange(markedAsPaid);
+            }
+
+            if (changedTickets.Count > 0)
+            {
+                await _ticketsRepository.Update(changedTickets.AsReadOnly());
+            }
         }
 
         public async Task CancelTicketsForUserOnLot(Guid lotId, Guid userId, int count)

@@ -173,6 +173,42 @@
             base.Delete();
         }
 
+        public IReadOnlyCollection<Ticket> MarkTicketsAsPayed(Guid userId, int count)
+        {
+            if (userId == Guid.Empty)
+                throw new ArgumentException("UserId cannot be empty.", nameof(userId));
+
+            if (count <= 0)
+                throw new ArgumentOutOfRangeException(nameof(count), "Count must be greater than zero.");
+
+            if (Tickets is null)
+                throw new InvalidOperationException("Tickets must be loaded before marking as paid.");
+
+            var toMark = Tickets
+                .Where(t => t.UserId == userId && !t.IsPayed)
+                .OrderBy(t => t.CreatedAt)
+                .Take(count)
+                .ToList();
+
+            if (toMark.Count < count)
+                throw new InvalidOperationException(
+                    $"Not enough unpaid tickets to mark as paid for user '{userId}'. Requested: {count}, available: {toMark.Count}.");
+
+            var idsToMark = toMark.Select(t => t.Id).ToHashSet();
+
+            var updatedTickets = Tickets
+                .Select(t => idsToMark.Contains(t.Id) ? t.MarkAsPayed() : t)
+                .ToList()
+                .AsReadOnly();
+
+            Tickets = updatedTickets;
+
+            return updatedTickets
+                .Where(t => idsToMark.Contains(t.Id))
+                .ToList()
+                .AsReadOnly();
+        }
+
         private static int CalculateTotalTickets(Money price, Money ticketPrice)
         {
             if (ticketPrice.Amount <= 0) return 0;
