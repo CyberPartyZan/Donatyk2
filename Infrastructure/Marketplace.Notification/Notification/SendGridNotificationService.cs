@@ -21,33 +21,58 @@ namespace Marketplace.Notification
             _options = options.Value;
         }
 
-        public Task NotifyOrderPaidAsync(Guid orderId)
+        public async Task NotifyOrderPaidAsync(Guid orderId, string email)
         {
-            _logger.LogInformation("Order {OrderId} has been marked as paid.", orderId);
-            return Task.CompletedTask;
+            var subject = "Your order payment was successful";
+            var plainText = $"Order {orderId} has been marked as paid.";
+            var html = $"""
+                        <p>Your payment was successful.</p>
+                        <p><strong>Order ID:</strong> {orderId}</p>
+                        """;
+
+            await SendEmailAsync(email, subject, plainText, html);
+            _logger.LogInformation("Order paid email queued for order {OrderId} to {Email}.", orderId, email);
         }
 
-        public Task NotifyOrderPayFailedAsync(Guid orderId)
+        public async Task NotifyOrderPayFailedAsync(Guid orderId, string email)
         {
-            _logger.LogWarning("Payment failed for order {OrderId}.", orderId);
-            return Task.CompletedTask;
+            var subject = "Your order payment failed";
+            var plainText = $"Payment for order {orderId} failed.";
+            var html = $"""
+                        <p>Payment for your order failed.</p>
+                        <p><strong>Order ID:</strong> {orderId}</p>
+                        """;
+
+            await SendEmailAsync(email, subject, plainText, html);
+            _logger.LogWarning("Order payment failed email queued for order {OrderId} to {Email}.", orderId, email);
         }
 
-        public Task NotifyOrderCreatedAsync(Guid orderId)
+        public async Task NotifyOrderCreatedAsync(Guid orderId, string email)
         {
-            _logger.LogInformation("Order {OrderId} has been created.", orderId);
-            return Task.CompletedTask;
+            var subject = "Your order was created";
+            var plainText = $"Order {orderId} has been created.";
+            var html = $"""
+                        <p>Your order has been created.</p>
+                        <p><strong>Order ID:</strong> {orderId}</p>
+                        """;
+
+            await SendEmailAsync(email, subject, plainText, html);
+            _logger.LogInformation("Order created email queued for order {OrderId} to {Email}.", orderId, email);
         }
 
-        public Task NotifyShipmentCreatedAsync(Guid orderId, Guid shipmentId, DateTimeOffset createdAt)
+        public async Task NotifyShipmentCreatedAsync(Guid orderId, string email, Guid shipmentId, DateTimeOffset createdAt)
         {
-            _logger.LogInformation(
-                "Shipment {ShipmentId} created for order {OrderId} at {CreatedAt}.",
-                shipmentId,
-                orderId,
-                createdAt);
+            var subject = "Your shipment was created";
+            var plainText = $"Shipment {shipmentId} for order {orderId} was created at {createdAt:u}.";
+            var html = $"""
+                        <p>Your shipment has been created.</p>
+                        <p><strong>Order ID:</strong> {orderId}</p>
+                        <p><strong>Shipment ID:</strong> {shipmentId}</p>
+                        <p><strong>Created:</strong> {createdAt:u}</p>
+                        """;
 
-            return Task.CompletedTask;
+            await SendEmailAsync(email, subject, plainText, html);
+            _logger.LogInformation("Shipment created email queued for order {OrderId} to {Email}.", orderId, email);
         }
 
         public async Task NotifyPasswordResetAsync(Guid userId, string email, string resetToken)
@@ -60,15 +85,10 @@ namespace Marketplace.Notification
                         """;
 
             await SendEmailAsync(email, subject, plainText, html);
-
             _logger.LogInformation("Password reset email queued for user {UserId} ({Email}).", userId, email);
         }
 
-        public async Task NotifyEmailConfirmationAsync(
-            Guid userId,
-            string email,
-            string confirmationToken,
-            string? confirmationUrl = null)
+        public async Task NotifyEmailConfirmationAsync(Guid userId, string email, string confirmationToken, string? confirmationUrl = null)
         {
             var subject = "Confirm your email";
             var plainText = string.IsNullOrWhiteSpace(confirmationUrl)
@@ -86,19 +106,21 @@ namespace Marketplace.Notification
                    """;
 
             await SendEmailAsync(email, subject, plainText, html);
-
             _logger.LogInformation("Email confirmation email queued for user {UserId} ({Email}).", userId, email);
         }
 
-        public Task NotifyDrawWinnerAsync(Guid userId, Guid lotId, Guid winningTicketId)
+        public async Task NotifyDrawWinnerAsync(Guid userId, string email, Guid lotId, Guid winningTicketId)
         {
-            _logger.LogInformation(
-                "User {UserId} has won the draw for lot {LotId} with ticket {WinningTicketId}.",
-                userId,
-                lotId,
-                winningTicketId);
+            var subject = "You won the draw";
+            var plainText = $"You won lot {lotId} with ticket {winningTicketId}.";
+            var html = $"""
+                        <p>Congratulations, you won the draw!</p>
+                        <p><strong>Lot ID:</strong> {lotId}</p>
+                        <p><strong>Winning Ticket ID:</strong> {winningTicketId}</p>
+                        """;
 
-            return Task.CompletedTask;
+            await SendEmailAsync(email, subject, plainText, html);
+            _logger.LogInformation("Draw winner email queued for user {UserId} ({Email}) on lot {LotId}.", userId, email, lotId);
         }
 
         private async Task SendEmailAsync(string toEmail, string subject, string plainTextContent, string htmlContent)

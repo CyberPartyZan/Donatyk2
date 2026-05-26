@@ -11,85 +11,45 @@ namespace Marketplace.Notification
             _logger = logger;
         }
 
-        public Task NotifyOrderPaidAsync(Guid orderId)
+        public Task NotifyOrderPaidAsync(Guid orderId, string email)
         {
-            _logger.LogInformation("Order {OrderId} has been marked as paid.", orderId);
+            _logger.LogInformation("Order {OrderId} paid for {Email}.", orderId, email);
             return Task.CompletedTask;
         }
 
-        public Task NotifyOrderPayFailedAsync(Guid orderId)
+        public Task NotifyOrderPayFailedAsync(Guid orderId, string email)
         {
-            _logger.LogWarning("Payment failed for order {OrderId}.", orderId);
+            _logger.LogWarning("Order {OrderId} payment failed for {Email}.", orderId, email);
             return Task.CompletedTask;
         }
 
-        public Task NotifyOrderCreatedAsync(Guid orderId)
+        public Task NotifyOrderCreatedAsync(Guid orderId, string email)
         {
-            _logger.LogInformation("Order {OrderId} has been created.", orderId);
+            _logger.LogInformation("Order {OrderId} created for {Email}.", orderId, email);
             return Task.CompletedTask;
         }
 
-        public Task NotifyShipmentCreatedAsync(Guid orderId, Guid shipmentId, DateTimeOffset createdAt)
+        public Task NotifyShipmentCreatedAsync(Guid orderId, string email, Guid shipmentId, DateTimeOffset createdAt)
         {
-            _logger.LogInformation(
-                "Shipment {ShipmentId} created for order {OrderId} at {CreatedAt}.",
-                shipmentId,
-                orderId,
-                createdAt);
-
+            _logger.LogInformation("Shipment {ShipmentId} created for order {OrderId} and {Email} at {CreatedAt}.", shipmentId, orderId, email, createdAt);
             return Task.CompletedTask;
         }
 
         public Task NotifyPasswordResetAsync(Guid userId, string email, string resetToken)
         {
-            // TODO: Implement SendGrid or SMTP email sending here.
-            var preview = resetToken.Length <= 8 ? resetToken : $"{resetToken[..8]}...";
-            _logger.LogInformation(
-                "Password reset requested for user {UserId} ({Email}). Token preview: {TokenPreview}",
-                userId,
-                email,
-                preview);
-
+            _logger.LogInformation("Password reset requested for user {UserId} ({Email}).", userId, email);
             return Task.CompletedTask;
         }
 
-        public Task NotifyEmailConfirmationAsync(
-            Guid userId,
-            string email,
-            string confirmationToken,
-            string? confirmationUrl = null)
+        public Task NotifyEmailConfirmationAsync(Guid userId, string email, string confirmationToken, string? confirmationUrl = null)
         {
-            var preview = confirmationToken.Length <= 8 ? confirmationToken : $"{confirmationToken[..8]}...";
-            if (!string.IsNullOrWhiteSpace(confirmationUrl))
-            {
-                _logger.LogInformation(
-                    "Email confirmation requested for user {UserId} ({Email}). Token preview: {TokenPreview}. Confirmation URL: {ConfirmationUrl}",
-                    userId,
-                    email,
-                    preview,
-                    confirmationUrl);
-            }
-            else
-            {
-                _logger.LogInformation(
-                    "Email confirmation requested for user {UserId} ({Email}). Token preview: {TokenPreview}",
-                    userId,
-                    email,
-                    preview);
-            }
-
+            _logger.LogInformation("Email confirmation requested for user {UserId} ({Email}).", userId, email);
             return Task.CompletedTask;
         }
 
-        public Task NotifyDrawWinnerAsync(Guid userId, Guid lotId, Guid winningTicketId)
+        public Task NotifyDrawWinnerAsync(Guid userId, string email, Guid lotId, Guid winningTicketId)
         {
-            // TODO: Implement SendGrid or SMTP email sending here.
-            _logger.LogInformation(
-                "User {UserId} has won the draw for lot {LotId} with ticket {WinningTicketId}.",
-                userId,
-                lotId,
-                winningTicketId);
-
+            _logger.LogInformation("Draw winner user {UserId} ({Email}), lot {LotId}, ticket {TicketId}.", userId, email, lotId, winningTicketId);
             return Task.CompletedTask;
         }
     }

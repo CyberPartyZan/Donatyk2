@@ -137,6 +137,7 @@ namespace Marketplace.Repository.MSSql
                 DiscountedPrice = lot.DiscountedPrice,
                 Type = lot.Type,
                 Stage = lot.Stage,
+                DeclineReason = lot.DeclineReason,
                 Category = new CategoryEntity
                 {
                     Id = lot.Category.Id,
@@ -198,6 +199,7 @@ namespace Marketplace.Repository.MSSql
             existing.DiscountedPrice = lot.DiscountedPrice;
             existing.Type = lot.Type;
             existing.Stage = lot.Stage;
+            existing.DeclineReason = lot.DeclineReason;
             existing.IsActive = lot.IsActive;
             existing.IsCompensationPaid = lot.IsCompensationPaid;
             existing.EndOfAuction = (lot is AuctionLot a) ? a.EndOfAuction : null;
