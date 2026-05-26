@@ -6,7 +6,9 @@ namespace Marketplace
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMarketplaceServices(this IServiceCollection services)
+        public static IServiceCollection AddMarketplaceServices(
+            this IServiceCollection services,
+            string? rabbitMqEndpointPrefix = null)
         {
             services.AddScoped<ILotsService, LotsService>();
             services.AddScoped<ISellersService, SellersService>();
@@ -21,6 +23,8 @@ namespace Marketplace
 
             services.AddMassTransit(x =>
             {
+                x.SetEndpointNameFormatter(CreateEndpointNameFormatter(rabbitMqEndpointPrefix));
+
                 x.AddConsumer<OrderCreatedConsumer>();
                 x.AddConsumer<PaymentProcessedConsumer>();
                 x.AddConsumer<ShipmentServicePaymentProcessedConsumer>();
@@ -28,8 +32,6 @@ namespace Marketplace
                 x.AddConsumer<ShipmentCreatedConsumer>();
                 x.AddConsumer<DrawLaunchedConsumer>();
                 x.AddConsumer<AuctionEndedConsumer>();
-
-                //x.AddEntityFrameworkOutbox<AppDbContext>();
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -46,6 +48,18 @@ namespace Marketplace
             });
 
             return services;
+        }
+
+        private static IEndpointNameFormatter CreateEndpointNameFormatter(string? rabbitMqEndpointPrefix)
+        {
+            if (string.IsNullOrWhiteSpace(rabbitMqEndpointPrefix))
+            {
+                return KebabCaseEndpointNameFormatter.Instance;
+            }
+
+            return new KebabCaseEndpointNameFormatter(
+                prefix: rabbitMqEndpointPrefix.Trim().ToLowerInvariant(),
+                includeNamespace: false);
         }
     }
 }

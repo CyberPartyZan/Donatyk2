@@ -74,7 +74,8 @@ namespace Marketplace.Server
             builder.Services.AddAuthenticationServices();
             builder.Services.AddNotificationServices(builder.Configuration);
             builder.Services.AddCacheServices(builder.Configuration);
-            builder.Services.AddMarketplaceServices();
+            builder.Services.AddMarketplaceServices(
+                builder.Configuration["MassTransit:EndpointPrefix"]);
             builder.Services.AddPaymentServices(builder.Configuration);
 
             // Hangfire — using in-memory storage (swap to SQL Server in production via Hangfire.SqlServer)

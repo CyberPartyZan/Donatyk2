@@ -24,6 +24,8 @@ public class CustomWebApplicationFactory
     private DbConnection _connection = default!;
     private Respawner _respawner = default!;
 
+    public string RabbitMqEndpointPrefix { get; } = $"it-{Guid.NewGuid():N}";
+
     public async Task InitializeAsync()
     {
         await _sqlContainer.StartAsync();
@@ -49,6 +51,8 @@ public class CustomWebApplicationFactory
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("MassTransit:EndpointPrefix", RabbitMqEndpointPrefix);
+
         builder.ConfigureServices(services =>
         {
             var descriptor = services.SingleOrDefault(

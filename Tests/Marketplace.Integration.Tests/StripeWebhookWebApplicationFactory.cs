@@ -60,8 +60,12 @@ public class StripeWebhookWebApplicationFactory
         await _sqlContainer.DisposeAsync();
     }
 
+    public string RabbitMqEndpointPrefix { get; } = $"it-stripe-{Guid.NewGuid():N}";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("MassTransit:EndpointPrefix", RabbitMqEndpointPrefix);
+
         // Override configuration so the app uses Stripe gateway pointed at WireMock
         builder.UseSetting("Payments:Provider", "Stripe");
         builder.UseSetting("Stripe:SecretKey", "sk_test_fakesecretkey");
