@@ -363,102 +363,21 @@ public class OrdersEndpointTests : IntegrationTestsBase
             }
         };
 
-    private async Task<(LotEntity Lot, CartItemEntity CartItem, int StockBefore)> SeedCartItemAsync(int quantity, LotType type)
+    private async Task<(LotEntity Lot, CartItemEntity CartItem, int StockBefore)> SeedCartItemAsync(
+        int quantity, LotType type)
     {
         var lot = await SeedLotAsync(stockCount: 10, type: type);
-        var stockBefore = lot.StockCount;
-
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var cartItem = new CartItemEntity
-        {
-            LotId = lot.Id,
-            Quantity = quantity,
-            UserId = TestAuthHandler.UserId
-        };
-
-        db.CartItems.Add(cartItem);
-        await db.SaveChangesAsync();
-
-        return (lot, cartItem, stockBefore);
+        var cartItem = await IntegrationTestsHelper.SeedCartItemAsync(
+            _factory.Services, lot.Id, quantity, TestAuthHandler.UserId);
+        return (lot, cartItem, lot.StockCount);
     }
 
-    private async Task<LotEntity> SeedLotAsync(int stockCount, LotType type)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var sellerUser = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedUserName = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            Email = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedEmail = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            EmailConfirmed = true,
-            PasswordHash = "seller-password",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550000",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "seller-password"
-        };
-
-        var category = new CategoryEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = $"Orders Category {Guid.NewGuid():N}",
-            Description = "Orders integration category."
-        };
-
-        var seller = new SellerEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Orders Seller",
-            Description = "Seller for orders integration tests.",
-            Email = $"orders-seller-{Guid.NewGuid():N}@example.com",
-            PhoneNumber = "+15555550001",
-            AvatarImageUrl = string.Empty,
-            UserId = sellerUser.Id,
-            User = sellerUser,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        var lot = new LotEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = $"Order Lot {Guid.NewGuid():N}".Substring(0, 16),
-            Description = "Lot seeded for orders integration tests.",
-            Price = new Money(100, Currency.USD),
-            Compensation = new Money(60, Currency.USD),
-            StockCount = stockCount,
-            DiscountedPrice = null,
-            Type = type,
-            Stage = LotStage.Approved,
-            Seller = seller,
-            Category = category,
-            IsActive = true,
-            IsCompensationPaid = false,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false,
-            EndOfAuction = type == LotType.Auction ? DateTime.UtcNow.AddHours(2) : null,
-            AuctionStepPercent = type == LotType.Auction ? 5 : null,
-            TicketPrice = type == LotType.Draw ? new Money(5, Currency.USD) : null,
-            TicketsSold = type == LotType.Draw ? 0 : null,
-            IsDrawn = false
-        };
-
-        db.Users.Add(sellerUser);
-        db.Categories.Add(category);
-        db.Sellers.Add(seller);
-        db.Lots.Add(lot);
-        await db.SaveChangesAsync();
-
-        return lot;
-    }
+    private Task<LotEntity> SeedLotAsync(int stockCount, LotType type) =>
+        IntegrationTestsHelper.SeedLotAsync(
+            _factory.Services,
+            stockCount: stockCount,
+            type: type,
+            stage: LotStage.Approved);
 
     private static async Task WaitUntilAsync(
         Func<Task<bool>> condition,

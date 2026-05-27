@@ -119,7 +119,7 @@ public class LotsEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task ApproveLot_MarksStageAsApproved()
     {
-        var seededLot = await SeedLotAsync(l => l.Stage = LotStage.PendingApproval);
+        var seededLot = await SeedLotAsync(configure: l => l.Stage = LotStage.PendingApproval);
 
         var response = await _client.PostAsync($"/api/lots/{seededLot.Id}/approve", null);
 
@@ -136,7 +136,7 @@ public class LotsEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task DeclineLot_SetsStageAndReason()
     {
-        var seededLot = await SeedLotAsync(l => l.Stage = LotStage.PendingApproval);
+        var seededLot = await SeedLotAsync(configure: l => l.Stage = LotStage.PendingApproval);
         var request = new DeclineLotRequest { Reason = "Missing documentation" };
 
         var response = await _client.PostAsJsonAsync($"/api/lots/{seededLot.Id}/decline", request);
@@ -151,76 +151,6 @@ public class LotsEndpointTests : IntegrationTestsBase
         Assert.Equal(request.Reason, lot.DeclineReason);
     }
 
-    private async Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var sellerUser = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = "seller@test.com",
-            NormalizedUserName = "SELLER@TEST.COM",
-            Email = "seller@test.com",
-            NormalizedEmail = "SELLER@TEST.COM",
-            EmailConfirmed = true,
-            PasswordHash = "seller-password",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550100",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "seller-password"
-        };
-
-        var category = new CategoryEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Category",
-            Description = "A category for testing."
-        };
-
-        var seller = new SellerEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Seller",
-            Description = "A seller for testing.",
-            Email = "test.seller@example.com",
-            PhoneNumber = "+1234567890",
-            AvatarImageUrl = string.Empty,
-            UserId = sellerUser.Id,
-            User = sellerUser,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        var lot = new LotEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Existing lot",
-            Description = "This is an existing lot.",
-            Price = new Money(100, Currency.USD),
-            Compensation = new Money(50, Currency.USD),
-            StockCount = 10,
-            DiscountedPrice = null,
-            Type = LotType.Simple,
-            Stage = LotStage.PendingApproval,
-            Seller = seller,
-            Category = category,
-            IsActive = true,
-            IsCompensationPaid = false,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        configure?.Invoke(lot);
-
-        db.Users.Add(sellerUser);
-        db.Categories.Add(category);
-        db.Sellers.Add(seller);
-        db.Lots.Add(lot);
-        await db.SaveChangesAsync();
-
-        return lot;
-    }
+    private Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null) =>
+        IntegrationTestsHelper.SeedLotAsync(_factory.Services, configure: configure);
 }

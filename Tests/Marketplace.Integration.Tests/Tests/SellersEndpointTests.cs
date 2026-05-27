@@ -123,48 +123,6 @@ public class SellersEndpointTests : IntegrationTestsBase
         Assert.True(stored.IsDeleted);
     }
 
-    private async Task<SellerEntity> SeedSellerAsync(Action<SellerEntity>? configure = null)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var sellerUser = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedUserName = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            Email = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedEmail = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            EmailConfirmed = true,
-            PasswordHash = "seller-password",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550000",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "seller-password"
-        };
-
-        var seller = new SellerEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Seed Seller",
-            Description = "Seller seeded for integration tests.",
-            Email = $"seed-seller-{Guid.NewGuid():N}@example.com",
-            PhoneNumber = "+15555550001",
-            AvatarImageUrl = "https://example.com/seed.png",
-            UserId = sellerUser.Id,
-            User = sellerUser,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        configure?.Invoke(seller);
-
-        db.Users.Add(sellerUser);
-        db.Sellers.Add(seller);
-        await db.SaveChangesAsync();
-
-        return seller;
-    }
+    private Task<SellerEntity> SeedSellerAsync(Action<SellerEntity>? configure = null) =>
+        IntegrationTestsHelper.SeedSellerAsync(_factory.Services, configure);
 }

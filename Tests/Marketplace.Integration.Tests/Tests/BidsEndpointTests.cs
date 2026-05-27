@@ -14,7 +14,20 @@ public class BidsEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task PlaceBid_CreatesBidAndUpdatesLotPrice()
     {
-        var lot = await SeedAuctionLotAsync();
+        var lot = await IntegrationTestsHelper.SeedLotAsync(
+            _factory.Services,
+            stockCount: 1,
+            type: LotType.Auction,
+            stage: LotStage.Approved,
+            configure: l =>
+            {
+                l.Name = "Auction lot";
+                l.Description = "Auction lot";
+                l.Price = new Money(100, Currency.USD);
+                l.Compensation = new Money(60, Currency.USD);
+                l.EndOfAuction = DateTime.UtcNow.AddHours(2);
+                l.AuctionStepPercent = 5;
+            });
 
         var response = await _client.PostAsJsonAsync($"/api/bids/{lot.Id}", new PlaceBidRequest
         {
@@ -32,69 +45,5 @@ public class BidsEndpointTests : IntegrationTestsBase
 
         var updatedLot = await db.Lots.SingleAsync(l => l.Id == lot.Id);
         Assert.Equal(120, updatedLot.Price.Amount);
-    }
-
-    private async Task<LotEntity> SeedAuctionLotAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var email = $"seller-{Guid.NewGuid():N}@example.com";
-        var user = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = email,
-            NormalizedUserName = email.ToUpperInvariant(),
-            Email = email,
-            NormalizedEmail = email.ToUpperInvariant(),
-            EmailConfirmed = true,
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            CreatedAt = DateTime.UtcNow,
-            Password = "seller-password"
-        };
-
-        var category = new CategoryEntity { Id = Guid.NewGuid(), Name = "Bids", Description = "Bids category" };
-        var seller = new SellerEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Seller",
-            Description = "Seller",
-            Email = email,
-            PhoneNumber = "+15555550111",
-            AvatarImageUrl = string.Empty,
-            UserId = user.Id,
-            User = user,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        var lot = new LotEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Auction lot",
-            Description = "Auction lot",
-            Price = new Money(100, Currency.USD),
-            Compensation = new Money(60, Currency.USD),
-            StockCount = 1,
-            Type = LotType.Auction,
-            Stage = LotStage.Approved,
-            Seller = seller,
-            Category = category,
-            IsActive = true,
-            IsCompensationPaid = false,
-            IsDeleted = false,
-            CreatedAt = DateTime.UtcNow,
-            EndOfAuction = DateTime.UtcNow.AddHours(2),
-            AuctionStepPercent = 5
-        };
-
-        db.Users.Add(user);
-        db.Categories.Add(category);
-        db.Sellers.Add(seller);
-        db.Lots.Add(lot);
-        await db.SaveChangesAsync();
-
-        return lot;
     }
 }

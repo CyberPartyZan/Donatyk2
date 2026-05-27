@@ -17,7 +17,7 @@ public class CategoriesEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task GetAll_ReturnsCategoryHierarchy()
     {
-        var (parent, child) = await SeedCategoryHierarchyAsync();
+        var (parent, child) = await IntegrationTestsHelper.SeedCategoryHierarchyAsync(_factory.Services);
 
         var response = await _client.GetAsync("/api/categories");
 
@@ -34,7 +34,7 @@ public class CategoriesEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task Get_ReturnsCategory_WhenExists()
     {
-        var category = await SeedCategoryAsync();
+        var category = await IntegrationTestsHelper.SeedCategoryAsync(_factory.Services);
 
         var response = await _client.GetAsync($"/api/categories/{category.Id}");
 
@@ -57,7 +57,7 @@ public class CategoriesEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task Post_CreatesCategory()
     {
-        var parent = await SeedCategoryAsync("Parent");
+        var parent = await IntegrationTestsHelper.SeedCategoryAsync(_factory.Services, "Parent");
 
         var request = new CategoryDto
         {
@@ -86,8 +86,8 @@ public class CategoriesEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task Put_UpdatesCategory()
     {
-        var category = await SeedCategoryAsync("Original");
-        var newParent = await SeedCategoryAsync("Updated Parent");
+        var category = await IntegrationTestsHelper.SeedCategoryAsync(_factory.Services, "Original");
+        var newParent = await IntegrationTestsHelper.SeedCategoryAsync(_factory.Services, "Updated Parent");
 
         var update = new CategoryDto
         {
@@ -113,7 +113,7 @@ public class CategoriesEndpointTests : IntegrationTestsBase
     [Fact]
     public async Task Delete_RemovesCategory()
     {
-        var category = await SeedCategoryAsync();
+        var category = await IntegrationTestsHelper.SeedCategoryAsync(_factory.Services);
 
         var response = await _client.DeleteAsync($"/api/categories/{category.Id}");
 
@@ -122,32 +122,5 @@ public class CategoriesEndpointTests : IntegrationTestsBase
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
         Assert.False(await db.Categories.AnyAsync(c => c.Id == category.Id));
-    }
-
-    private async Task<CategoryEntity> SeedCategoryAsync(string? name = null, Guid? parentId = null)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var unique = Guid.NewGuid().ToString("N");
-        var entity = new CategoryEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = name ?? $"Category {unique}",
-            Description = $"Description for {(name ?? "category")} {unique}",
-            ParentCategoryId = parentId
-        };
-
-        db.Categories.Add(entity);
-        await db.SaveChangesAsync();
-
-        return entity;
-    }
-
-    private async Task<(CategoryEntity Parent, CategoryEntity Child)> SeedCategoryHierarchyAsync()
-    {
-        var parent = await SeedCategoryAsync("Parent Category");
-        var child = await SeedCategoryAsync("Child Category", parent.Id);
-        return (parent, child);
     }
 }

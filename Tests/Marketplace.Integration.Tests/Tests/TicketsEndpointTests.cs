@@ -54,61 +54,19 @@ public class TicketsEndpointTests : IntegrationTestsBase
 
     private async Task<LotEntity> SeedDrawLotAsync()
     {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var user = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedUserName = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            Email = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedEmail = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            EmailConfirmed = true,
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            CreatedAt = DateTime.UtcNow,
-            Password = "seller-password"
-        };
-
-        var category = new CategoryEntity { Id = Guid.NewGuid(), Name = "Tickets", Description = "Tickets category" };
-        var seller = new SellerEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Seller",
-            Description = "Seller",
-            Email = $"seller-{Guid.NewGuid():N}@example.com",
-            PhoneNumber = "+15555550112",
-            UserId = user.Id,
-            User = user,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        var lot = new LotEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Draw lot",
-            Description = "Draw lot",
-            Price = new Money(100, Currency.USD),
-            Compensation = new Money(60, Currency.USD),
-            StockCount = 1,
-            Type = LotType.Draw,
-            Stage = LotStage.Approved,
-            Seller = seller,
-            Category = category,
-            IsActive = true,
-            IsCompensationPaid = false,
-            CreatedAt = DateTime.UtcNow,
-            TicketPrice = new Money(10, Currency.USD),
-            TicketsSold = 0,
-            IsDrawn = false
-        };
-
-        db.Users.Add(user);
-        db.Categories.Add(category);
-        db.Sellers.Add(seller);
-        db.Lots.Add(lot);
-        await db.SaveChangesAsync();
+        var lot = await IntegrationTestsHelper.SeedLotAsync(
+            _factory.Services,
+            stockCount: 1,
+            type: LotType.Draw,
+            stage: LotStage.Approved,
+            configure: l =>
+            {
+                l.Name = "Draw lot";
+                l.Description = "Draw lot";
+                l.TicketPrice = new Money(10, Currency.USD);
+                l.TicketsSold = 0;
+                l.IsDrawn = false;
+            });
 
         return lot;
     }

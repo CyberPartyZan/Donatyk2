@@ -110,35 +110,11 @@ public class StripeWebhookWebApplicationFactory
 
     public async Task EnsureTestUserAsync()
     {
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        if (await db.Users.AnyAsync(u => u.Id == TestAuthHandler.UserId))
-            return;
-
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        var user = new ApplicationUser
-        {
-            Id = TestAuthHandler.UserId,
-            UserName = "stripe-integration@test.com",
-            NormalizedUserName = "STRIPE-INTEGRATION@TEST.COM",
-            Email = "stripe-integration@test.com",
-            NormalizedEmail = "STRIPE-INTEGRATION@TEST.COM",
-            EmailConfirmed = true,
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550199",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "stripe-integration-test"
-        };
-
-        var result = await userManager.CreateAsync(user, "P@ssw0rd1!");
-        if (!result.Succeeded)
-        {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Failed to create Stripe test user: {errors}");
-        }
+        await IntegrationTestsHelper.EnsureUserExistsAsync(
+            Services,
+            TestAuthHandler.UserId,
+            "stripe-integration@test.com",
+            "P@ssw0rd1!",
+            "stripe-integration-test");
     }
 }

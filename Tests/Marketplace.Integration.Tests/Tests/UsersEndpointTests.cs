@@ -88,37 +88,6 @@ public class UsersEndpointTests : IntegrationTestsBase
         Assert.Equal(dto.LockoutEnd, updated.LockoutEnd);
     }
 
-    private async Task<ApplicationUser> SeedUserAsync(Action<ApplicationUser>? configure = null)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var unique = Guid.NewGuid().ToString("N");
-        var email = $"user-{unique}@example.com";
-
-        var user = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = email,
-            NormalizedUserName = email.ToUpperInvariant(),
-            Email = email,
-            NormalizedEmail = email.ToUpperInvariant(),
-            EmailConfirmed = true,
-            PasswordHash = "integration-user",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550000",
-            PhoneNumberConfirmed = true,
-            LockoutEnabled = false,
-            CreatedAt = DateTime.UtcNow,
-            Password = "integration-user"
-        };
-
-        configure?.Invoke(user);
-
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
-
-        return user;
-    }
+    private Task<ApplicationUser> SeedUserAsync(Action<ApplicationUser>? configure = null) =>
+        IntegrationTestsHelper.SeedUserAsync(_factory.Services, configure);
 }

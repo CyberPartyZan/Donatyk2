@@ -237,43 +237,13 @@ public class AuthEndpointTests : IntegrationTestsBase
         Assert.Equal(originalEmail, reloaded.UserName);
     }
 
-    private async Task<ApplicationUser> CreateUserAsync(bool emailConfirmed = true, string? email = null, Guid? userId = null)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        email ??= $"user-{Guid.NewGuid():N}@example.com";
-
-        var user = new ApplicationUser
-        {
-            Id = userId ?? Guid.NewGuid(),
-            UserName = email,
-            Email = email,
-            EmailConfirmed = emailConfirmed,
-            CreatedAt = DateTime.UtcNow,
-            Password = DefaultPassword
-        };
-
-        var result = await userManager.CreateAsync(user, DefaultPassword);
-        if (!result.Succeeded)
-        {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Failed to create test user: {errors}");
-        }
-
-        if (emailConfirmed && !user.EmailConfirmed)
-        {
-            user.EmailConfirmed = true;
-            await userManager.UpdateAsync(user);
-        }
-        else if (!emailConfirmed && user.EmailConfirmed)
-        {
-            user.EmailConfirmed = false;
-            await userManager.UpdateAsync(user);
-        }
-
-        return user;
-    }
+    private Task<ApplicationUser> CreateUserAsync(bool emailConfirmed = true, string? email = null, Guid? userId = null) =>
+        IntegrationTestsHelper.CreateUserAsync(
+            _factory.Services,
+            DefaultPassword,
+            emailConfirmed,
+            email,
+            userId);
 
     private async Task<string> GenerateEmailConfirmationTokenAsync(Guid userId)
     {

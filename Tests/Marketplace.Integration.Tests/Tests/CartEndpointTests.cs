@@ -120,97 +120,24 @@ public class CartEndpointTests : IntegrationTestsBase
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    private Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null) =>
+        IntegrationTestsHelper.SeedLotAsync(
+            _factory.Services,
+            stockCount: 10,
+            type: LotType.Simple,
+            stage: LotStage.PendingApproval,
+            configure: configure);
+
     private async Task<(LotEntity Lot, CartItemEntity CartItem)> SeedCartItemAsync(int quantity)
     {
         var lot = await SeedLotAsync();
+        var cartItem = await IntegrationTestsHelper.SeedCartItemAsync(
+            _factory.Services,
+            lot.Id,
+            quantity,
+            TestAuthHandler.UserId);
 
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var entity = new CartItemEntity
-        {
-            LotId = lot.Id,
-            Quantity = quantity,
-            UserId = TestAuthHandler.UserId
-        };
-
-        db.CartItems.Add(entity);
-        await db.SaveChangesAsync();
-
-        return (lot, entity);
-    }
-
-    private async Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-        var sellerUser = new ApplicationUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedUserName = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            Email = $"seller-{Guid.NewGuid():N}@example.com",
-            NormalizedEmail = $"SELLER-{Guid.NewGuid():N}@EXAMPLE.COM",
-            EmailConfirmed = true,
-            PasswordHash = "seller-password",
-            SecurityStamp = Guid.NewGuid().ToString("N"),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N"),
-            PhoneNumber = "+15555550000",
-            PhoneNumberConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            Password = "seller-password"
-        };
-
-        var category = new CategoryEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = $"Category {Guid.NewGuid():N}",
-            Description = "Test category for cart scenarios."
-        };
-
-        var seller = new SellerEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = "Cart Seller",
-            Description = "Seller used for cart integration tests.",
-            Email = $"cart-seller-{Guid.NewGuid():N}@example.com",
-            PhoneNumber = "+15555550001",
-            AvatarImageUrl = string.Empty,
-            UserId = sellerUser.Id,
-            User = sellerUser,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        var lot = new LotEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = $"Cart Lot {Guid.NewGuid():N}".Substring(0, 16),
-            Description = "Lot used for cart integration tests.",
-            Price = new Money(100, Currency.USD),
-            Compensation = new Money(50, Currency.USD),
-            StockCount = 10,
-            DiscountedPrice = null,
-            Type = LotType.Simple,
-            Stage = LotStage.PendingApproval,
-            Seller = seller,
-            Category = category,
-            IsActive = true,
-            IsCompensationPaid = false,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
-
-        configure?.Invoke(lot);
-
-        db.Users.Add(sellerUser);
-        db.Categories.Add(category);
-        db.Sellers.Add(seller);
-        db.Lots.Add(lot);
-        await db.SaveChangesAsync();
-
-        return lot;
+        return (lot, cartItem);
     }
 
     private sealed class CartResponse
