@@ -120,7 +120,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
 
             Assert.Equal(id, shipment.Id);
             Assert.Equal(orderId, shipment.OrderId);
-            Assert.Equal("REF-123", shipment.ShippingReference);
+            Assert.Equal("REF-123", shipment.TrackingNumber);
             Assert.Equal(ShipmentStatus.InTransit, shipment.Status);
             Assert.Equal(createdAt, shipment.CreatedAt);
         }

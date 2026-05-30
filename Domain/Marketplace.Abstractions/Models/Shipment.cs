@@ -4,7 +4,7 @@
     {
         public Guid Id { get; private set; }
         public Guid OrderId { get; private set; }
-        public string ShippingReference { get; private set; } = null!;
+        public string TrackingNumber { get; private set; } = null!;
         public ShipmentStatus Status { get; private set; }
         public DateTime CreatedAt { get; private set; }
 
@@ -22,7 +22,7 @@
             {
                 Id = Guid.NewGuid(),
                 OrderId = orderId,
-                ShippingReference = shippingReference,
+                TrackingNumber = shippingReference,
                 Status = ShipmentStatus.Created,
                 CreatedAt = DateTime.UtcNow
             };
@@ -48,7 +48,7 @@
             {
                 Id = id,
                 OrderId = orderId,
-                ShippingReference = shippingReference,
+                TrackingNumber = shippingReference,
                 Status = status,
                 CreatedAt = createdAt
             };

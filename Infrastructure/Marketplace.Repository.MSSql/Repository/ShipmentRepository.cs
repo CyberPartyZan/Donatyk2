@@ -61,7 +61,7 @@ namespace Marketplace.Repository.MSSql
             {
                 Id = shipment.Id,
                 OrderId = shipment.OrderId,
-                ShippingReference = shipment.ShippingReference,
+                ShippingReference = shipment.TrackingNumber,
                 Status = shipment.Status,
                 CreatedAt = shipment.CreatedAt
             };
