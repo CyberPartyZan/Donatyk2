@@ -151,4 +151,4 @@ namespace Marketplace.Repository.MSSql
                     .ToList()
             };
     }
-}}
+}

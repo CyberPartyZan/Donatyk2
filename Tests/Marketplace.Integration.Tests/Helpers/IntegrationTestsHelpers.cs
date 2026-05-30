@@ -272,6 +272,82 @@ internal static class IntegrationTestsHelper
         return item;
     }
 
+    // ── Order helpers ─────────────────────────────────────────────────────────
+
+    public static async Task<OrderEntity> SeedOrderAsync(
+        IServiceProvider services,
+        Guid customerId,
+        OrderStatus status = OrderStatus.Paid,
+        Action<OrderEntity>? configure = null)
+    {
+        var lot = await SeedLotAsync(services, stockCount: 10, type: LotType.Simple, stage: LotStage.Approved);
+
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var order = new OrderEntity
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = customerId,
+            Status = status,
+            Total = new Money(100m, Currency.USD),
+            CreatedAt = DateTime.UtcNow,
+            ShippingRecipientName = "Test Buyer",
+            ShippingLine1 = "123 Test Street",
+            ShippingLine2 = null,
+            ShippingCity = "Testville",
+            ShippingState = "TS",
+            ShippingPostalCode = "12345",
+            ShippingCountry = "US",
+            ShippingPhone = "+15555551234",
+            PaymentProvider = "Stripe",
+            PaymentTaxRate = 0.07m,
+            PaymentReturnUrl = "https://example.com/return",
+            PaymentReference = $"PAY-{Guid.NewGuid():N}",
+            Items =
+            [
+                new OrderItemEntity
+                {
+                    LotId = lot.Id,
+                    NameSnapshot = lot.Name,
+                    UnitPrice = new Money(100m, Currency.USD),
+                    Quantity = 1
+                }
+            ]
+        };
+
+        configure?.Invoke(order);
+
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+        return order;
+    }
+
+    // ── Shipment helpers ──────────────────────────────────────────────────────
+
+    public static async Task<ShipmentEntity> SeedShipmentAsync(
+        IServiceProvider services,
+        Guid orderId,
+        ShipmentStatus status = ShipmentStatus.Created,
+        string? shippingReference = null)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var shipment = new ShipmentEntity
+        {
+            Id = Guid.NewGuid(),
+            OrderId = orderId,
+            ShippingReference = shippingReference ?? $"SHIP-{orderId:N}",
+            Status = status,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.Shipments.Add(shipment);
+        await db.SaveChangesAsync();
+        return shipment;
+    }
+
     // ── Private builders ──────────────────────────────────────────────────────
 
     private static ApplicationUser BuildSellerUser()
