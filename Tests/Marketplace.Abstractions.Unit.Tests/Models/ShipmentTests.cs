@@ -4,8 +4,11 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
 {
     public class ShipmentTests
     {
+        private static ShippingAddress ValidAddress() =>
+            new ShippingAddress("John Doe", "123 Main St", null, "City", "State", "00000", "US", "+10000000000");
+
         private static Shipment CreateValidShipment() =>
-            Shipment.Create(Guid.NewGuid(), "TRACK-001");
+            Shipment.Create(Guid.NewGuid(), "TRACK-001", ValidAddress(), DeliveryCarrier.UPS);
 
         [Fact]
         public void Create_WithValidArgs_SetsCreatedStatus()
@@ -16,17 +19,43 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         }
 
         [Fact]
+        public void Create_WithValidArgs_SetsShippingAddress()
+        {
+            var address = ValidAddress();
+            var shipment = Shipment.Create(Guid.NewGuid(), "TRACK-001", address, DeliveryCarrier.DHL);
+
+            Assert.Equal(address.RecipientName, shipment.ShippingAddress.RecipientName);
+            Assert.Equal(address.Line1, shipment.ShippingAddress.Line1);
+            Assert.Equal(address.City, shipment.ShippingAddress.City);
+        }
+
+        [Fact]
+        public void Create_WithValidArgs_SetsCarrier()
+        {
+            var shipment = Shipment.Create(Guid.NewGuid(), "TRACK-001", ValidAddress(), DeliveryCarrier.FedEx);
+
+            Assert.Equal(DeliveryCarrier.FedEx, shipment.Carrier);
+        }
+
+        [Fact]
         public void Create_WithEmptyOrderId_Throws()
         {
             Assert.Throws<ArgumentException>(() =>
-                Shipment.Create(Guid.Empty, "TRACK-001"));
+                Shipment.Create(Guid.Empty, "TRACK-001", ValidAddress(), DeliveryCarrier.UPS));
         }
 
         [Fact]
         public void Create_WithBlankReference_Throws()
         {
             Assert.Throws<ArgumentException>(() =>
-                Shipment.Create(Guid.NewGuid(), "   "));
+                Shipment.Create(Guid.NewGuid(), "   ", ValidAddress(), DeliveryCarrier.UPS));
+        }
+
+        [Fact]
+        public void Create_WithNullShippingAddress_Throws()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                Shipment.Create(Guid.NewGuid(), "TRACK-001", null!, DeliveryCarrier.UPS));
         }
 
         [Fact]
@@ -133,6 +162,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var deliveredAt = DateTime.UtcNow.AddHours(-2);
             var shipment = Shipment.Reconstruct(
                 Guid.NewGuid(), Guid.NewGuid(), "REF-123", ShipmentStatus.Delivered,
+                ValidAddress(), DeliveryCarrier.DHL,
                 DateTime.UtcNow.AddHours(-5), deliveredAt);
 
             Assert.Equal(deliveredAt, shipment.DeliveredAt);
@@ -144,14 +174,18 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var id = Guid.NewGuid();
             var orderId = Guid.NewGuid();
             var createdAt = DateTime.UtcNow.AddHours(-1);
+            var address = ValidAddress();
 
-            var shipment = Shipment.Reconstruct(id, orderId, "REF-123", ShipmentStatus.InTransit, createdAt);
+            var shipment = Shipment.Reconstruct(id, orderId, "REF-123", ShipmentStatus.InTransit,
+                address, DeliveryCarrier.FedEx, createdAt);
 
             Assert.Equal(id, shipment.Id);
             Assert.Equal(orderId, shipment.OrderId);
             Assert.Equal("REF-123", shipment.TrackingNumber);
             Assert.Equal(ShipmentStatus.InTransit, shipment.Status);
+            Assert.Equal(DeliveryCarrier.FedEx, shipment.Carrier);
             Assert.Equal(createdAt, shipment.CreatedAt);
+            Assert.Equal(address.RecipientName, shipment.ShippingAddress.RecipientName);
         }
     }
 }

@@ -24,9 +24,11 @@ namespace Marketplace
                 return;
 
             // TODO: Derive a real tracking reference from the payment/logistics provider
-            var shippingReference = $"SHIP-{message.OrderId:N}";
+            var trackingNumber = $"SHIP-{message.OrderId:N}";
 
-            var shipmentId = await _shipmentService.CreateShipmentAsync(message.OrderId, shippingReference);
+            var shipmentId = await _shipmentService.CreateShipmentAsync(
+                message.OrderId,
+                trackingNumber);
 
             await _publishEndpoint.Publish(new ShipmentCreated(message.OrderId, shipmentId, DateTime.UtcNow));
         }

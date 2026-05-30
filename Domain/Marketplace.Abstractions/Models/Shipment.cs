@@ -6,24 +6,35 @@
         public Guid OrderId { get; private set; }
         public string TrackingNumber { get; private set; } = null!;
         public ShipmentStatus Status { get; private set; }
+        public ShippingAddress ShippingAddress { get; private set; } = null!;
+        public DeliveryCarrier Carrier { get; private set; }
         public DateTime CreatedAt { get; private set; }
         public DateTime? DeliveredAt { get; private set; }
 
         private Shipment() { }
 
-        public static Shipment Create(Guid orderId, string shippingReference)
+        public static Shipment Create(
+            Guid orderId,
+            string trackingNumber,
+            ShippingAddress shippingAddress,
+            DeliveryCarrier carrier)
         {
             if (orderId == Guid.Empty)
                 throw new ArgumentException("OrderId must be provided.", nameof(orderId));
 
-            if (string.IsNullOrWhiteSpace(shippingReference))
-                throw new ArgumentException("ShippingReference must be provided.", nameof(shippingReference));
+            if (string.IsNullOrWhiteSpace(trackingNumber))
+                throw new ArgumentException("ShippingReference must be provided.", nameof(trackingNumber));
+
+            if (shippingAddress is null)
+                throw new ArgumentNullException(nameof(shippingAddress));
 
             return new Shipment
             {
                 Id = Guid.NewGuid(),
                 OrderId = orderId,
-                TrackingNumber = shippingReference,
+                TrackingNumber = trackingNumber,
+                ShippingAddress = shippingAddress,
+                Carrier = carrier,
                 Status = ShipmentStatus.Created,
                 CreatedAt = DateTime.UtcNow
             };
@@ -34,6 +45,8 @@
             Guid orderId,
             string shippingReference,
             ShipmentStatus status,
+            ShippingAddress shippingAddress,
+            DeliveryCarrier carrier,
             DateTime createdAt,
             DateTime? deliveredAt = null)
         {
@@ -46,11 +59,16 @@
             if (string.IsNullOrWhiteSpace(shippingReference))
                 throw new ArgumentException("ShippingReference must be provided.", nameof(shippingReference));
 
+            if (shippingAddress is null)
+                throw new ArgumentNullException(nameof(shippingAddress));
+
             return new Shipment
             {
                 Id = id,
                 OrderId = orderId,
                 TrackingNumber = shippingReference,
+                ShippingAddress = shippingAddress,
+                Carrier = carrier,
                 Status = status,
                 CreatedAt = createdAt,
                 DeliveredAt = deliveredAt

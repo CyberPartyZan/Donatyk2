@@ -8,10 +8,11 @@
         public Guid CustomerId { get; private set; }
         public OrderStatus Status { get; private set; }
         public Money Total { get; private set; } = null!;
-        public ShippingAddress ShippingInfo { get; private set; } = null!;
+        public ShippingAddress ShippingAddress { get; private set; } = null!;
         public PaymentInfo PaymentInfo { get; private set; } = null!;
         public DateTime CreatedAt { get; private set; }
         public Guid? ShipmentId { get; private set; }
+        public DeliveryCarrier? DeliveryCarrier { get; private set; }
         public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
         private Order() { }
@@ -28,7 +29,8 @@
             ShippingAddress shippingInfo,
             PaymentInfo paymentInfo,
             IReadOnlyList<PricedItem> items,
-            Guid? shipmentId = null)
+            Guid? shipmentId = null,
+            DeliveryCarrier? deliveryCarrier = null)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id must be provided.", nameof(id));
@@ -51,9 +53,10 @@
                 CustomerId = customerId,
                 Status = status,
                 CreatedAt = createdAt,
-                ShippingInfo = shippingInfo,
+                ShippingAddress = shippingInfo,
                 PaymentInfo = paymentInfo,
-                ShipmentId = shipmentId
+                ShipmentId = shipmentId,
+                DeliveryCarrier = deliveryCarrier
             };
 
             var firstCurrency = items[0].UnitPrice.Currency;
@@ -97,7 +100,7 @@
                 Id = Guid.NewGuid(),
                 CustomerId = userId,
                 Status = OrderStatus.Created,
-                ShippingInfo = shippingInfo,
+                ShippingAddress = shippingInfo,
                 PaymentInfo = paymentInfo,
                 CreatedAt = DateTime.UtcNow
             };
@@ -118,6 +121,11 @@
             order.Total = runningTotal;
 
             return order;
+        }
+
+        public void SetDeliveryCarrier(DeliveryCarrier carrier)
+        {
+            DeliveryCarrier = carrier;
         }
 
         public void MarkPaid()

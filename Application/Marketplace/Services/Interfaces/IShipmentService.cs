@@ -2,7 +2,7 @@
 {
     public interface IShipmentService
     {
-        Task<Guid> CreateShipmentAsync(Guid orderId, string shippingReference);
+        Task<Guid> CreateShipmentAsync(Guid orderId, string trackingNumber);
         Task TakeIntoProcessingAsync(Guid shipmentId);
         Task MarkShippedAsync(Guid shipmentId);
         Task MarkInTransitAsync(Guid shipmentId);

@@ -292,14 +292,18 @@ internal static class IntegrationTestsHelper
             Status = status,
             Total = new Money(100m, Currency.USD),
             CreatedAt = DateTime.UtcNow,
-            ShippingRecipientName = "Test Buyer",
-            ShippingLine1 = "123 Test Street",
-            ShippingLine2 = null,
-            ShippingCity = "Testville",
-            ShippingState = "TS",
-            ShippingPostalCode = "12345",
-            ShippingCountry = "US",
-            ShippingPhone = "+15555551234",
+            ShippingAddress = new ShippingAddressEntity
+            {
+                Id = Guid.NewGuid(),
+                RecipientName = "Test Buyer",
+                Line1 = "123 Test Street",
+                Line2 = null,
+                City = "Testville",
+                State = "TS",
+                PostalCode = "12345",
+                Country = "US",
+                Phone = "+15555551234"
+            },
             PaymentProvider = "Stripe",
             PaymentTaxRate = 0.07m,
             PaymentReturnUrl = "https://example.com/return",
@@ -340,6 +344,18 @@ internal static class IntegrationTestsHelper
             OrderId = orderId,
             ShippingReference = shippingReference ?? $"SHIP-{orderId:N}",
             Status = status,
+            ShippingAddress = new ShippingAddressEntity
+            {
+                Id = Guid.NewGuid(),
+                RecipientName = "Test Buyer",
+                Line1 = "123 Test Street",
+                Line2 = null,
+                City = "Testville",
+                State = "TS",
+                PostalCode = "12345",
+                Country = "US",
+                Phone = "+15555551234"
+            },
             CreatedAt = DateTime.UtcNow
         };
 

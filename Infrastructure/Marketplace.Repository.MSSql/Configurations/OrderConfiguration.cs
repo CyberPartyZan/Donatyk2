@@ -19,37 +19,6 @@ namespace Marketplace.Repository.MSSql
             builder.Property(x => x.CreatedAt)
                    .IsRequired();
 
-            builder.Property(x => x.ShippingRecipientName)
-                   .IsRequired()
-                   .HasMaxLength(200);
-
-            builder.Property(x => x.ShippingLine1)
-                   .IsRequired()
-                   .HasMaxLength(250);
-
-            builder.Property(x => x.ShippingLine2)
-                   .HasMaxLength(250);
-
-            builder.Property(x => x.ShippingCity)
-                   .IsRequired()
-                   .HasMaxLength(150);
-
-            builder.Property(x => x.ShippingState)
-                   .IsRequired()
-                   .HasMaxLength(150);
-
-            builder.Property(x => x.ShippingPostalCode)
-                   .IsRequired()
-                   .HasMaxLength(20);
-
-            builder.Property(x => x.ShippingCountry)
-                   .IsRequired()
-                   .HasMaxLength(100);
-
-            builder.Property(x => x.ShippingPhone)
-                   .IsRequired()
-                   .HasMaxLength(30);
-
             builder.Property(x => x.PaymentProvider)
                    .IsRequired()
                    .HasMaxLength(100);
@@ -65,6 +34,11 @@ namespace Marketplace.Repository.MSSql
 
             builder.Property(x => x.ShipmentId);
 
+            builder.Property(x => x.DeliveryCarrier)
+                   .HasConversion<string>()
+                   .HasMaxLength(50)
+                   .IsRequired(false);
+
             builder.OwnsOne(x => x.Total, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount)
@@ -77,6 +51,11 @@ namespace Marketplace.Repository.MSSql
                             .HasMaxLength(3)
                             .HasColumnName("TotalCurrency");
             });
+
+            builder.HasOne(x => x.ShippingAddress)
+                   .WithOne(a => a.Order)
+                   .HasForeignKey<OrderEntity>(x => x.ShippingAddressId)
+                   .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(x => x.Items)
                    .WithOne(i => i.Order)

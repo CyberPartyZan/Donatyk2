@@ -20,12 +20,14 @@ namespace Marketplace
             _publishEndpoint = publishEndpoint;
         }
 
-        public async Task<Guid> CreateShipmentAsync(Guid orderId, string shippingReference)
+        public async Task<Guid> CreateShipmentAsync(
+            Guid orderId,
+            string trackingNumber)
         {
             var order = await _ordersRepository.GetById(orderId)
                 ?? throw new KeyNotFoundException($"Order '{orderId}' not found.");
 
-            var shipment = Shipment.Create(orderId, shippingReference);
+            var shipment = Shipment.Create(orderId, trackingNumber, order.ShippingAddress, order.DeliveryCarrier!.Value);
             var shipmentId = await _shipmentRepository.Create(shipment);
 
             order.AttachShipment(shipmentId);

@@ -27,6 +27,7 @@ namespace Marketplace.Repository.MSSql
         {
             var entity = await _db.Orders
                 .AsNoTracking()
+                .Include(o => o.ShippingAddress)
                 .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
@@ -44,6 +45,7 @@ namespace Marketplace.Repository.MSSql
         {
             var entity = await _db.Orders
                 .AsNoTracking()
+                .Include(o => o.ShippingAddress)
                 .Include(o => o.Items)
                 .Where(o => o.Status == OrderStatus.Paid
                             && o.Items.Any(i => i.LotId == lotId))
@@ -59,28 +61,29 @@ namespace Marketplace.Repository.MSSql
                 throw new ArgumentNullException(nameof(order));
 
             var entity = await _db.Orders
+                .Include(o => o.ShippingAddress)
                 .FirstOrDefaultAsync(o => o.Id == order.Id);
 
             if (entity is null)
                 throw new KeyNotFoundException($"Order '{order.Id}' not found.");
 
-            var mapped = Map(order);
+            entity.Status = order.Status;
+            entity.Total = order.Total;
+            entity.PaymentProvider = order.PaymentInfo.Provider;
+            entity.PaymentTaxRate = order.PaymentInfo.TaxRate;
+            entity.PaymentReturnUrl = order.PaymentInfo.ReturnUrl;
+            entity.PaymentReference = order.PaymentInfo.Reference;
+            entity.ShipmentId = order.ShipmentId;
+            entity.DeliveryCarrier = order.DeliveryCarrier;
 
-            entity.Status = mapped.Status;
-            entity.Total = mapped.Total;
-            entity.ShippingRecipientName = mapped.ShippingRecipientName;
-            entity.ShippingLine1 = mapped.ShippingLine1;
-            entity.ShippingLine2 = mapped.ShippingLine2;
-            entity.ShippingCity = mapped.ShippingCity;
-            entity.ShippingState = mapped.ShippingState;
-            entity.ShippingPostalCode = mapped.ShippingPostalCode;
-            entity.ShippingCountry = mapped.ShippingCountry;
-            entity.ShippingPhone = mapped.ShippingPhone;
-            entity.PaymentProvider = mapped.PaymentProvider;
-            entity.PaymentTaxRate = mapped.PaymentTaxRate;
-            entity.PaymentReturnUrl = mapped.PaymentReturnUrl;
-            entity.PaymentReference = mapped.PaymentReference;
-            entity.ShipmentId = mapped.ShipmentId;
+            entity.ShippingAddress.RecipientName = order.ShippingAddress.RecipientName;
+            entity.ShippingAddress.Line1 = order.ShippingAddress.Line1;
+            entity.ShippingAddress.Line2 = order.ShippingAddress.Line2;
+            entity.ShippingAddress.City = order.ShippingAddress.City;
+            entity.ShippingAddress.State = order.ShippingAddress.State;
+            entity.ShippingAddress.PostalCode = order.ShippingAddress.PostalCode;
+            entity.ShippingAddress.Country = order.ShippingAddress.Country;
+            entity.ShippingAddress.Phone = order.ShippingAddress.Phone;
 
             await _db.SaveChangesAsync();
         }
@@ -88,14 +91,14 @@ namespace Marketplace.Repository.MSSql
         private static Order MapToDomain(OrderEntity entity)
         {
             var shippingInfo = new ShippingAddress(
-                entity.ShippingRecipientName,
-                entity.ShippingLine1,
-                entity.ShippingLine2,
-                entity.ShippingCity,
-                entity.ShippingState,
-                entity.ShippingPostalCode,
-                entity.ShippingCountry,
-                entity.ShippingPhone);
+                entity.ShippingAddress.RecipientName,
+                entity.ShippingAddress.Line1,
+                entity.ShippingAddress.Line2,
+                entity.ShippingAddress.City,
+                entity.ShippingAddress.State,
+                entity.ShippingAddress.PostalCode,
+                entity.ShippingAddress.Country,
+                entity.ShippingAddress.Phone);
 
             var paymentInfo = new PaymentInfo(
                 entity.PaymentProvider,
@@ -115,7 +118,8 @@ namespace Marketplace.Repository.MSSql
                 shippingInfo,
                 paymentInfo,
                 pricedItems,
-                entity.ShipmentId);
+                entity.ShipmentId,
+                entity.DeliveryCarrier);
         }
 
         private static OrderEntity Map(Order order) =>
@@ -127,14 +131,18 @@ namespace Marketplace.Repository.MSSql
                 Total = order.Total,
                 CreatedAt = order.CreatedAt,
                 ShipmentId = order.ShipmentId,
-                ShippingRecipientName = order.ShippingInfo.RecipientName,
-                ShippingLine1 = order.ShippingInfo.Line1,
-                ShippingLine2 = order.ShippingInfo.Line2,
-                ShippingCity = order.ShippingInfo.City,
-                ShippingState = order.ShippingInfo.State,
-                ShippingPostalCode = order.ShippingInfo.PostalCode,
-                ShippingCountry = order.ShippingInfo.Country,
-                ShippingPhone = order.ShippingInfo.Phone,
+                DeliveryCarrier = order.DeliveryCarrier,
+                ShippingAddress = new ShippingAddressEntity
+                {
+                    RecipientName = order.ShippingAddress.RecipientName,
+                    Line1 = order.ShippingAddress.Line1,
+                    Line2 = order.ShippingAddress.Line2,
+                    City = order.ShippingAddress.City,
+                    State = order.ShippingAddress.State,
+                    PostalCode = order.ShippingAddress.PostalCode,
+                    Country = order.ShippingAddress.Country,
+                    Phone = order.ShippingAddress.Phone
+                },
                 PaymentProvider = order.PaymentInfo.Provider,
                 PaymentTaxRate = order.PaymentInfo.TaxRate,
                 PaymentReturnUrl = order.PaymentInfo.ReturnUrl,

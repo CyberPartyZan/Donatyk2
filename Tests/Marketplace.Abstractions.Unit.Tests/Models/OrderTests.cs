@@ -23,7 +23,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
 
             Assert.Equal(userId, order.CustomerId);
             Assert.Equal(OrderStatus.Created, order.Status);
-            Assert.Equal(shipping, order.ShippingInfo);
+            Assert.Equal(shipping, order.ShippingAddress);
             Assert.Equal(payment, order.PaymentInfo);
             Assert.Equal(expectedTotal, order.Total);
             Assert.Equal(items.Length, order.Items.Count);
