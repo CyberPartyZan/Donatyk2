@@ -27,9 +27,6 @@ public class ShipmentEndpointTests : IntegrationTestsBase
 
         var updatedShipment = await db.Shipments.SingleAsync(s => s.Id == shipment.Id);
         Assert.Equal(ShipmentStatus.Processing, updatedShipment.Status);
-
-        var updatedOrder = await db.Orders.SingleAsync(o => o.Id == order.Id);
-        Assert.Equal(OrderStatus.Processing, updatedOrder.Status);
     }
 
     [Fact]
@@ -72,9 +69,6 @@ public class ShipmentEndpointTests : IntegrationTestsBase
 
         var updatedShipment = await db.Shipments.SingleAsync(s => s.Id == shipment.Id);
         Assert.Equal(ShipmentStatus.Shipped, updatedShipment.Status);
-
-        var updatedOrder = await db.Orders.SingleAsync(o => o.Id == order.Id);
-        Assert.Equal(OrderStatus.Shipped, updatedOrder.Status);
     }
 
     [Fact]
@@ -116,9 +110,6 @@ public class ShipmentEndpointTests : IntegrationTestsBase
 
         var updatedShipment = await db.Shipments.SingleAsync(s => s.Id == shipment.Id);
         Assert.Equal(ShipmentStatus.InTransit, updatedShipment.Status);
-
-        var updatedOrder = await db.Orders.SingleAsync(o => o.Id == order.Id);
-        Assert.Equal(OrderStatus.InTransit, updatedOrder.Status);
     }
 
     [Fact]
@@ -161,9 +152,6 @@ public class ShipmentEndpointTests : IntegrationTestsBase
 
         var updatedShipment = await db.Shipments.SingleAsync(s => s.Id == shipment.Id);
         Assert.Equal(ShipmentStatus.OutForDelivery, updatedShipment.Status);
-
-        var updatedOrder = await db.Orders.SingleAsync(o => o.Id == order.Id);
-        Assert.Equal(OrderStatus.OutForDelivery, updatedOrder.Status);
     }
 
     [Fact]
@@ -207,9 +195,6 @@ public class ShipmentEndpointTests : IntegrationTestsBase
 
         var updatedShipment = await db.Shipments.SingleAsync(s => s.Id == shipment.Id);
         Assert.Equal(ShipmentStatus.Delivered, updatedShipment.Status);
-
-        var updatedOrder = await db.Orders.SingleAsync(o => o.Id == order.Id);
-        Assert.Equal(OrderStatus.Delivered, updatedOrder.Status);
     }
 
     [Fact]
@@ -241,8 +226,7 @@ public class ShipmentEndpointTests : IntegrationTestsBase
 
         async Task AssertTransitionAsync(
             string endpoint,
-            ShipmentStatus expectedShipment,
-            OrderStatus expectedOrder)
+            ShipmentStatus expectedShipment)
         {
             var r = await _client.PutAsync($"/api/shipment/{shipment.Id}/{endpoint}", null);
             Assert.Equal(HttpStatusCode.NoContent, r.StatusCode);
@@ -252,16 +236,13 @@ public class ShipmentEndpointTests : IntegrationTestsBase
 
             var sh = await db.Shipments.SingleAsync(x => x.Id == shipment.Id);
             Assert.Equal(expectedShipment, sh.Status);
-
-            var ord = await db.Orders.SingleAsync(x => x.Id == order.Id);
-            Assert.Equal(expectedOrder, ord.Status);
         }
 
-        await AssertTransitionAsync("take-into-processing", ShipmentStatus.Processing,   OrderStatus.Processing);
-        await AssertTransitionAsync("shipped",              ShipmentStatus.Shipped,       OrderStatus.Shipped);
-        await AssertTransitionAsync("in-transit",           ShipmentStatus.InTransit,     OrderStatus.InTransit);
-        await AssertTransitionAsync("out-for-delivery",     ShipmentStatus.OutForDelivery, OrderStatus.OutForDelivery);
-        await AssertTransitionAsync("delivered",            ShipmentStatus.Delivered,     OrderStatus.Delivered);
+        await AssertTransitionAsync("take-into-processing", ShipmentStatus.Processing);
+        await AssertTransitionAsync("shipped",              ShipmentStatus.Shipped);
+        await AssertTransitionAsync("in-transit",           ShipmentStatus.InTransit);
+        await AssertTransitionAsync("out-for-delivery",     ShipmentStatus.OutForDelivery);
+        await AssertTransitionAsync("delivered",            ShipmentStatus.Delivered);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

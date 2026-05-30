@@ -14,7 +14,7 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
             var shipmentId = Guid.NewGuid();
             var deliveredAt = DateTime.UtcNow;
 
-            var order = CreateDeliveredOrder(orderId);
+            var order = CreatePaidOrder(orderId);
             var ordersRepository = new Mock<IOrdersRepository>();
             ordersRepository.Setup(x => x.GetById(orderId)).ReturnsAsync(order);
 
@@ -45,7 +45,7 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
             await Assert.ThrowsAsync<KeyNotFoundException>(() => consumer.Consume(context.Object));
         }
 
-        private static Order CreateDeliveredOrder(Guid orderId)
+        private static Order CreatePaidOrder(Guid orderId)
         {
             var shippingInfo = new ShippingAddress("Test User", "Street 1", null, "City", "State", "00000", "US", "+10000000000");
             var paymentInfo = new PaymentInfo("Stripe", 0m, "https://example.com/return");
@@ -54,14 +54,9 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
                 PricedItem.FromCustomPrice(Guid.NewGuid(), "Item", new Money(10m, Currency.USD), 1, 0m)
             };
 
-            var order = Order.Create(Guid.NewGuid(), shippingInfo, paymentInfo, items);
+            var order = Order.Create(orderId, shippingInfo, paymentInfo, items);
             order.AttachShipment(Guid.NewGuid());
             order.MarkPaid();
-            order.MarkProcessing();
-            order.MarkShipped();
-            order.MarkInTransit();
-            order.MarkOutForDelivery();
-            order.MarkDelivered();
             return order;
         }
     }

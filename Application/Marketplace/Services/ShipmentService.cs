@@ -38,71 +38,58 @@ namespace Marketplace
 
         public async Task TakeIntoProcessingAsync(Guid shipmentId)
         {
-            var (shipment, order) = await GetShipmentAndOrderAsync(shipmentId);
+            var shipment = await GetShipmentAsync(shipmentId);
 
             shipment.TakeIntoProcessing();
-            order.MarkProcessing();
 
             await _shipmentRepository.Update(shipment);
-            await _ordersRepository.Update(order);
         }
 
         public async Task MarkShippedAsync(Guid shipmentId)
         {
-            var (shipment, order) = await GetShipmentAndOrderAsync(shipmentId);
+            var shipment = await GetShipmentAsync(shipmentId);
 
             shipment.MarkShipped();
-            order.MarkShipped();
 
             await _shipmentRepository.Update(shipment);
-            await _ordersRepository.Update(order);
         }
 
         public async Task MarkInTransitAsync(Guid shipmentId)
         {
-            var (shipment, order) = await GetShipmentAndOrderAsync(shipmentId);
+            var shipment = await GetShipmentAsync(shipmentId);
 
             shipment.MarkInTransit();
-            order.MarkInTransit();
 
             await _shipmentRepository.Update(shipment);
-            await _ordersRepository.Update(order);
         }
 
         public async Task MarkOutForDeliveryAsync(Guid shipmentId)
         {
-            var (shipment, order) = await GetShipmentAndOrderAsync(shipmentId);
+            var shipment = await GetShipmentAsync(shipmentId);
 
             shipment.MarkOutForDelivery();
-            order.MarkOutForDelivery();
 
             await _shipmentRepository.Update(shipment);
-            await _ordersRepository.Update(order);
         }
 
         public async Task MarkDeliveredAsync(Guid shipmentId)
         {
-            var (shipment, order) = await GetShipmentAndOrderAsync(shipmentId);
+            var shipment = await GetShipmentAsync(shipmentId);
 
             shipment.MarkDelivered();
-            order.MarkDelivered();
 
             await _shipmentRepository.Update(shipment);
-            await _ordersRepository.Update(order);
 
             await _publishEndpoint.Publish(
-                new ShipmentDelivered(order.Id, shipment.Id, shipment.DeliveredAt!.Value));
+                new ShipmentDelivered(shipment.OrderId, shipment.Id, shipment.DeliveredAt!.Value));
         }
 
-        private async Task<(Shipment shipment, Order order)> GetShipmentAndOrderAsync(Guid shipmentId)
+        private async Task<Shipment> GetShipmentAsync(Guid shipmentId)
         {
             var shipment = await _shipmentRepository.GetById(shipmentId)
                 ?? throw new KeyNotFoundException($"Shipment '{shipmentId}' not found.");
 
-            var order = await _ordersRepository.GetById(shipment.OrderId)
-                ?? throw new KeyNotFoundException($"Order '{shipment.OrderId}' not found.");
-
-            return (shipment, order);
+            return shipment;
         }
     }
 }

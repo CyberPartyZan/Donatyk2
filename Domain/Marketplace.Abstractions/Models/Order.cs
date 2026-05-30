@@ -52,9 +52,9 @@
                 Id = id,
                 CustomerId = customerId,
                 Status = status,
-                CreatedAt = createdAt,
                 ShippingAddress = shippingInfo,
                 PaymentInfo = paymentInfo,
+                CreatedAt = createdAt,
                 ShipmentId = shipmentId,
                 DeliveryCarrier = deliveryCarrier
             };
@@ -62,12 +62,9 @@
             var firstCurrency = items[0].UnitPrice.Currency;
             var runningTotal = new Money(0m, firstCurrency);
 
-            foreach (var pricedItem in items)
+            foreach (var item in items)
             {
-                if (pricedItem.UnitPrice.Currency != firstCurrency)
-                    throw new InvalidOperationException("All items in the order must use the same currency.");
-
-                var orderItem = OrderItem.From(pricedItem);
+                var orderItem = OrderItem.From(item);
                 order._items.Add(orderItem);
                 runningTotal += orderItem.Total;
             }
@@ -147,50 +144,10 @@
             ShipmentId = shipmentId;
         }
 
-        public void MarkProcessing()
-        {
-            if (Status != OrderStatus.Paid)
-                throw new InvalidOperationException("Only paid orders can be moved to processing.");
-
-            Status = OrderStatus.Processing;
-        }
-
-        public void MarkShipped()
-        {
-            if (Status != OrderStatus.Processing)
-                throw new InvalidOperationException("Only processing orders can be marked as shipped.");
-
-            Status = OrderStatus.Shipped;
-        }
-
-        public void MarkInTransit()
-        {
-            if (Status != OrderStatus.Shipped)
-                throw new InvalidOperationException("Only shipped orders can be marked as in transit.");
-
-            Status = OrderStatus.InTransit;
-        }
-
-        public void MarkOutForDelivery()
-        {
-            if (Status != OrderStatus.InTransit)
-                throw new InvalidOperationException("Only in-transit orders can be marked as out for delivery.");
-
-            Status = OrderStatus.OutForDelivery;
-        }
-
-        public void MarkDelivered()
-        {
-            if (Status != OrderStatus.OutForDelivery)
-                throw new InvalidOperationException("Only out-for-delivery orders can be marked as delivered.");
-
-            Status = OrderStatus.Delivered;
-        }
-
         public void MarkCompleted()
         {
-            if (Status != OrderStatus.Delivered)
-                throw new InvalidOperationException("Only delivered orders can be marked as completed.");
+            if (Status != OrderStatus.Paid)
+                throw new InvalidOperationException("Only paid orders can be marked as completed.");
 
             Status = OrderStatus.Completed;
         }

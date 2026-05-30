@@ -4,11 +4,6 @@
     {
         Created,
         Paid,
-        Processing,
-        Shipped,
-        InTransit,
-        OutForDelivery,
-        Delivered,
         Completed,
         Cancelled
     }
