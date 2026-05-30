@@ -34,6 +34,7 @@ namespace Marketplace.Repository.MSSql
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IBidsRepository, BidsRepository>();
             services.AddScoped<IShipmentRepository, ShipmentRepository>();
+            services.AddScoped<IDeliveryPreferencesRepository, DeliveryPreferencesRepository>();
 
             services.AddScoped<IAuthService, AuthService>();
 

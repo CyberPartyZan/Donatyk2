@@ -14,5 +14,6 @@
 
         public virtual OrderEntity? Order { get; set; }
         public virtual ShipmentEntity? Shipment { get; set; }
+        public virtual DeliveryPreferencesEntity? DeliveryPreferences { get; set; }
     }
 }

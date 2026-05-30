@@ -21,6 +21,7 @@ namespace Marketplace.Repository.MSSql
         public DbSet<TicketEntity> Tickets { get; set; }
         public DbSet<ShipmentEntity> Shipments { get; set; }
         public DbSet<ShippingAddressEntity> ShippingAddresses { get; set; }
+        public DbSet<DeliveryPreferencesEntity> DeliveryPreferences { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +40,7 @@ namespace Marketplace.Repository.MSSql
             modelBuilder.ApplyConfiguration(new TicketConfiguration());
             modelBuilder.ApplyConfiguration(new ShipmentConfiguration());
             modelBuilder.ApplyConfiguration(new ShippingAddressConfiguration());
+            modelBuilder.ApplyConfiguration(new DeliveryPreferencesConfiguration());
         }
     }
 }

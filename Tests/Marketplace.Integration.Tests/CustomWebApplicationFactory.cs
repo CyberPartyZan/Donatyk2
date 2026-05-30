@@ -1,5 +1,6 @@
 ﻿using Marketplace.Repository.MSSql;
 using Marketplace.Server;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -51,18 +52,29 @@ public class CustomWebApplicationFactory
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseSetting("MassTransit:EndpointPrefix", RabbitMqEndpointPrefix);
-
         builder.ConfigureServices(services =>
         {
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType ==
-                     typeof(DbContextOptions<MarketplaceDbContext>));
+            // Remove the existing MassTransit hosted service and bus registration
+            var massTransitDescriptors = services
+                .Where(d => d.ServiceType.Namespace?.StartsWith("MassTransit") == true)
+                .ToList();
 
-            if (descriptor != null)
-            {
+            foreach (var descriptor in massTransitDescriptors)
                 services.Remove(descriptor);
-            }
+
+            // Replace with in-memory test harness — registers all consumers
+            // with a fake in-memory transport, no RabbitMQ connection needed
+            services.AddMassTransitTestHarness(cfg =>
+            {
+                cfg.AddConsumer<OrderCreatedConsumer>();
+                cfg.AddConsumer<PaymentProcessedConsumer>();
+                cfg.AddConsumer<ShipmentServicePaymentProcessedConsumer>();
+                cfg.AddConsumer<MarketplacePaymentProcessedConsumer>();
+                cfg.AddConsumer<ShipmentCreatedConsumer>();
+                cfg.AddConsumer<ShipmentDeliveredConsumer>();
+                cfg.AddConsumer<DrawLaunchedConsumer>();
+                cfg.AddConsumer<AuctionEndedConsumer>();
+            });
 
             services.AddDbContext<MarketplaceDbContext>(options =>
                 options.UseSqlServer(_sqlContainer.GetConnectionString()));

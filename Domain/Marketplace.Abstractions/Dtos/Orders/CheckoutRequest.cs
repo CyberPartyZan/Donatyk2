@@ -2,6 +2,8 @@ namespace Marketplace
 {
     public class CheckoutRequest
     {
+        public Guid? DeliveryPreferenceId { get; set; }
+        public DeliveryCarrier Carrier { get; set; }
         public ShippingInfoDto Shipping { get; set; } = new();
         public PaymentInfoDto Payment { get; set; } = new();
     }

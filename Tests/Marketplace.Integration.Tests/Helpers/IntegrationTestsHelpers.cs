@@ -364,6 +364,43 @@ internal static class IntegrationTestsHelper
         return shipment;
     }
 
+    // ── DeliveryPreferences helpers ───────────────────────────────────────────
+
+    public static async Task<DeliveryPreferencesEntity> SeedDeliveryPreferencesAsync(
+        IServiceProvider services,
+        Guid userId,
+        DeliveryCarrier carrier = DeliveryCarrier.UPS)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var address = new ShippingAddressEntity
+        {
+            Id = Guid.NewGuid(),
+            RecipientName = "Test Recipient",
+            Line1 = "123 Test Street",
+            Line2 = null,
+            City = "Testville",
+            State = "TS",
+            PostalCode = "12345",
+            Country = "US",
+            Phone = "+15555551234"
+        };
+
+        var preference = new DeliveryPreferencesEntity
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Carrier = carrier,
+            ShippingAddress = address
+        };
+
+        db.DeliveryPreferences.Add(preference);
+        await db.SaveChangesAsync();
+
+        return preference;
+    }
+
     // ── Private builders ──────────────────────────────────────────────────────
 
     private static ApplicationUser BuildSellerUser()

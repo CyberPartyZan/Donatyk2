@@ -17,6 +17,7 @@ namespace Marketplace
         private readonly IOrdersRepository _ordersRepository;
         private readonly ITicketsService _ticketsService;
         private readonly IBidsService _bidsService;
+        private readonly IDeliveryPreferencesService _deliveryPreferencesService;
         private readonly IPaymentGatewayFactory _paymentGatewayFactory;
         private readonly ILogger<OrdersService> _logger;
         private readonly IPublishEndpoint _publishEndpoint;
@@ -29,6 +30,7 @@ namespace Marketplace
             IOrdersRepository ordersRepository,
             ITicketsService ticketsService,
             IBidsService bidsService,
+            IDeliveryPreferencesService deliveryPreferencesService,
             IPaymentGatewayFactory paymentGatewayFactory,
             IPublishEndpoint publishEndpoint,
             IConfiguration configuration,
@@ -40,6 +42,7 @@ namespace Marketplace
             _ordersRepository = ordersRepository;
             _ticketsService = ticketsService;
             _bidsService = bidsService;
+            _deliveryPreferencesService = deliveryPreferencesService;
             _paymentGatewayFactory = paymentGatewayFactory;
             _logger = logger;
             _publishEndpoint = publishEndpoint;
@@ -59,7 +62,7 @@ namespace Marketplace
             if (cartItems.Count == 0)
                 throw new InvalidOperationException("Cart is empty.");
 
-            var shippingInfo = ToShippingInfo(request.Shipping);
+            var (shippingInfo, carrier) = await ResolveDeliveryAsync(userId, request);
             var paymentInfo = ToPaymentInfo(request.Payment);
             var pricedItems = new List<PricedItem>(cartItems.Count);
 
@@ -91,6 +94,7 @@ namespace Marketplace
             }
 
             var order = Order.Create(userId, shippingInfo, paymentInfo, pricedItems);
+            order.SetDeliveryCarrier(carrier);
 
             await _ordersRepository.Create(order);
 
@@ -123,7 +127,7 @@ namespace Marketplace
             var drawLot = lot as DrawLot
                 ?? throw new InvalidOperationException($"Lot '{lot.Name}' is not a draw lot.");
 
-            var shippingInfo = ToShippingInfo(request.Shipping);
+            var (shippingInfo, carrier) = await ResolveDeliveryAsync(userId, request);
 
             var drawWebhookReturnUrl = $"{_apiBaseUrl.TrimEnd('/')}/api/orders/payment/draw/webhook?lotId={drawLot.Id}";
             var paymentInfo = new PaymentInfo(request.Payment.Provider, request.Payment.TaxRate, drawWebhookReturnUrl);
@@ -138,6 +142,7 @@ namespace Marketplace
                 paymentInfo.TaxRate);
 
             var order = Order.Create(userId, shippingInfo, paymentInfo, new[] { pricedItem });
+            order.SetDeliveryCarrier(carrier);
 
             await _ordersRepository.Create(order);
 
@@ -168,7 +173,7 @@ namespace Marketplace
             var auctionLot = lot as AuctionLot
                 ?? throw new InvalidOperationException($"Lot '{lot.Name}' is not an auction lot.");
 
-            var shippingInfo = ToShippingInfo(request.Shipping);
+            var (shippingInfo, carrier) = await ResolveDeliveryAsync(userId, request);
             var paymentInfo = ToPaymentInfo(request.Payment);
 
             var bid = await _bidsService.PlaceBid(auctionLot.Id, request.Amount);
@@ -181,6 +186,7 @@ namespace Marketplace
                 taxRate: 0m);
 
             var order = Order.Create(userId, shippingInfo, paymentInfo, new[] { pricedItem });
+            order.SetDeliveryCarrier(carrier);
 
             await _ordersRepository.Create(order);
 
@@ -280,6 +286,21 @@ namespace Marketplace
             await _ordersRepository.Update(order);
 
             return order.CustomerId;
+        }
+
+        private async Task<(ShippingAddress shippingAddress, DeliveryCarrier carrier)> ResolveDeliveryAsync(
+            Guid userId, CheckoutRequest request)
+        {
+            if (request.DeliveryPreferenceId.HasValue)
+            {
+                var preference = await _deliveryPreferencesService.GetById(request.DeliveryPreferenceId.Value);
+                return (preference.ShippingAddress, preference.Carrier);
+            }
+
+            var shippingAddress = ToShippingInfo(request.Shipping);
+            await _deliveryPreferencesService.GetOrCreate(userId, request.Carrier, shippingAddress);
+
+            return (shippingAddress, request.Carrier);
         }
 
         private static ShippingAddress ToShippingInfo(ShippingInfoDto dto)
