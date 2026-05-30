@@ -78,7 +78,7 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
 
         private static Order CreateOrder(Guid lotId)
         {
-            var shippingInfo = new ShippingInfo(
+            var shippingInfo = new ShippingAddress(
                 "Test Recipient",
                 "123 Test St",
                 null,

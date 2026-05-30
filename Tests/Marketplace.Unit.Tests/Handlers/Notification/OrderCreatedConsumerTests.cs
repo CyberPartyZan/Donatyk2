@@ -37,7 +37,7 @@ namespace Marketplace.Unit.Tests.Handlers.NotificationService
 
         private static Order CreateOrder(Guid customerId)
         {
-            var shippingInfo = new ShippingInfo("Test User", "Street 1", null, "City", "State", "00000", "US", "+10000000000");
+            var shippingInfo = new ShippingAddress("Test User", "Street 1", null, "City", "State", "00000", "US", "+10000000000");
             var paymentInfo = new PaymentInfo("Stripe", 0m, "https://example.com/return");
             var items = new List<PricedItem>
             {

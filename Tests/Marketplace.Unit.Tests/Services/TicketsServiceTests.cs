@@ -303,7 +303,7 @@ namespace Marketplace.Unit.Tests.Services
 
         private static Order CreateOrder(Guid customerId, params (Guid LotId, int Quantity)[] items)
         {
-            var shipping = new ShippingInfo(
+            var shipping = new ShippingAddress(
                 "Buyer",
                 "Line1",
                 null,

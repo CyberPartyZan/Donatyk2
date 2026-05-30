@@ -282,12 +282,12 @@ namespace Marketplace
             return order.CustomerId;
         }
 
-        private static ShippingInfo ToShippingInfo(ShippingInfoDto dto)
+        private static ShippingAddress ToShippingInfo(ShippingInfoDto dto)
         {
             if (dto is null)
                 throw new ArgumentNullException(nameof(dto));
 
-            return new ShippingInfo(
+            return new ShippingAddress(
                 dto.RecipientName,
                 dto.Line1,
                 dto.Line2,

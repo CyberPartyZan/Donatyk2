@@ -8,7 +8,7 @@
         public Guid CustomerId { get; private set; }
         public OrderStatus Status { get; private set; }
         public Money Total { get; private set; } = null!;
-        public ShippingInfo ShippingInfo { get; private set; } = null!;
+        public ShippingAddress ShippingInfo { get; private set; } = null!;
         public PaymentInfo PaymentInfo { get; private set; } = null!;
         public DateTime CreatedAt { get; private set; }
         public Guid? ShipmentId { get; private set; }
@@ -25,7 +25,7 @@
             Guid customerId,
             OrderStatus status,
             DateTime createdAt,
-            ShippingInfo shippingInfo,
+            ShippingAddress shippingInfo,
             PaymentInfo paymentInfo,
             IReadOnlyList<PricedItem> items,
             Guid? shipmentId = null)
@@ -76,7 +76,7 @@
 
         public static Order Create(
             Guid userId,
-            ShippingInfo shippingInfo,
+            ShippingAddress shippingInfo,
             PaymentInfo paymentInfo,
             IReadOnlyList<PricedItem> items)
         {

@@ -1,6 +1,6 @@
 namespace Marketplace
 {
-    public class ShippingInfo
+    public class ShippingAddress
     {
         public string RecipientName { get; }
         public string Line1 { get; }
@@ -11,7 +11,7 @@ namespace Marketplace
         public string Country { get; }
         public string Phone { get; }
 
-        public ShippingInfo(
+        public ShippingAddress(
             string recipientName,
             string line1,
             string? line2,

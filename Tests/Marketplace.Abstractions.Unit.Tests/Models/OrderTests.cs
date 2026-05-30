@@ -157,7 +157,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             return Order.Create(Guid.NewGuid(), CreateShippingInfo(), CreatePaymentInfo(), items);
         }
 
-        private static ShippingInfo CreateShippingInfo() =>
+        private static ShippingAddress CreateShippingInfo() =>
             new("John Doe", "123 Main St", null, "Metropolis", "NY", "12345", "USA", "+1234567890");
 
         private static PaymentInfo CreatePaymentInfo() =>

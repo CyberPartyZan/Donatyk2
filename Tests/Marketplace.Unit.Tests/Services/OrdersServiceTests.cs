@@ -827,7 +827,7 @@ namespace Marketplace.Unit.Tests.Services
 
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
-        private static ShippingInfo CreateShippingInfo() =>
+        private static ShippingAddress CreateShippingInfo() =>
             new("Alice", "123 Main", null, "Kyiv", "Kyivska", "01001", "Ukraine", "+380441234567");
 
         private static PaymentInfo CreatePaymentInfo() =>

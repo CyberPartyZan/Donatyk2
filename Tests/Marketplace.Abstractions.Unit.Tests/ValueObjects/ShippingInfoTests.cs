@@ -47,7 +47,7 @@
         {
             yield return new object[]
             {
-                (Action)(() => new ShippingInfo(
+                (Action)(() => new ShippingAddress(
                     recipientName: null!,
                     line1: Line1,
                     line2: null,
@@ -61,7 +61,7 @@
 
             yield return new object[]
             {
-                (Action)(() => new ShippingInfo(
+                (Action)(() => new ShippingAddress(
                     recipientName: Recipient,
                     line1: "   ",
                     line2: null,
@@ -75,7 +75,7 @@
 
             yield return new object[]
             {
-                (Action)(() => new ShippingInfo(
+                (Action)(() => new ShippingAddress(
                     recipientName: Recipient,
                     line1: Line1,
                     line2: null,
@@ -89,7 +89,7 @@
 
             yield return new object[]
             {
-                (Action)(() => new ShippingInfo(
+                (Action)(() => new ShippingAddress(
                     recipientName: Recipient,
                     line1: Line1,
                     line2: null,
@@ -103,7 +103,7 @@
 
             yield return new object[]
             {
-                (Action)(() => new ShippingInfo(
+                (Action)(() => new ShippingAddress(
                     recipientName: Recipient,
                     line1: Line1,
                     line2: null,
@@ -117,7 +117,7 @@
 
             yield return new object[]
             {
-                (Action)(() => new ShippingInfo(
+                (Action)(() => new ShippingAddress(
                     recipientName: Recipient,
                     line1: Line1,
                     line2: null,
@@ -131,7 +131,7 @@
 
             yield return new object[]
             {
-                (Action)(() => new ShippingInfo(
+                (Action)(() => new ShippingAddress(
                     recipientName: Recipient,
                     line1: Line1,
                     line2: null,
@@ -144,7 +144,7 @@
             };
         }
 
-        private static ShippingInfo CreateShippingInfo(string? line2) =>
+        private static ShippingAddress CreateShippingInfo(string? line2) =>
             new(Recipient, Line1, line2, City, State, PostalCode, Country, Phone);
     }
 }

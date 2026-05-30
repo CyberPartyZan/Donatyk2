@@ -87,7 +87,7 @@ namespace Marketplace.Repository.MSSql
 
         private static Order MapToDomain(OrderEntity entity)
         {
-            var shippingInfo = new ShippingInfo(
+            var shippingInfo = new ShippingAddress(
                 entity.ShippingRecipientName,
                 entity.ShippingLine1,
                 entity.ShippingLine2,
