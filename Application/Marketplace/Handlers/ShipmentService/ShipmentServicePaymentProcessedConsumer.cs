@@ -5,10 +5,14 @@ namespace Marketplace
 {
     internal class ShipmentServicePaymentProcessedConsumer : IConsumer<PaymentProcessed>
     {
+        private readonly IShipmentService _shipmentService;
         private readonly IPublishEndpoint _publishEndpoint;
 
-        public ShipmentServicePaymentProcessedConsumer(IPublishEndpoint publishEndpoint)
+        public ShipmentServicePaymentProcessedConsumer(
+            IShipmentService shipmentService,
+            IPublishEndpoint publishEndpoint)
         {
+            _shipmentService = shipmentService;
             _publishEndpoint = publishEndpoint;
         }
 
@@ -17,14 +21,14 @@ namespace Marketplace
             var message = context.Message;
 
             if (!message.Succeeded)
-            {
                 return;
-            }
 
-            // TODO: Add shipment service and create shipment for the order here
-            var shipmentCreated = Guid.NewGuid(); // Simulate shipment creation
+            // TODO: Derive a real tracking reference from the payment/logistics provider
+            var shippingReference = $"SHIP-{message.OrderId:N}";
 
-            await _publishEndpoint.Publish(new ShipmentCreated (message.OrderId, shipmentCreated, DateTime.UtcNow));
+            var shipmentId = await _shipmentService.CreateShipmentAsync(message.OrderId, shippingReference);
+
+            await _publishEndpoint.Publish(new ShipmentCreated(message.OrderId, shipmentId, DateTime.UtcNow));
         }
     }
 }

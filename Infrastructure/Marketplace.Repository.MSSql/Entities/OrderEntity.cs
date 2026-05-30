@@ -19,6 +19,8 @@
         public decimal PaymentTaxRate { get; set; }
         public string? PaymentReturnUrl { get; set; }
         public string? PaymentReference { get; set; }
+        public Guid? ShipmentId { get; set; }
+        public virtual ShipmentEntity? Shipment { get; set; }
         public virtual ICollection<OrderItemEntity> Items { get; set; } = new List<OrderItemEntity>();
     }
 }

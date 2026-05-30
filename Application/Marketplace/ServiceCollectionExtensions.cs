@@ -18,6 +18,7 @@ namespace Marketplace
             services.AddScoped<ICategoriesService, CategoryService>();
             services.AddScoped<ITicketsService, TicketsService>();
             services.AddScoped<IBidsService, BidsService>();
+            services.AddScoped<IShipmentService, ShipmentService>();
 
             services.AddScoped<CheckAuctionEndedJob>();
 
@@ -53,9 +54,7 @@ namespace Marketplace
         private static IEndpointNameFormatter CreateEndpointNameFormatter(string? rabbitMqEndpointPrefix)
         {
             if (string.IsNullOrWhiteSpace(rabbitMqEndpointPrefix))
-            {
                 return KebabCaseEndpointNameFormatter.Instance;
-            }
 
             return new KebabCaseEndpointNameFormatter(
                 prefix: rabbitMqEndpointPrefix.Trim().ToLowerInvariant(),

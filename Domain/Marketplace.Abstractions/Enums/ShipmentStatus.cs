@@ -1,15 +1,12 @@
 ﻿namespace Marketplace
 {
-    public enum OrderStatus
+    public enum ShipmentStatus
     {
         Created,
-        Paid,
         Processing,
         Shipped,
         InTransit,
         OutForDelivery,
-        Delivered,
-        Completed,
-        Cancelled
+        Delivered
     }
 }

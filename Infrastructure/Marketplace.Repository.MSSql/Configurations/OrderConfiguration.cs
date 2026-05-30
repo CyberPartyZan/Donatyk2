@@ -63,6 +63,8 @@ namespace Marketplace.Repository.MSSql
             builder.Property(x => x.PaymentTaxRate)
                    .HasPrecision(5, 4);
 
+            builder.Property(x => x.ShipmentId);
+
             builder.OwnsOne(x => x.Total, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount)

@@ -14,9 +14,7 @@ namespace Marketplace.Repository.MSSql
         public async Task<Guid> Create(Order order)
         {
             if (order is null)
-            {
                 throw new ArgumentNullException(nameof(order));
-            }
 
             var entity = Map(order);
             _db.Orders.Add(entity);
@@ -82,6 +80,7 @@ namespace Marketplace.Repository.MSSql
             entity.PaymentTaxRate = mapped.PaymentTaxRate;
             entity.PaymentReturnUrl = mapped.PaymentReturnUrl;
             entity.PaymentReference = mapped.PaymentReference;
+            entity.ShipmentId = mapped.ShipmentId;
 
             await _db.SaveChangesAsync();
         }
@@ -115,18 +114,19 @@ namespace Marketplace.Repository.MSSql
                 entity.CreatedAt,
                 shippingInfo,
                 paymentInfo,
-                pricedItems);
+                pricedItems,
+                entity.ShipmentId);
         }
 
-        private static OrderEntity Map(Order order)
-        {
-            return new OrderEntity
+        private static OrderEntity Map(Order order) =>
+            new OrderEntity
             {
                 Id = order.Id,
                 CustomerId = order.CustomerId,
                 Status = order.Status,
                 Total = order.Total,
                 CreatedAt = order.CreatedAt,
+                ShipmentId = order.ShipmentId,
                 ShippingRecipientName = order.ShippingInfo.RecipientName,
                 ShippingLine1 = order.ShippingInfo.Line1,
                 ShippingLine2 = order.ShippingInfo.Line2,
@@ -150,6 +150,5 @@ namespace Marketplace.Repository.MSSql
                     })
                     .ToList()
             };
-        }
     }
-}
+}}

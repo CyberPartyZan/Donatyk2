@@ -11,11 +11,10 @@
         public ShippingInfo ShippingInfo { get; private set; } = null!;
         public PaymentInfo PaymentInfo { get; private set; } = null!;
         public DateTime CreatedAt { get; private set; }
+        public Guid? ShipmentId { get; private set; }
         public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
-        private Order()
-        {
-        }
+        private Order() { }
 
         /// <summary>
         /// Reconstructs an <see cref="Order"/> from persisted data, preserving the original Id,
@@ -28,7 +27,8 @@
             DateTime createdAt,
             ShippingInfo shippingInfo,
             PaymentInfo paymentInfo,
-            IReadOnlyList<PricedItem> items)
+            IReadOnlyList<PricedItem> items,
+            Guid? shipmentId = null)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id must be provided.", nameof(id));
@@ -52,7 +52,8 @@
                 Status = status,
                 CreatedAt = createdAt,
                 ShippingInfo = shippingInfo,
-                PaymentInfo = paymentInfo
+                PaymentInfo = paymentInfo,
+                ShipmentId = shipmentId
             };
 
             var firstCurrency = items[0].UnitPrice.Currency;
@@ -125,6 +126,57 @@
                 throw new InvalidOperationException("Only created orders can be marked as paid.");
 
             Status = OrderStatus.Paid;
+        }
+
+        public void AttachShipment(Guid shipmentId)
+        {
+            if (shipmentId == Guid.Empty)
+                throw new ArgumentException("ShipmentInfoId must be provided.", nameof(shipmentId));
+
+            if (ShipmentId.HasValue)
+                throw new InvalidOperationException("A shipment is already attached to this order.");
+
+            ShipmentId = shipmentId;
+        }
+
+        public void MarkProcessing()
+        {
+            if (Status != OrderStatus.Paid)
+                throw new InvalidOperationException("Only paid orders can be moved to processing.");
+
+            Status = OrderStatus.Processing;
+        }
+
+        public void MarkShipped()
+        {
+            if (Status != OrderStatus.Processing)
+                throw new InvalidOperationException("Only processing orders can be marked as shipped.");
+
+            Status = OrderStatus.Shipped;
+        }
+
+        public void MarkInTransit()
+        {
+            if (Status != OrderStatus.Shipped)
+                throw new InvalidOperationException("Only shipped orders can be marked as in transit.");
+
+            Status = OrderStatus.InTransit;
+        }
+
+        public void MarkOutForDelivery()
+        {
+            if (Status != OrderStatus.InTransit)
+                throw new InvalidOperationException("Only in-transit orders can be marked as out for delivery.");
+
+            Status = OrderStatus.OutForDelivery;
+        }
+
+        public void MarkDelivered()
+        {
+            if (Status != OrderStatus.OutForDelivery)
+                throw new InvalidOperationException("Only out-for-delivery orders can be marked as delivered.");
+
+            Status = OrderStatus.Delivered;
         }
 
         public void Cancel()
