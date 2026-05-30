@@ -110,6 +110,35 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         }
 
         [Fact]
+        public void MarkDelivered_FromOutForDelivery_SetsDeliveredAt()
+        {
+            var shipment = CreateValidShipment();
+            shipment.TakeIntoProcessing();
+            shipment.MarkShipped();
+            shipment.MarkInTransit();
+            shipment.MarkOutForDelivery();
+
+            var before = DateTime.UtcNow;
+            shipment.MarkDelivered();
+            var after = DateTime.UtcNow;
+
+            Assert.Equal(ShipmentStatus.Delivered, shipment.Status);
+            Assert.NotNull(shipment.DeliveredAt);
+            Assert.InRange(shipment.DeliveredAt!.Value, before, after);
+        }
+
+        [Fact]
+        public void Reconstruct_PreservesDeliveredAt()
+        {
+            var deliveredAt = DateTime.UtcNow.AddHours(-2);
+            var shipment = Shipment.Reconstruct(
+                Guid.NewGuid(), Guid.NewGuid(), "REF-123", ShipmentStatus.Delivered,
+                DateTime.UtcNow.AddHours(-5), deliveredAt);
+
+            Assert.Equal(deliveredAt, shipment.DeliveredAt);
+        }
+
+        [Fact]
         public void Reconstruct_PreservesAllFields()
         {
             var id = Guid.NewGuid();

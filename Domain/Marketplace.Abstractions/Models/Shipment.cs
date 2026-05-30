@@ -7,6 +7,7 @@
         public string TrackingNumber { get; private set; } = null!;
         public ShipmentStatus Status { get; private set; }
         public DateTime CreatedAt { get; private set; }
+        public DateTime? DeliveredAt { get; private set; }
 
         private Shipment() { }
 
@@ -33,7 +34,8 @@
             Guid orderId,
             string shippingReference,
             ShipmentStatus status,
-            DateTime createdAt)
+            DateTime createdAt,
+            DateTime? deliveredAt = null)
         {
             if (id == Guid.Empty)
                 throw new ArgumentException("Id must be provided.", nameof(id));
@@ -50,7 +52,8 @@
                 OrderId = orderId,
                 TrackingNumber = shippingReference,
                 Status = status,
-                CreatedAt = createdAt
+                CreatedAt = createdAt,
+                DeliveredAt = deliveredAt
             };
         }
 
@@ -92,6 +95,7 @@
                 throw new InvalidOperationException("Only out-for-delivery shipments can be marked as delivered.");
 
             Status = ShipmentStatus.Delivered;
+            DeliveredAt = DateTime.UtcNow;
         }
     }
 }

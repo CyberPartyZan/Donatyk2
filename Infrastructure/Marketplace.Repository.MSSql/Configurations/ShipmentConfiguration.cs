@@ -23,6 +23,9 @@ namespace Marketplace.Repository.MSSql
             builder.Property(x => x.CreatedAt)
                    .IsRequired();
 
+            builder.Property(x => x.DeliveredAt)
+                   .IsRequired(false);
+
             builder.HasOne(x => x.Order)
                    .WithOne(o => o.Shipment)
                    .HasForeignKey<ShipmentEntity>(x => x.OrderId)

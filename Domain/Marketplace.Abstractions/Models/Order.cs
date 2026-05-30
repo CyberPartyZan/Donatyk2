@@ -179,6 +179,14 @@
             Status = OrderStatus.Delivered;
         }
 
+        public void MarkCompleted()
+        {
+            if (Status != OrderStatus.Delivered)
+                throw new InvalidOperationException("Only delivered orders can be marked as completed.");
+
+            Status = OrderStatus.Completed;
+        }
+
         public void Cancel()
         {
             if (Status == OrderStatus.Cancelled)

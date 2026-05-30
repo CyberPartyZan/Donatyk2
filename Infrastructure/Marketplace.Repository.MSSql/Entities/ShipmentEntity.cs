@@ -7,6 +7,7 @@
         public string ShippingReference { get; set; } = null!;
         public ShipmentStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? DeliveredAt { get; set; }
 
         public virtual OrderEntity Order { get; set; } = null!;
     }

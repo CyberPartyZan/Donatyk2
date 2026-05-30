@@ -31,6 +31,7 @@ namespace Marketplace
                 x.AddConsumer<ShipmentServicePaymentProcessedConsumer>();
                 x.AddConsumer<MarketplacePaymentProcessedConsumer>();
                 x.AddConsumer<ShipmentCreatedConsumer>();
+                x.AddConsumer<ShipmentDeliveredConsumer>();
                 x.AddConsumer<DrawLaunchedConsumer>();
                 x.AddConsumer<AuctionEndedConsumer>();
 

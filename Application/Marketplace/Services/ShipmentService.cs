@@ -1,4 +1,6 @@
-﻿using Marketplace.Repository;
+﻿using Marketplace.Abstractions;
+using Marketplace.Repository;
+using MassTransit;
 
 namespace Marketplace
 {
@@ -6,13 +8,16 @@ namespace Marketplace
     {
         private readonly IShipmentRepository _shipmentRepository;
         private readonly IOrdersRepository _ordersRepository;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public ShipmentService(
             IShipmentRepository shipmentRepository,
-            IOrdersRepository ordersRepository)
+            IOrdersRepository ordersRepository,
+            IPublishEndpoint publishEndpoint)
         {
             _shipmentRepository = shipmentRepository;
             _ordersRepository = ordersRepository;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task<Guid> CreateShipmentAsync(Guid orderId, string shippingReference)
@@ -82,6 +87,9 @@ namespace Marketplace
 
             await _shipmentRepository.Update(shipment);
             await _ordersRepository.Update(order);
+
+            await _publishEndpoint.Publish(
+                new ShipmentDelivered(order.Id, shipment.Id, shipment.DeliveredAt!.Value));
         }
 
         private async Task<(Shipment shipment, Order order)> GetShipmentAndOrderAsync(Guid shipmentId)

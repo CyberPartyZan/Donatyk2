@@ -44,6 +44,7 @@ namespace Marketplace.Repository.MSSql
                 throw new KeyNotFoundException($"Shipment '{shipment.Id}' not found.");
 
             entity.Status = shipment.Status;
+            entity.DeliveredAt = shipment.DeliveredAt;
 
             await _db.SaveChangesAsync();
         }
@@ -54,7 +55,8 @@ namespace Marketplace.Repository.MSSql
                 entity.OrderId,
                 entity.ShippingReference,
                 entity.Status,
-                entity.CreatedAt);
+                entity.CreatedAt,
+                entity.DeliveredAt);
 
         private static ShipmentEntity Map(Shipment shipment) =>
             new ShipmentEntity
@@ -63,7 +65,8 @@ namespace Marketplace.Repository.MSSql
                 OrderId = shipment.OrderId,
                 ShippingReference = shipment.TrackingNumber,
                 Status = shipment.Status,
-                CreatedAt = shipment.CreatedAt
+                CreatedAt = shipment.CreatedAt,
+                DeliveredAt = shipment.DeliveredAt
             };
     }
 }
