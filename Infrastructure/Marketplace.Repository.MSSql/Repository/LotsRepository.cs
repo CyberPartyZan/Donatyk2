@@ -16,6 +16,8 @@ namespace Marketplace.Repository.MSSql
             var q = _db.Lots
                 .Include(l => l.Seller)
                 .Include(l => l.Category)
+                .Include(l => l.Characteristics)
+                .Include(l => l.Images)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query?.SearchText))
@@ -96,6 +98,8 @@ namespace Marketplace.Repository.MSSql
                 .Include(l => l.Seller)
                 .Include(l => l.Category)
                 .Include(l => l.BidHistory)
+                .Include(l => l.Characteristics)
+                .Include(l => l.Images)
                 .FirstOrDefaultAsync(l => l.Id == id && !l.IsDeleted);
 
             return entity is null ? null : CreateFromEntity(entity);
@@ -109,12 +113,14 @@ namespace Marketplace.Repository.MSSql
                 .Include(l => l.Seller)
                 .Include(l => l.Category)
                 .Include(l => l.BidHistory)
+                .Include(l => l.Characteristics)
+                .Include(l => l.Images)
                 .Where(l => l.Type == LotType.Auction
                             && !l.IsDeleted
                             && l.IsActive
                             && l.EndOfAuction != null
                             && l.EndOfAuction <= now
-                            && l.StockCount > 0)       // not yet sold/fulfilled
+                            && l.StockCount > 0)
                 .ToListAsync(cancellationToken);
 
             return entities
@@ -126,9 +132,11 @@ namespace Marketplace.Repository.MSSql
         {
             if (lot is null) throw new ArgumentNullException(nameof(lot));
 
+            var lotId = lot.Id == Guid.Empty ? Guid.NewGuid() : lot.Id;
+
             var entity = new LotEntity
             {
-                Id = lot.Id == Guid.Empty ? Guid.NewGuid() : lot.Id,
+                Id = lotId,
                 Name = lot.Name,
                 Description = lot.Description,
                 Price = lot.Price,
@@ -165,6 +173,20 @@ namespace Marketplace.Repository.MSSql
                 TicketsSold = (lot is DrawLot dl2) ? dl2.TicketsSold : null,
                 IsDeleted = lot.IsDeleted,
                 IsDrawn = (lot is DrawLot dl3) && dl3.IsDrawn,
+                Characteristics = lot.Characteristics.Select(c => new CharacteristicEntity
+                {
+                    Id = Guid.NewGuid(),
+                    Key = c.Key,
+                    Value = c.Value,
+                    LotId = lotId
+                }).ToList(),
+                Images = lot.Images.Select(i => new ImageEntity
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Data = i.Data?.ToArray(),
+                    LotId = lotId
+                }).ToList()
             };
 
             _db.Lots.Add(entity);
@@ -186,6 +208,8 @@ namespace Marketplace.Repository.MSSql
 
             var existing = await _db.Lots
                 .Include(l => l.Seller)
+                .Include(l => l.Characteristics)
+                .Include(l => l.Images)
                 .FirstOrDefaultAsync(l => l.Id == id);
 
             if (existing is null || existing.IsDeleted)
@@ -227,6 +251,40 @@ namespace Marketplace.Repository.MSSql
                 }
             }
 
+            // Replace characteristics
+            foreach (var c in existing.Characteristics.ToList())
+                _db.Entry(c).State = EntityState.Deleted;
+
+            existing.Characteristics.Clear();
+
+            foreach (var c in lot.Characteristics)
+            {
+                existing.Characteristics.Add(new CharacteristicEntity
+                {
+                    Id = Guid.NewGuid(),
+                    Key = c.Key,
+                    Value = c.Value,
+                    LotId = existing.Id
+                });
+            }
+
+            // Replace images
+            foreach (var image in existing.Images.ToList())
+                _db.Entry(image).State = EntityState.Deleted;
+
+            existing.Images.Clear();
+
+            foreach (var image in lot.Images)
+            {
+                existing.Images.Add(new ImageEntity
+                {
+                    Id = image.Id,
+                    Url = image.Url,
+                    Data = image.Data?.ToArray(),
+                    LotId = existing.Id
+                });
+            }
+
             _db.Lots.Update(existing);
             await _db.SaveChangesAsync();
         }
@@ -238,6 +296,10 @@ namespace Marketplace.Repository.MSSql
             var sellerEntity = entity.Seller ?? throw new InvalidOperationException("Lot entity must have a Seller.");
             var categoryEntity = entity.Category ?? throw new InvalidOperationException("Lot entity must have a Category.");
             var category = new Category(categoryEntity.Id, categoryEntity.Name, categoryEntity.Description);
+
+            var characteristics = entity.Characteristics
+                .Select(c => new Characteristic(c.Key, c.Value))
+                .ToArray();
 
             return entity.Type switch
             {
@@ -263,7 +325,8 @@ namespace Marketplace.Repository.MSSql
                     entity.IsCompensationPaid,
                     category,
                     entity.DeclineReason,
-                    entity.IsDeleted),
+                    entity.IsDeleted,
+                    characteristics),
 
                 LotType.Auction => new AuctionLot(
                     entity.Id,
@@ -292,7 +355,8 @@ namespace Marketplace.Repository.MSSql
                     bidHistory: entity.BidHistory
                         .Select(b => new Bid(b.Id, b.AuctionId, b.BidderId, b.Amount, b.PlacedAt))
                         .ToList(),
-                    isDeleted: entity.IsDeleted),
+                    isDeleted: entity.IsDeleted,
+                    characteristics: characteristics),
 
                 LotType.Draw => new DrawLot(
                     entity.Id,
@@ -320,7 +384,8 @@ namespace Marketplace.Repository.MSSql
                     entity.DeclineReason,
                     tickets: null,
                     isDrawn: entity.IsDrawn,
-                    isDeleted: entity.IsDeleted),
+                    isDeleted: entity.IsDeleted,
+                    characteristics: characteristics),
 
                 _ => throw new InvalidOperationException($"Unsupported LotType: {entity.Type}")
             };

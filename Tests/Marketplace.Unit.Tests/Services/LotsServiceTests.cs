@@ -132,6 +132,10 @@ namespace Marketplace.Unit.Tests.Services
 
             var dto = CreateLotDto();
             dto.Stage = LotStage.Approved; // should be overridden
+            dto.Images =
+            [
+                new ImageDto { Id = Guid.NewGuid(), Url = "https://example.com/cover.png", Data = null }
+            ];
 
             Lot? capturedLot = null;
             var expectedId = fixture.Create<Guid>();
@@ -150,6 +154,8 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal(LotStage.PendingApproval, capturedLot!.Stage);
             Assert.Equal(userId, capturedLot.Seller.UserId);
             Assert.Equal(dto.Name, capturedLot.Name);
+            Assert.Single(capturedLot.Images);
+            Assert.Equal("https://example.com/cover.png", capturedLot.Images[0].Url);
         }
 
         [Fact]

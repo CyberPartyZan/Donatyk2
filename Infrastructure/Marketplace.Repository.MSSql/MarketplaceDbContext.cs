@@ -19,9 +19,11 @@ namespace Marketplace.Repository.MSSql
         public DbSet<BidEntity> BidHistory { get; set; }
         public DbSet<CategoryEntity> Categories { get; set; }
         public DbSet<TicketEntity> Tickets { get; set; }
+        public DbSet<CharacteristicEntity> Characteristics { get; set; }
         public DbSet<ShipmentEntity> Shipments { get; set; }
         public DbSet<ShippingAddressEntity> ShippingAddresses { get; set; }
         public DbSet<DeliveryPreferencesEntity> DeliveryPreferences { get; set; }
+        public DbSet<ImageEntity> Images { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,9 +40,11 @@ namespace Marketplace.Repository.MSSql
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
             modelBuilder.ApplyConfiguration(new BidConfiguration());
             modelBuilder.ApplyConfiguration(new TicketConfiguration());
+            modelBuilder.ApplyConfiguration(new CharacteristicConfiguration());
             modelBuilder.ApplyConfiguration(new ShipmentConfiguration());
             modelBuilder.ApplyConfiguration(new ShippingAddressConfiguration());
             modelBuilder.ApplyConfiguration(new DeliveryPreferencesConfiguration());
+            modelBuilder.ApplyConfiguration(new ImageConfiguration());
         }
     }
 }

@@ -38,8 +38,16 @@ namespace Marketplace.Server.Controllers
         public async Task<IActionResult> Post([FromBody] LotDto dto)
         {
             if (dto is null) return BadRequest();
-            var id = await _lotsService.CreateLot(dto);
-            return CreatedAtAction(nameof(Get), new { id }, null);
+
+            try
+            {
+                var id = await _lotsService.CreateLot(dto);
+                return CreatedAtAction(nameof(Get), new { id }, null);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
@@ -49,6 +57,10 @@ namespace Marketplace.Server.Controllers
             {
                 await _lotsService.UpdateLot(id, dto);
                 return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch (KeyNotFoundException)
             {

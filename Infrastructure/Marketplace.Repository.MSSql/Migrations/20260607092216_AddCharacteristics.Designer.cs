@@ -4,6 +4,7 @@ using Marketplace.Repository.MSSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Marketplace.Repository.MSSql.Migrations
 {
     [DbContext(typeof(MarketplaceDbContext))]
-    partial class MarketplaceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260607092216_AddCharacteristics")]
+    partial class AddCharacteristics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -219,32 +222,6 @@ namespace Marketplace.Repository.MSSql.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("DeliveryPreferences");
-                });
-
-            modelBuilder.Entity("Marketplace.Repository.MSSql.ImageEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte[]>("Data")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<Guid>("LotId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Url")
-                        .HasMaxLength(2048)
-                        .HasColumnType("nvarchar(2048)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LotId");
-
-                    b.ToTable("Images", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_Images_UrlOrData", "[Url] IS NOT NULL OR [Data] IS NOT NULL");
-                        });
                 });
 
             modelBuilder.Entity("Marketplace.Repository.MSSql.LotEntity", b =>
@@ -825,17 +802,6 @@ namespace Marketplace.Repository.MSSql.Migrations
                     b.Navigation("ShippingAddress");
                 });
 
-            modelBuilder.Entity("Marketplace.Repository.MSSql.ImageEntity", b =>
-                {
-                    b.HasOne("Marketplace.Repository.MSSql.LotEntity", "Lot")
-                        .WithMany("Images")
-                        .HasForeignKey("LotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Lot");
-                });
-
             modelBuilder.Entity("Marketplace.Repository.MSSql.LotEntity", b =>
                 {
                     b.HasOne("Marketplace.Repository.MSSql.CategoryEntity", "Category")
@@ -1153,8 +1119,6 @@ namespace Marketplace.Repository.MSSql.Migrations
                     b.Navigation("BidHistory");
 
                     b.Navigation("Characteristics");
-
-                    b.Navigation("Images");
 
                     b.Navigation("Tickets");
                 });

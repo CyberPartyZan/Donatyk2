@@ -33,6 +33,8 @@
         public string? DeclineReason { get; set; }
         public Category Category { get; set; }
         public Money Profit => Price - Compensation;
+        public Characteristic[] Characteristics { get; private set; }
+        public Image[] Images { get; private set; }
 
         public Lot(
             Guid id,
@@ -49,7 +51,9 @@
             bool isCompensationPaid,
             Category category,
             string? declineReason = null,
-            bool isDeleted = false)
+            bool isDeleted = false,
+            Characteristic[]? characteristics = null,
+            Image[]? images = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Lot name cannot be null or whitespace.", nameof(name));
@@ -79,6 +83,9 @@
             if (price < compensation)
                 throw new ArgumentException("Price cannot be less than Compensation.");
 
+            if (images is not null && images.Any(i => i is null))
+                throw new ArgumentException("Images collection cannot contain null elements.", nameof(images));
+
             Id = id;
             Name = name;
             Description = description;
@@ -97,6 +104,8 @@
             DeclineReason = declineReason;
             Category = category;
             IsDeleted = isDeleted;
+            Characteristics = characteristics ?? Array.Empty<Characteristic>();
+            Images = images ?? Array.Empty<Image>();
         }
 
         public virtual void Sell(int quantity)

@@ -24,6 +24,8 @@
         public bool IsDrawn { get; set; }
         public virtual ICollection<TicketEntity> Tickets { get; set; } = new List<TicketEntity>();
         public virtual ICollection<BidEntity> BidHistory { get; set; } = new List<BidEntity>();
+        public virtual ICollection<CharacteristicEntity> Characteristics { get; set; } = new List<CharacteristicEntity>();
+        public virtual ICollection<ImageEntity> Images { get; set; } = new List<ImageEntity>();
         public bool IsDeleted { get; set; }
     }
 }

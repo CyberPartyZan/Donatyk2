@@ -24,8 +24,10 @@
             Category category,
             string? declineReason = null,
             IReadOnlyCollection<Bid>? bidHistory = null,
-            bool isDeleted = false)
-            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason, isDeleted)
+            bool isDeleted = false,
+            Characteristic[]? characteristics = null,
+            Image[]? images = null)
+            : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason, isDeleted, characteristics, images)
         {
             if (auctionStepPercent <= 0)
                 throw new ArgumentOutOfRangeException(nameof(auctionStepPercent), "Auction step percent should be greater than zero.");

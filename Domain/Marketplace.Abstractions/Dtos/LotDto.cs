@@ -21,5 +21,7 @@
         public DateTime? EndOfAuction { get; set; }
         public int? AuctionStepPercent { get; set; }
         public Money? TicketPrice { get; set; }
+        public CharacteristicDto[] Characteristics { get; set; } = Array.Empty<CharacteristicDto>();
+        public ImageDto[] Images { get; set; } = Array.Empty<ImageDto>();
     }
 }

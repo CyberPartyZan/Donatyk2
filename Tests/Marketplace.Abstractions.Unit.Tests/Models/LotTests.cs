@@ -201,6 +201,91 @@
             Assert.Equal(3, lot.StockCount);
         }
 
+        [Fact]
+        public void Constructor_WithCharacteristics_SetsCharacteristicsProperty()
+        {
+            var characteristics = new[]
+            {
+                new Characteristic("Color", "Red"),
+                new Characteristic("Size", "XL")
+            };
+
+            var lot = new Lot(
+                Guid.NewGuid(),
+                "Lot with characteristics",
+                "Description",
+                CreateMoney(100m),
+                CreateMoney(60m),
+                stockCount: 5,
+                discountedPrice: null,
+                LotType.Simple,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                category: CreateCategory(),
+                characteristics: characteristics);
+
+            Assert.Equal(2, lot.Characteristics.Length);
+            Assert.Equal("Color", lot.Characteristics[0].Key);
+            Assert.Equal("Red", lot.Characteristics[0].Value);
+            Assert.Equal("Size", lot.Characteristics[1].Key);
+            Assert.Equal("XL", lot.Characteristics[1].Value);
+        }
+
+        [Fact]
+        public void Constructor_WithNullCharacteristics_DefaultsToEmptyArray()
+        {
+            var lot = new Lot(
+                Guid.NewGuid(),
+                "Lot",
+                "Description",
+                CreateMoney(100m),
+                CreateMoney(60m),
+                stockCount: 1,
+                discountedPrice: null,
+                LotType.Simple,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                category: CreateCategory(),
+                characteristics: null);
+
+            Assert.NotNull(lot.Characteristics);
+            Assert.Empty(lot.Characteristics);
+        }
+
+        [Fact]
+        public void Constructor_WithImages_SetsImagesProperty()
+        {
+            var images = new[]
+            {
+                new Image(Guid.NewGuid(), "https://example.com/1.png", null),
+                new Image(Guid.NewGuid(), null, new byte[] { 10, 20 })
+            };
+
+            var lot = new Lot(
+                Guid.NewGuid(),
+                "Lot with images",
+                "Description",
+                CreateMoney(100m),
+                CreateMoney(60m),
+                stockCount: 2,
+                discountedPrice: null,
+                LotType.Simple,
+                LotStage.Created,
+                CreateSeller(),
+                isActive: true,
+                isCompensationPaid: false,
+                category: CreateCategory(),
+                images: images);
+
+            Assert.Equal(2, lot.Images.Length);
+            Assert.Equal(images[0].Url, lot.Images[0].Url);
+            Assert.Equal(images[1].Data, lot.Images[1].Data);
+        }
+
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
 
         private static Seller CreateSeller() =>

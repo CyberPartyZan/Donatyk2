@@ -81,6 +81,9 @@ namespace Marketplace
                 dto.Category.Name,
                 dto.Category.Description);
 
+            var characteristics = MapCharacteristics(dto.Characteristics);
+            var images = MapImages(dto.Images);
+
             var lot = new Lot(
                 id: dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id,
                 name: dto.Name,
@@ -94,9 +97,10 @@ namespace Marketplace
                 seller: seller,
                 isActive: dto.IsActive,
                 isCompensationPaid: dto.IsCompensationPaid,
-                category: category);
+                category: category,
+                characteristics: characteristics,
+                images: images);
 
-            // child specific props are handled by repository/factory if needed (e.g. AuctionLot/DrawLot)
             return await _lotsRepository.CreateLot(lot);
         }
 
@@ -122,6 +126,9 @@ namespace Marketplace
                 dto.Category.Name,
                 dto.Category.Description);
 
+            var characteristics = MapCharacteristics(dto.Characteristics);
+            var images = MapImages(dto.Images);
+
             var updated = new Lot(
                 id: id,
                 name: dto.Name,
@@ -136,7 +143,9 @@ namespace Marketplace
                 isActive: dto.IsActive,
                 isCompensationPaid: dto.IsCompensationPaid,
                 category: category,
-                isDeleted: existing.IsDeleted);
+                isDeleted: existing.IsDeleted,
+                characteristics: characteristics,
+                images: images);
 
             await _lotsRepository.UpdateLot(id, updated);
         }
@@ -194,6 +203,19 @@ namespace Marketplace
             return Guid.Parse(userIdValue);
         }
 
+        private static Characteristic[] MapCharacteristics(CharacteristicDto[]? dtos) =>
+            dtos is null or { Length: 0 }
+                ? Array.Empty<Characteristic>()
+                : dtos.Select(c => new Characteristic(c.Key, c.Value)).ToArray();
+
+        private static Image[] MapImages(ImageDto[]? dtos) =>
+            dtos is null or { Length: 0 }
+                ? Array.Empty<Image>()
+                : dtos.Select(i => new Image(
+                    i.Id == Guid.Empty ? Guid.NewGuid() : i.Id,
+                    i.Url,
+                    i.Data)).ToArray();
+
         private static LotDto ToDto(Lot lot)
         {
             return new LotDto
@@ -230,7 +252,18 @@ namespace Marketplace
                 CreatedAt = DateTime.UtcNow,
                 EndOfAuction = lot is AuctionLot al ? al.EndOfAuction : null,
                 AuctionStepPercent = lot is AuctionLot a2 ? a2.AuctionStepPercent : null,
-                TicketPrice = lot is DrawLot dl ? dl.TicketPrice : null
+                TicketPrice = lot is DrawLot dl ? dl.TicketPrice : null,
+                Characteristics = lot.Characteristics
+                    .Select(c => new CharacteristicDto { Key = c.Key, Value = c.Value })
+                    .ToArray(),
+                Images = lot.Images
+                    .Select(i => new ImageDto
+                    {
+                        Id = i.Id,
+                        Url = i.Url,
+                        Data = i.Data is null ? null : i.Data.ToArray()
+                    })
+                    .ToArray()
             };
         }
     }
