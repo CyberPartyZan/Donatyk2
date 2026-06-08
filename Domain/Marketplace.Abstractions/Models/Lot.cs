@@ -80,8 +80,8 @@
                 throw new ArgumentNullException(nameof(seller), "Seller cannot be null.");
             if (category == null)
                 throw new ArgumentNullException(nameof(category), "Category cannot be null.");
-            if (price < compensation)
-                throw new ArgumentException("Price cannot be less than Compensation.");
+            if (stage == LotStage.Approved && price < compensation)
+                throw new ArgumentException("Price cannot be less than Compensation for Approved lots.");
 
             if (images is not null && images.Any(i => i is null))
                 throw new ArgumentException("Images collection cannot contain null elements.", nameof(images));
