@@ -149,7 +149,7 @@ namespace Marketplace.Repository.MSSql
                 StockCount = lot.StockCount,
                 DiscountedPrice = lot.DiscountedPrice,
                 Type = lot.Type,
-                Stage = lot.Stage,
+                Stage = LotStage.PendingApproval,
                 DeclineReason = lot.DeclineReason,
                 Category = new CategoryEntity
                 {
