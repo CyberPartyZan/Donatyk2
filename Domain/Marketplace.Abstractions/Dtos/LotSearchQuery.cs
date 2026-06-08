@@ -7,6 +7,7 @@
         public int? MaxPrice { get; set; }
         public Guid? SellerId { get; set; }
         public LotType? Type { get; set; }
+        public LotStage? Stage { get; set; }
         public int? MinDiscount { get; set; }
         public int? MaxDiscount { get; set; }
         public Guid? CategoryId { get; set; }
@@ -25,7 +26,8 @@
                 && MaxDiscount is null
                 && GetDeleted is null
                 && GetExhausted is null
-                && GetInactive is null;
+                && GetInactive is null
+                && Stage is null;
         }
 
         public string ToCacheKey()

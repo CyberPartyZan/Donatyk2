@@ -151,6 +151,22 @@ public class LotsEndpointTests : IntegrationTestsBase
         Assert.Equal(request.Reason, lot.DeclineReason);
     }
 
+    [Fact]
+    public async Task GetLots_WithStageFilter_ReturnsOnlyRequestedStage()
+    {
+        var approvedLot = await SeedLotAsync(configure: l => l.Stage = LotStage.Approved);
+        var deniedLot = await SeedLotAsync(configure: l => l.Stage = LotStage.Denied);
+
+        var response = await _client.GetAsync("/api/lots?stage=Approved");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<List<LotDto>>();
+        Assert.NotNull(payload);
+        Assert.Contains(payload!, lot => lot.Id == approvedLot.Id);
+        Assert.DoesNotContain(payload!, lot => lot.Id == deniedLot.Id);
+    }
+
     private Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null) =>
         IntegrationTestsHelper.SeedLotAsync(_factory.Services, configure: configure);
 }

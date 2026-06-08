@@ -45,6 +45,11 @@ namespace Marketplace.Repository.MSSql
                 q = q.Where(e => e.Type == query.Type.Value);
             }
 
+            if (query?.Stage is not null) // NEW
+            {
+                q = q.Where(e => e.Stage == query.Stage.Value);
+            }
+
             if (query?.MinDiscount is not null)
             {
                 q = q.Where(e =>
