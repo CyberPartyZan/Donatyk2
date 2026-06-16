@@ -24,7 +24,7 @@ import PaymentCancelPage from "../pages/payment-cancel/page";
 import CheckoutPage from "../pages/checkout/page";
 import SellerPage from "../pages/marketplace/seller/page";
 import GoalDetailPage from "../pages/goals/page";
-import ReportsAdmin from "../pages/admin/reports/page";
+import ReportsAdmin from "../pages/admin/report/page";
 import MediaAdmin from "../pages/admin/media/page";
 import FaqsAdmin from "../pages/admin/faqs/page";
 
