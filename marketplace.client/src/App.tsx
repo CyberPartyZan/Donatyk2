@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react';
-import { HomePage } from './pages/HomePage';
-import { Route, Routes } from 'react-router';
-import './App.css';
-import { LotFull } from './components/LotFull';
+import { BrowserRouter } from "react-router-dom";
+import { AppRoutes } from "./router";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./i18n";
+import { AuthProvider } from "./hooks/useAuth";
+import ChatWidget from "./components/feature/ChatWidget";
+
 
 function App() {
-  return (
-    <Routes>
-      <Route index element={<HomePage />} />
-      <Route path='lot' element={<LotFull />} />
-    </Routes>
-  );
+    return (
+        <I18nextProvider i18n={i18n}>
+            <AuthProvider>
+                <BrowserRouter basename={__BASE_PATH__}>
+                    <AppRoutes />
+                    <ChatWidget />
+                </BrowserRouter>
+            </AuthProvider>
+        </I18nextProvider>
+    );
 }
 
 export default App;

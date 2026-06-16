@@ -1,61 +1,83 @@
-import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import { resolve } from "node:path";
+import AutoImport from "unplugin-auto-import/vite";
 
-import { defineConfig } from 'vite';
-import plugin from '@vitejs/plugin-react';
-import fs from 'fs';
-import path from 'path';
-import child_process from 'child_process';
-import { env } from 'process';
-
-const baseFolder =
-    env.APPDATA !== undefined && env.APPDATA !== ''
-        ? `${env.APPDATA}/ASP.NET/https`
-        : `${env.HOME}/.aspnet/https`;
-
-const certificateName = "marketplace.client";
-const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
-const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
-
-if (!fs.existsSync(baseFolder)) {
-    fs.mkdirSync(baseFolder, { recursive: true });
-}
-
-if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-    if (0 !== child_process.spawnSync('dotnet', [
-        'dev-certs',
-        'https',
-        '--export-path',
-        certFilePath,
-        '--format',
-        'Pem',
-        '--no-password',
-    ], { stdio: 'inherit', }).status) {
-        throw new Error("Could not create certificate.");
-    }
-}
-
-const target = env.ASPNETCORE_HTTPS_PORT ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}` :
-    env.ASPNETCORE_URLS ? env.ASPNETCORE_URLS.split(';')[0] : 'https://localhost:7077';
-
-// https://vitejs.dev/config/
+const base = process.env.BASE_PATH || "/";
+const isPreview = process.env.IS_PREVIEW ? true : false;
+// https://vite.dev/config/
 export default defineConfig({
-    plugins: [plugin()],
+    define: {
+        __BASE_PATH__: JSON.stringify(base),
+        __IS_PREVIEW__: JSON.stringify(isPreview),
+        __READDY_PROJECT_ID__: JSON.stringify(process.env.PROJECT_ID || ""),
+        __READDY_VERSION_ID__: JSON.stringify(process.env.VERSION_ID || ""),
+        __READDY_AI_DOMAIN__: JSON.stringify(process.env.READDY_AI_DOMAIN || ""),
+    },
+    plugins: [
+        react(),
+        AutoImport({
+            imports: [
+                {
+                    react: [
+                        "React",
+                        "useState",
+                        "useEffect",
+                        "useContext",
+                        "useReducer",
+                        "useCallback",
+                        "useMemo",
+                        "useRef",
+                        "useImperativeHandle",
+                        "useLayoutEffect",
+                        "useDebugValue",
+                        "useDeferredValue",
+                        "useId",
+                        "useInsertionEffect",
+                        "useSyncExternalStore",
+                        "useTransition",
+                        "startTransition",
+                        "lazy",
+                        "memo",
+                        "forwardRef",
+                        "createContext",
+                        "createElement",
+                        "cloneElement",
+                        "isValidElement",
+                    ],
+                },
+                {
+                    "react-router-dom": [
+                        "useNavigate",
+                        "useLocation",
+                        "useParams",
+                        "useSearchParams",
+                        "Link",
+                        "NavLink",
+                        "Navigate",
+                        "Outlet",
+                    ],
+                },
+                // React i18n
+                {
+                    "react-i18next": ["useTranslation", "Trans"],
+                },
+            ],
+            dts: true,
+        }),
+    ],
+    base,
+    build: {
+        sourcemap: true,
+        outDir: "out",
+    },
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
-        }
+            "@": resolve(__dirname, "./src"),
+        },
     },
     server: {
-        proxy: {
-            '^/weatherforecast': {
-                target,
-                secure: false
-            }
-        },
-        port: parseInt(env.DEV_SERVER_PORT || '62630'),
-        https: {
-            key: fs.readFileSync(keyFilePath),
-            cert: fs.readFileSync(certFilePath),
-        }
-    }
-})
+        port: 3000,
+        host: "0.0.0.0",
+    },
+});
