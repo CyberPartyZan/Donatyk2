@@ -24,6 +24,7 @@ namespace Marketplace.Repository.MSSql
         public DbSet<ShippingAddressEntity> ShippingAddresses { get; set; }
         public DbSet<DeliveryPreferencesEntity> DeliveryPreferences { get; set; }
         public DbSet<ImageEntity> Images { get; set; }
+        public DbSet<CompensationEntity> Compensations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,6 +46,7 @@ namespace Marketplace.Repository.MSSql
             modelBuilder.ApplyConfiguration(new ShippingAddressConfiguration());
             modelBuilder.ApplyConfiguration(new DeliveryPreferencesConfiguration());
             modelBuilder.ApplyConfiguration(new ImageConfiguration());
+            modelBuilder.ApplyConfiguration(new CompensationConfiguration());
         }
     }
 }

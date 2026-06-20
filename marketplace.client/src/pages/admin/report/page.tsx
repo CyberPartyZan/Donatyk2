@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { mockReports } from '@/mocks/reports';
 import { mockGoals } from '@/mocks/goals';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 5;
 
 interface ReceiptDocument {
     name: string;
@@ -34,6 +37,7 @@ export default function ReportsAdmin() {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const allDirections = Array.from(new Set(reports.map(r => r.direction)));
     const totalSpent = reports.reduce((sum, r) => sum + r.moneySpent, 0);
@@ -157,73 +161,76 @@ export default function ReportsAdmin() {
                                 <p className="text-gray-500 text-sm">No reports found</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {filtered.map(report => {
-                                    const goal = mockGoals.find(g => g.id === report.goalId);
-                                    const pctSpent = Math.round((report.moneySpent / report.moneyBudget) * 100);
-                                    return (
-                                        <div key={report.id} className="bg-gray-50 rounded-lg border border-gray-200 p-5 hover:border-teal-200 transition-colors">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-xs text-gray-400">{report.organizationName}</span>
-                                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${report.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                                                            }`}>
-                                                            {report.status}
-                                                        </span>
+                            <>
+                                <div className="space-y-4">
+                                    {filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(report => {
+                                        const goal = mockGoals.find(g => g.id === report.goalId);
+                                        const pctSpent = Math.round((report.moneySpent / report.moneyBudget) * 100);
+                                        return (
+                                            <div key={report.id} className="bg-gray-50 rounded-lg border border-gray-200 p-5 hover:border-teal-200 transition-colors">
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-xs text-gray-400">{report.organizationName}</span>
+                                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${report.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                                                }`}>
+                                                                {report.status}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="text-lg font-semibold text-gray-900">{report.goalTitle}</h3>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded-full">{report.direction}</span>
+                                                        </div>
                                                     </div>
-                                                    <h3 className="text-lg font-semibold text-gray-900">{report.goalTitle}</h3>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded-full">{report.direction}</span>
+                                                    <div className="text-right">
+                                                        <p className="text-sm text-gray-500">Spent</p>
+                                                        <p className="text-xl font-bold text-emerald-600">${report.moneySpent.toLocaleString()}</p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm text-gray-500">Spent</p>
-                                                    <p className="text-xl font-bold text-emerald-600">${report.moneySpent.toLocaleString()}</p>
+
+                                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{report.spentOn}</p>
+
+                                                <div className="mb-3">
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-xs text-gray-500">Budget utilization</span>
+                                                        <span className="text-xs font-medium text-gray-700">{pctSpent}%</span>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                        <div className={`h-full rounded-full ${report.status === 'Completed' ? 'bg-emerald-500' : 'bg-teal-500'}`} style={{ width: `${Math.min(pctSpent, 100)}%` }}></div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                                                        <i className="ri-calendar-line"></i>
+                                                        {new Date(report.spentAt).toLocaleDateString()}
+                                                    </p>
+                                                    <div className="flex items-center gap-3">
+                                                        {report.receiptDocuments.length > 0 && (
+                                                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                                <i className="ri-file-pdf-line text-red-500"></i>
+                                                                {report.receiptDocuments.length} document{report.receiptDocuments.length !== 1 ? 's' : ''}
+                                                            </span>
+                                                        )}
+                                                        {report.youtubeUrl && (
+                                                            <span className="text-xs text-red-500 flex items-center gap-1">
+                                                                <i className="ri-youtube-line"></i>Video
+                                                            </span>
+                                                        )}
+                                                        <button
+                                                            onClick={() => setSelectedReport(report)}
+                                                            className="text-xs text-teal-600 hover:text-teal-700 cursor-pointer flex items-center gap-1"
+                                                        >
+                                                            <i className="ri-eye-line"></i>View Details
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{report.spentOn}</p>
-
-                                            <div className="mb-3">
-                                                <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-xs text-gray-500">Budget utilization</span>
-                                                    <span className="text-xs font-medium text-gray-700">{pctSpent}%</span>
-                                                </div>
-                                                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                    <div className={`h-full rounded-full ${report.status === 'Completed' ? 'bg-emerald-500' : 'bg-teal-500'}`} style={{ width: `${Math.min(pctSpent, 100)}%` }}></div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-xs text-gray-400 flex items-center gap-1">
-                                                    <i className="ri-calendar-line"></i>
-                                                    {new Date(report.spentAt).toLocaleDateString()}
-                                                </p>
-                                                <div className="flex items-center gap-3">
-                                                    {report.receiptDocuments.length > 0 && (
-                                                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                            <i className="ri-file-pdf-line text-red-500"></i>
-                                                            {report.receiptDocuments.length} document{report.receiptDocuments.length !== 1 ? 's' : ''}
-                                                        </span>
-                                                    )}
-                                                    {report.youtubeUrl && (
-                                                        <span className="text-xs text-red-500 flex items-center gap-1">
-                                                            <i className="ri-youtube-line"></i>Video
-                                                        </span>
-                                                    )}
-                                                    <button
-                                                        onClick={() => setSelectedReport(report)}
-                                                        className="text-xs text-teal-600 hover:text-teal-700 cursor-pointer flex items-center gap-1"
-                                                    >
-                                                        <i className="ri-eye-line"></i>View Details
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <Pagination currentPage={currentPage} totalPages={Math.ceil(filtered.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                            </>
                         )}
                     </div>
                 </div>

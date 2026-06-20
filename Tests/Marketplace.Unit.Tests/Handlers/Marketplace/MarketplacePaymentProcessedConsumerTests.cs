@@ -1,4 +1,5 @@
 using Marketplace.Abstractions;
+using Marketplace.Repository;
 using MassTransit;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -12,12 +13,18 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
         {
             var ordersService = new Mock<IOrdersService>();
             var ticketsService = new Mock<ITicketsService>();
+            var ordersRepository = new Mock<IOrdersRepository>();
+            var lotsRepository = new Mock<ILotsRepository>();
+            var compensationService = new Mock<ICompensationService>();
             var logger = NullLogger<MarketplacePaymentProcessedConsumer>.Instance;
 
             var consumer = new MarketplacePaymentProcessedConsumer(
                 ordersService.Object,
                 ticketsService.Object,
-                logger);
+                logger,
+                ordersRepository.Object,
+                lotsRepository.Object,
+                compensationService.Object);
 
             var context = new Mock<ConsumeContext<PaymentProcessed>>();
             context.SetupGet(x => x.Message).Returns(new PaymentProcessed(Guid.NewGuid(), false));
@@ -39,12 +46,19 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
             var ticketsService = new Mock<ITicketsService>();
             ticketsService.Setup(s => s.MarkAsPayedByOrderId(orderId)).Returns(Task.CompletedTask);
 
+            var ordersRepository = new Mock<IOrdersRepository>();
+            var lotsRepository = new Mock<ILotsRepository>();
+            var compensationService = new Mock<ICompensationService>();
+
             var logger = NullLogger<MarketplacePaymentProcessedConsumer>.Instance;
 
             var consumer = new MarketplacePaymentProcessedConsumer(
                 ordersService.Object,
                 ticketsService.Object,
-                logger);
+                logger,
+                ordersRepository.Object,
+                lotsRepository.Object,
+                compensationService.Object);
 
             var context = new Mock<ConsumeContext<PaymentProcessed>>();
             context.SetupGet(x => x.Message).Returns(new PaymentProcessed(orderId, true));

@@ -4,6 +4,10 @@ import { mockLots, mockCategories } from '../../../mocks/lots';
 import { mockCompensations } from '../../../mocks/compensations';
 import LotCard from '../lots/components/LotCard';
 import LotFormModal from '../lots/components/LotFormModal';
+import Pagination from '@/components/base/Pagination';
+
+const LOTS_PER_PAGE = 5;
+const COMPS_PER_PAGE = 5;
 
 interface Seller {
     id: string;
@@ -58,6 +62,7 @@ export default function SellerPage() {
     const [editingLot, setEditingLot] = useState<Lot | null>(null);
     const [lots, setLots] = useState<Lot[]>(mockLots.filter(l => l.sellerId === 'seller-1'));
     const [lotSearch, setLotSearch] = useState('');
+    const [activeLotSearch, setActiveLotSearch] = useState('');
     const [lotTypeFilter, setLotTypeFilter] = useState<'All' | 'Simple' | 'Auction' | 'Draw'>('All');
     const [lotStageFilter, setLotStageFilter] = useState<'All' | 'Created' | 'PendingApproval' | 'Denied' | 'Approved'>('All');
     const [imagePreview, setImagePreview] = useState(seller?.avatarImage || '');
@@ -67,6 +72,9 @@ export default function SellerPage() {
     const [showRequestModal, setShowRequestModal] = useState(false);
     const [compensationsList, setCompensationsList] = useState(mockCompensations);
 
+    const [lotsPage, setLotsPage] = useState(1);
+    const [compsPage, setCompsPage] = useState(1);
+
     const [formData, setFormData] = useState({
         name: seller?.name || '',
         description: seller?.description || '',
@@ -75,14 +83,24 @@ export default function SellerPage() {
         avatarImage: seller?.avatarImage || ''
     });
 
+    const handleLotSearch = () => {
+        setActiveLotSearch(lotSearch.trim());
+    };
+
     const filteredLots = lots.filter(lot => {
         const matchesSearch =
-            lot.name.toLowerCase().includes(lotSearch.toLowerCase()) ||
-            lot.description.toLowerCase().includes(lotSearch.toLowerCase());
+            lot.name.toLowerCase().includes(activeLotSearch.toLowerCase()) ||
+            lot.description.toLowerCase().includes(activeLotSearch.toLowerCase());
         const matchesType = lotTypeFilter === 'All' || lot.type === lotTypeFilter;
         const matchesStage = lotStageFilter === 'All' || lot.stage === lotStageFilter;
         return matchesSearch && matchesType && matchesStage;
     });
+
+    const lotsTotalPages = Math.ceil(filteredLots.length / LOTS_PER_PAGE);
+    const pagedLots = filteredLots.slice((lotsPage - 1) * LOTS_PER_PAGE, lotsPage * LOTS_PER_PAGE);
+
+    const compsTotalPages = Math.ceil(compensationsList.length / COMPS_PER_PAGE);
+    const pagedComps = compensationsList.slice((compsPage - 1) * COMPS_PER_PAGE, compsPage * COMPS_PER_PAGE);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -516,15 +534,24 @@ export default function SellerPage() {
                                 <>
                                     {/* Filters */}
                                     <div className="flex items-center gap-3">
-                                        <div className="flex-1 relative">
-                                            <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                                            <input
-                                                type="text"
-                                                placeholder="Search lots..."
-                                                value={lotSearch}
-                                                onChange={(e) => setLotSearch(e.target.value)}
-                                                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                                            />
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <div className="relative flex-1">
+                                                <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search lots..."
+                                                    value={lotSearch}
+                                                    onChange={(e) => setLotSearch(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleLotSearch()}
+                                                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={handleLotSearch}
+                                                className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
+                                            >
+                                                <i className="ri-search-line mr-1.5"></i>Search
+                                            </button>
                                         </div>
                                         <select
                                             value={lotTypeFilter}
@@ -569,17 +596,20 @@ export default function SellerPage() {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="grid gap-4">
-                                            {filteredLots.map(lot => (
-                                                <LotCard
-                                                    key={lot.id}
-                                                    lot={lot}
-                                                    onEdit={handleEditLot}
-                                                    onDelete={handleDeleteLot}
-                                                    onToggleActive={handleToggleActive}
-                                                />
-                                            ))}
-                                        </div>
+                                        <>
+                                            <div className="grid gap-4">
+                                                {pagedLots.map(lot => (
+                                                    <LotCard
+                                                        key={lot.id}
+                                                        lot={lot}
+                                                        onEdit={handleEditLot}
+                                                        onDelete={handleDeleteLot}
+                                                        onToggleActive={handleToggleActive}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <Pagination currentPage={lotsPage} totalPages={lotsTotalPages} onPageChange={(p) => setLotsPage(p)} />
+                                        </>
                                     )}
                                 </>
                             )}
@@ -595,50 +625,53 @@ export default function SellerPage() {
                                             <p className="text-xs text-gray-400 mt-1">Compensations appear here when your lots are sold</p>
                                         </div>
                                     ) : (
-                                        <div className="grid gap-4">
-                                            {compensationsList.map(comp => (
-                                                <div key={comp.id} className="bg-white rounded-lg border border-gray-200 p-5 hover:border-emerald-200 transition-colors">
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="w-20 h-20 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-                                                            <img src={comp.lotImage} alt={comp.lotName} className="w-full h-full object-cover object-top" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-start justify-between mb-2">
-                                                                <div>
-                                                                    <h4 className="text-base font-semibold text-gray-900">{comp.lotName}</h4>
-                                                                    <p className="text-sm text-gray-600">Sold to {comp.buyerName} • TXN: {comp.transactionId}</p>
-                                                                </div>
-                                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${comp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : comp.status === 'Requested' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'
-                                                                    }`}>
-                                                                    <i className={comp.status === 'Paid' ? 'ri-check-double-line' : comp.status === 'Requested' ? 'ri-question-answer-line' : 'ri-time-line'}></i>
-                                                                    {comp.status}
-                                                                </span>
+                                        <>
+                                            <div className="grid gap-4">
+                                                {pagedComps.map(comp => (
+                                                    <div key={comp.id} className="bg-white rounded-lg border border-gray-200 p-5 hover:border-emerald-200 transition-colors">
+                                                        <div className="flex items-start gap-4">
+                                                            <div className="w-20 h-20 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
+                                                                <img src={comp.lotImage} alt={comp.lotName} className="w-full h-full object-cover object-top" />
                                                             </div>
-                                                            <div className="grid grid-cols-3 gap-4 mt-3">
-                                                                <div>
-                                                                    <p className="text-xs text-gray-500 mb-0.5">Sold Price</p>
-                                                                    <p className="text-sm font-semibold text-gray-900">${comp.soldPrice.toLocaleString()}</p>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-start justify-between mb-2">
+                                                                    <div>
+                                                                        <h4 className="text-base font-semibold text-gray-900">{comp.lotName}</h4>
+                                                                        <p className="text-sm text-gray-600">Sold to {comp.buyerName} • TXN: {comp.transactionId}</p>
+                                                                    </div>
+                                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${comp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : comp.status === 'Requested' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'
+                                                                        }`}>
+                                                                        <i className={comp.status === 'Paid' ? 'ri-check-double-line' : comp.status === 'Requested' ? 'ri-question-answer-line' : 'ri-time-line'}></i>
+                                                                        {comp.status}
+                                                                    </span>
                                                                 </div>
-                                                                <div>
-                                                                    <p className="text-xs text-gray-500 mb-0.5">Compensation ({comp.compensationRate}%)</p>
-                                                                    <p className="text-sm font-semibold text-emerald-600">${comp.compensationAmount.toLocaleString()}</p>
+                                                                <div className="grid grid-cols-3 gap-4 mt-3">
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500 mb-0.5">Sold Price</p>
+                                                                        <p className="text-sm font-semibold text-gray-900">${comp.soldPrice.toLocaleString()}</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500 mb-0.5">Compensation ({comp.compensationRate}%)</p>
+                                                                        <p className="text-sm font-semibold text-emerald-600">${comp.compensationAmount.toLocaleString()}</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500 mb-0.5">Sold Date</p>
+                                                                        <p className="text-sm text-gray-700">{new Date(comp.soldAt).toLocaleDateString()}</p>
+                                                                    </div>
                                                                 </div>
-                                                                <div>
-                                                                    <p className="text-xs text-gray-500 mb-0.5">Sold Date</p>
-                                                                    <p className="text-sm text-gray-700">{new Date(comp.soldAt).toLocaleDateString()}</p>
-                                                                </div>
+                                                                {comp.paidAt && (
+                                                                    <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                                                        <i className="ri-bank-card-line"></i>
+                                                                        Paid on {new Date(comp.paidAt).toLocaleDateString()}
+                                                                    </p>
+                                                                )}
                                                             </div>
-                                                            {comp.paidAt && (
-                                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                                                    <i className="ri-bank-card-line"></i>
-                                                                    Paid on {new Date(comp.paidAt).toLocaleDateString()}
-                                                                </p>
-                                                            )}
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                                ))}
+                                            </div>
+                                            <Pagination currentPage={compsPage} totalPages={compsTotalPages} onPageChange={(p) => setCompsPage(p)} />
+                                        </>
                                     )}
                                 </>
                             )}

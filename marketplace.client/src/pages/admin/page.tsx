@@ -13,13 +13,13 @@ export default function AdminPanel() {
         { path: '/admin/lots', label: 'Lots', icon: 'ri-auction-line', adminOnly: true, section: 'admin' },
         { path: '/admin/sellers', label: 'Sellers', icon: 'ri-team-line', adminOnly: true, section: 'admin' },
         { path: '/admin/users', label: 'Users', icon: 'ri-user-line', adminOnly: true, section: 'admin' },
-        { path: '/admin/goal-management', label: 'Goal Management', icon: 'ri-check-double-line', adminOnly: true, section: 'admin' },
+        { path: '/admin/goal-management', label: 'Goal Management', icon: 'ri-check-double-line', adminOnly: true, section: 'admin', comingSoon: true },
         { path: '/admin/compensations', label: 'Compensations', icon: 'ri-money-dollar-circle-line', adminOnly: true, section: 'admin' },
-        { path: '/admin/reports', label: 'Reports', icon: 'ri-file-chart-line', section: 'general' },
-        { path: '/admin/media', label: 'Media', icon: 'ri-film-line', adminOnly: true, section: 'admin' },
-        { path: '/admin/faqs', label: 'FAQs', icon: 'ri-question-answer-line', adminOnly: true, section: 'admin' },
+        { path: '/admin/reports', label: 'Reports', icon: 'ri-file-chart-line', section: 'general', comingSoon: true },
+        { path: '/admin/media', label: 'Media', icon: 'ri-film-line', adminOnly: true, section: 'admin', comingSoon: true },
+        { path: '/admin/faqs', label: 'FAQs', icon: 'ri-question-answer-line', adminOnly: true, section: 'admin', comingSoon: true },
         { path: '/admin/seller', label: 'My Seller Info', icon: 'ri-store-2-line', section: 'general' },
-        { path: '/admin/goals', label: 'Goals', icon: 'ri-flag-line', section: 'general' },
+        { path: '/admin/goals', label: 'Goals', icon: 'ri-flag-line', section: 'general', comingSoon: true },
         { path: '/admin/shipments', label: 'Shipments', icon: 'ri-truck-line', section: 'general' },
         { path: '/admin/account', label: 'Account Info', icon: 'ri-user-settings-line', section: 'general' },
     ];
@@ -86,7 +86,7 @@ export default function AdminPanel() {
                                                     {adminItems.map((item) => {
                                                         const isActive = location.pathname === item.path;
                                                         return (
-                                                            <li key={item.path}>
+                                                            (!item.comingSoon && <li key={item.path}>
                                                                 <Link
                                                                     to={item.path}
                                                                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${isActive
@@ -97,7 +97,7 @@ export default function AdminPanel() {
                                                                     <i className={`${item.icon} text-lg`}></i>
                                                                     <span className="font-medium text-sm">{item.label}</span>
                                                                 </Link>
-                                                            </li>
+                                                            </li>)
                                                         );
                                                     })}
                                                     <li className="my-2 border-b border-gray-100"></li>
@@ -111,7 +111,7 @@ export default function AdminPanel() {
                                                     {generalItems.map((item) => {
                                                         const isActive = location.pathname === item.path;
                                                         return (
-                                                            <li key={item.path}>
+                                                            (!item.comingSoon && <li key={item.path}>
                                                                 <Link
                                                                     to={item.path}
                                                                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${isActive
@@ -122,7 +122,7 @@ export default function AdminPanel() {
                                                                     <i className={`${item.icon} text-lg`}></i>
                                                                     <span className="font-medium text-sm">{item.label}</span>
                                                                 </Link>
-                                                            </li>
+                                                            </li>)
                                                         );
                                                     })}
                                                 </>

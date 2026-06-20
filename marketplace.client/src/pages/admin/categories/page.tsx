@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { categories as initialCategories } from '../../../mocks/categories';
 import CategoryCard from './components/CategoryCard';
 import AddCategoryModal from './components/AddCategoryModal';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 9;
 
 interface Category {
     id: string;
@@ -16,6 +19,7 @@ export default function CategoriesPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const editingCategory = editingCategoryId ? categories.find(c => c.id === editingCategoryId) || null : null;
 
@@ -83,7 +87,7 @@ export default function CategoriesPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div className="bg-white rounded-lg border border-gray-200 p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
@@ -128,20 +132,23 @@ export default function CategoriesPage() {
 
                 {/* Categories Grid */}
                 {filteredCategories.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredCategories.map(category => (
-                            <CategoryCard
-                                key={category.id}
-                                category={category}
-                                parentTitle={getParentTitle(category.parentId)}
-                                onEdit={(id) => {
-                                    setEditingCategoryId(id);
-                                    setIsAddModalOpen(true);
-                                }}
-                                onDelete={handleDeleteCategory}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredCategories.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(category => (
+                                <CategoryCard
+                                    key={category.id}
+                                    category={category}
+                                    parentTitle={getParentTitle(category.parentId)}
+                                    onEdit={(id) => {
+                                        setEditingCategoryId(id);
+                                        setIsAddModalOpen(true);
+                                    }}
+                                    onDelete={handleDeleteCategory}
+                                />
+                            ))}
+                        </div>
+                        <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredCategories.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                    </>
                 ) : (
                     <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

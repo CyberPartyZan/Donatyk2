@@ -12,10 +12,11 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
         private readonly Mock<IOrdersRepository> _ordersRepository = new();
         private readonly Mock<ILotsRepository> _lotsRepository = new();
         private readonly Mock<IPaymentGatewayFactory> _paymentGatewayFactory = new();
+        private readonly Mock<ICompensationService> _compensationService = new();
 
         private AuctionEndedConsumer CreateConsumer() =>
             new(_ordersRepository.Object, _lotsRepository.Object, _paymentGatewayFactory.Object,
-                NullLogger<AuctionEndedConsumer>.Instance);
+                NullLogger<AuctionEndedConsumer>.Instance, _compensationService.Object);
 
         private static ConsumeContext<AuctionEnded> CreateContext(Guid lotId)
         {

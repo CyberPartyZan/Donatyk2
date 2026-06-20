@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { mockUsers } from '../../../mocks/users';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 interface User {
     id: string;
@@ -14,9 +17,15 @@ interface User {
 export default function UsersAdmin() {
     const [users, setUsers] = useState<User[]>(mockUsers);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeSearchQuery, setActiveSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const handleSearch = () => {
+        setActiveSearchQuery(searchQuery.trim());
+    };
 
     const filteredUsers = users.filter(user =>
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        user.email.toLowerCase().includes(activeSearchQuery.toLowerCase())
     );
 
     const handleUnlock = (userId: string) => {
@@ -64,15 +73,24 @@ export default function UsersAdmin() {
                     </div>
                 </div>
 
-                <div className="relative">
-                    <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input
-                        type="text"
-                        placeholder="Search users by email..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                    />
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                        <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input
+                            type="text"
+                            placeholder="Search users by email..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
+                    <button
+                        onClick={handleSearch}
+                        className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                        <i className="ri-search-line mr-1.5"></i>Search
+                    </button>
                 </div>
             </div>
 
@@ -84,93 +102,98 @@ export default function UsersAdmin() {
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
                         <p className="text-gray-600">
-                            {searchQuery ? 'Try adjusting your search terms' : 'No users have been registered yet'}
+                            {activeSearchQuery ? 'Try adjusting your search terms' : 'No users have been registered yet'}
                         </p>
                     </div>
                 ) : (
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Email
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Email Confirmed
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Lockout Status
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Lockout Date
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Last Login
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredUsers.map(user => (
-                                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <i className="ri-user-line text-teal-600 text-sm"></i>
-                                            </div>
-                                            <span className="text-sm font-medium text-gray-900">{user.email}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {user.emailConfirmed ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full whitespace-nowrap">
-                                                <i className="ri-checkbox-circle-fill"></i>
-                                                Confirmed
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full whitespace-nowrap">
-                                                <i className="ri-close-circle-fill"></i>
-                                                Not Confirmed
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {isLocked(user) ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full whitespace-nowrap">
-                                                <i className="ri-lock-fill"></i>
-                                                Locked
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full whitespace-nowrap">
-                                                <i className="ri-lock-unlock-fill"></i>
-                                                Active
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                        {user.lockoutDate ? formatDate(user.lockoutDate) : '—'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                        {formatDate(user.lastLogin)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {isLocked(user) ? (
-                                            <button
-                                                onClick={() => handleUnlock(user.id)}
-                                                className="inline-flex items-center gap-1 px-3 py-1 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap cursor-pointer"
-                                            >
-                                                <i className="ri-lock-unlock-line"></i>
-                                                Unlock Account
-                                            </button>
-                                        ) : (
-                                            <span className="text-sm text-gray-400">No action needed</span>
-                                        )}
-                                    </td>
+                    <>
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email Confirmed
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Lockout Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Lockout Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Last Login
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(user => (
+                                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <i className="ri-user-line text-teal-600 text-sm"></i>
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-900">{user.email}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {user.emailConfirmed ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full whitespace-nowrap">
+                                                    <i className="ri-checkbox-circle-fill"></i>
+                                                    Confirmed
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full whitespace-nowrap">
+                                                    <i className="ri-close-circle-fill"></i>
+                                                    Not Confirmed
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {isLocked(user) ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full whitespace-nowrap">
+                                                    <i className="ri-lock-fill"></i>
+                                                    Locked
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full whitespace-nowrap">
+                                                    <i className="ri-lock-unlock-fill"></i>
+                                                    Active
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            {user.lockoutDate ? formatDate(user.lockoutDate) : '—'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            {formatDate(user.lastLogin)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {isLocked(user) ? (
+                                                <button
+                                                    onClick={() => handleUnlock(user.id)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap cursor-pointer"
+                                                >
+                                                    <i className="ri-lock-unlock-line"></i>
+                                                    Unlock Account
+                                                </button>
+                                            ) : (
+                                                <span className="text-sm text-gray-400">No action needed</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div className="p-4">
+                            <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                        </div>
+                    </>
                 )}
             </div>
         </div>

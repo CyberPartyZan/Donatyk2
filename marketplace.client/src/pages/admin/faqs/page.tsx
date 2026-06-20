@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { mockFaqs } from '@/mocks/faqs';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 interface Faq {
     id: string;
@@ -20,6 +23,7 @@ export default function FaqsAdmin() {
     const [formAnswer, setFormAnswer] = useState('');
     const [formCategory, setFormCategory] = useState('General');
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category)))];
 
@@ -176,7 +180,7 @@ export default function FaqsAdmin() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {filteredFaqs.map((faq, idx) => (
+                            {filteredFaqs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((faq, idx) => (
                                 <tr key={faq.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 text-sm text-gray-400">{idx + 1}</td>
                                     <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate">
@@ -212,6 +216,9 @@ export default function FaqsAdmin() {
                             ))}
                         </tbody>
                     </table>
+                    <div className="p-4">
+                        <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredFaqs.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                    </div>
                 </div>
             ) : (
                 <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">

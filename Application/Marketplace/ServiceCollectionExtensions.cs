@@ -20,6 +20,7 @@ namespace Marketplace
             services.AddScoped<IBidsService, BidsService>();
             services.AddScoped<IShipmentService, ShipmentService>();
             services.AddScoped<IDeliveryPreferencesService, DeliveryPreferencesService>();
+            services.AddScoped<ICompensationService, CompensationService>();
 
             services.AddScoped<CheckAuctionEndedJob>();
 

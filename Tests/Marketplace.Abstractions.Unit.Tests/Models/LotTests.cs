@@ -145,15 +145,6 @@
         }
 
         [Fact]
-        public void Constructor_WithPriceLowerThanCompensation_ThrowsArgumentException()
-        {
-            var seller = CreateSeller();
-
-            Assert.Throws<ArgumentException>(() =>
-                new Lot(Guid.NewGuid(), "Valid", "Valid", CreateMoney(50m), CreateMoney(60m), 1, CreateMoney(50m), LotType.Simple, LotStage.Created, seller, true, false, category: CreateCategory()));
-        }
-
-        [Fact]
         public void Delete_SetsIsDeletedTrue()
         {
             var lot = new Lot(

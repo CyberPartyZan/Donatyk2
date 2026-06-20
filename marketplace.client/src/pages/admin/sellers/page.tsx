@@ -3,6 +3,9 @@ import { mockSellers } from '../../../mocks/sellers';
 import SellerCard from './components/SellerCard';
 import SellerDetailModal from './components/SellerDetailModal';
 import EditSellerModal from './components/EditSellerModal';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 6;
 
 interface Seller {
     id: string;
@@ -21,12 +24,18 @@ interface Seller {
 export default function SellersAdmin() {
     const [sellers, setSellers] = useState<Seller[]>(mockSellers);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeSearchQuery, setActiveSearchQuery] = useState('');
     const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
     const [editingSeller, setEditingSeller] = useState<Seller | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const handleSearch = () => {
+        setActiveSearchQuery(searchQuery.trim());
+    };
 
     const filteredSellers = sellers.filter(seller =>
-        seller.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        seller.email.toLowerCase().includes(searchQuery.toLowerCase())
+        seller.name.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
+        seller.email.toLowerCase().includes(activeSearchQuery.toLowerCase())
     );
 
     const handleDelete = (id: string) => {
@@ -52,15 +61,24 @@ export default function SellersAdmin() {
                     </div>
                 </div>
 
-                <div className="relative">
-                    <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input
-                        type="text"
-                        placeholder="Search sellers by name or email..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                    />
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                        <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input
+                            type="text"
+                            placeholder="Search sellers by name or email..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
+                    <button
+                        onClick={handleSearch}
+                        className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                        <i className="ri-search-line mr-1.5"></i>Search
+                    </button>
                 </div>
             </div>
 
@@ -72,21 +90,24 @@ export default function SellersAdmin() {
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No sellers found</h3>
                         <p className="text-gray-600">
-                            {searchQuery ? 'Try adjusting your search terms' : 'No sellers have been registered yet'}
+                            {activeSearchQuery ? 'Try adjusting your search terms' : 'No sellers have been registered yet'}
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {filteredSellers.map(seller => (
-                            <SellerCard
-                                key={seller.id}
-                                seller={seller}
-                                onEdit={setEditingSeller}
-                                onDelete={handleDelete}
-                                onView={setSelectedSeller}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {filteredSellers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(seller => (
+                                <SellerCard
+                                    key={seller.id}
+                                    seller={seller}
+                                    onEdit={setEditingSeller}
+                                    onDelete={handleDelete}
+                                    onView={setSelectedSeller}
+                                />
+                            ))}
+                        </div>
+                        <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredSellers.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                    </>
                 )}
             </div>
 

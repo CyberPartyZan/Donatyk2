@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { mockCompensations } from '@/mocks/compensations';
 import { mockSellers } from '@/mocks/sellers';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 5;
 
 interface Compensation {
     id: string;
@@ -40,6 +43,7 @@ export default function CompensationsAdmin() {
     const [approvalFile, setApprovalFile] = useState<File | null>(null);
     const [approvalFileName, setApprovalFileName] = useState('');
     const [processError, setProcessError] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const pendingComps = compensations.filter(c => c.status === 'Pending');
     const requestedComps = compensations.filter(c => c.status === 'Requested');
@@ -150,6 +154,8 @@ export default function CompensationsAdmin() {
     };
 
     const sellerList = Object.values(groupedBySeller);
+    const totalSellerPages = Math.ceil(sellerList.length / ITEMS_PER_PAGE);
+    const pagedSellerList = sellerList.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const stats = {
         total: compensations.length,
@@ -281,112 +287,115 @@ export default function CompensationsAdmin() {
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-8">
-                            {sellerList.map(group => (
-                                <div key={group.sellerId}>
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                                            <img
-                                                src={mockSellers.find(s => s.id === group.sellerId)?.avatarImage || ''}
-                                                alt={group.sellerName}
-                                                className="w-full h-full object-cover object-top"
-                                            />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-base font-semibold text-gray-900">{group.sellerName}</h3>
-                                            <p className="text-xs text-gray-500">
-                                                {group.compensations.length} compensation{group.compensations.length !== 1 ? 's' : ''}
-                                                {' · '}
-                                                ${group.compensations.reduce((sum, c) => sum + c.compensationAmount, 0).toLocaleString()} total
-                                            </p>
-                                        </div>
-                                        {(activeTab === 'pending' || activeTab === 'requests') && (
-                                            <button
-                                                onClick={toggleSelectAll}
-                                                className="ml-auto text-xs text-teal-600 hover:text-teal-700 cursor-pointer whitespace-nowrap"
-                                            >
-                                                {group.compensations.filter(c => c.status !== 'Paid').every(c => selectedIds.has(c.id))
-                                                    ? 'Deselect All'
-                                                    : 'Select All'}
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {group.compensations.map(comp => (
-                                            <div
-                                                key={comp.id}
-                                                className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${selectedIds.has(comp.id)
-                                                        ? 'bg-emerald-50 border-emerald-300'
-                                                        : 'bg-gray-50 border-gray-200'
-                                                    }`}
-                                            >
-                                                {comp.status !== 'Paid' && (
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedIds.has(comp.id)}
-                                                        onChange={() => toggleSelect(comp.id)}
-                                                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 cursor-pointer flex-shrink-0"
-                                                    />
-                                                )}
-                                                {comp.status === 'Paid' && (
-                                                    <div className="w-4 flex-shrink-0"></div>
-                                                )}
-                                                <div className="w-14 h-14 rounded-lg bg-white overflow-hidden flex-shrink-0 border border-gray-200">
-                                                    <img src={comp.lotImage} alt={comp.lotName} className="w-full h-full object-cover object-top" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-start justify-between mb-1">
-                                                        <div>
-                                                            <h4 className="text-sm font-semibold text-gray-900">{comp.lotName}</h4>
-                                                            <p className="text-xs text-gray-600">
-                                                                Buyer: {comp.buyerName} · TXN: {comp.transactionId}
-                                                            </p>
-                                                        </div>
-                                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${statusBadge(comp.status)}`}>
-                                                            <i className={`${statusIcon(comp.status)} mr-1`}></i>
-                                                            {comp.status}
-                                                        </span>
-                                                    </div>
-                                                    <div className="grid grid-cols-4 gap-4 mt-2">
-                                                        <div>
-                                                            <p className="text-xs text-gray-500">Sold Price</p>
-                                                            <p className="text-sm font-semibold text-gray-900">${comp.soldPrice.toLocaleString()}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-gray-500">Compensation ({comp.compensationRate}%)</p>
-                                                            <p className="text-sm font-semibold text-emerald-600">${comp.compensationAmount.toLocaleString()}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-gray-500">Sold Date</p>
-                                                            <p className="text-sm text-gray-700">{new Date(comp.soldAt).toLocaleDateString()}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-gray-500">
-                                                                {comp.status === 'Paid' && comp.paidAt ? 'Paid Date' : 'Status'}
-                                                            </p>
-                                                            <p className="text-sm text-gray-700">
-                                                                {comp.status === 'Paid' && comp.paidAt
-                                                                    ? new Date(comp.paidAt).toLocaleDateString()
-                                                                    : comp.status === 'Requested' ? 'Awaiting review' : 'Awaiting payment'}
-                                                            </p>
-                                                            {comp.status === 'Requested' && (
-                                                                <button
-                                                                    onClick={() => openApproveModal(comp.id)}
-                                                                    className="mt-1 text-xs text-teal-600 hover:text-teal-700 cursor-pointer flex items-center gap-1"
-                                                                >
-                                                                    <i className="ri-check-line text-xs"></i>Approve
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                        <>
+                            <div className="space-y-8">
+                                {pagedSellerList.map(group => (
+                                    <div key={group.sellerId}>
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                                                <img
+                                                    src={mockSellers.find(s => s.id === group.sellerId)?.avatarImage || ''}
+                                                    alt={group.sellerName}
+                                                    className="w-full h-full object-cover object-top"
+                                                />
                                             </div>
-                                        ))}
+                                            <div>
+                                                <h3 className="text-base font-semibold text-gray-900">{group.sellerName}</h3>
+                                                <p className="text-xs text-gray-500">
+                                                    {group.compensations.length} compensation{group.compensations.length !== 1 ? 's' : ''}
+                                                    {' · '}
+                                                    ${group.compensations.reduce((sum, c) => sum + c.compensationAmount, 0).toLocaleString()} total
+                                                </p>
+                                            </div>
+                                            {(activeTab === 'pending' || activeTab === 'requests') && (
+                                                <button
+                                                    onClick={toggleSelectAll}
+                                                    className="ml-auto text-xs text-teal-600 hover:text-teal-700 cursor-pointer whitespace-nowrap"
+                                                >
+                                                    {group.compensations.filter(c => c.status !== 'Paid').every(c => selectedIds.has(c.id))
+                                                        ? 'Deselect All'
+                                                        : 'Select All'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {group.compensations.map(comp => (
+                                                <div
+                                                    key={comp.id}
+                                                    className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${selectedIds.has(comp.id)
+                                                            ? 'bg-emerald-50 border-emerald-300'
+                                                            : 'bg-gray-50 border-gray-200'
+                                                        }`}
+                                                >
+                                                    {comp.status !== 'Paid' && (
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedIds.has(comp.id)}
+                                                            onChange={() => toggleSelect(comp.id)}
+                                                            className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 cursor-pointer flex-shrink-0"
+                                                        />
+                                                    )}
+                                                    {comp.status === 'Paid' && (
+                                                        <div className="w-4 flex-shrink-0"></div>
+                                                    )}
+                                                    <div className="w-14 h-14 rounded-lg bg-white overflow-hidden flex-shrink-0 border border-gray-200">
+                                                        <img src={comp.lotImage} alt={comp.lotName} className="w-full h-full object-cover object-top" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between mb-1">
+                                                            <div>
+                                                                <h4 className="text-sm font-semibold text-gray-900">{comp.lotName}</h4>
+                                                                <p className="text-xs text-gray-600">
+                                                                    Buyer: {comp.buyerName} · TXN: {comp.transactionId}
+                                                                </p>
+                                                            </div>
+                                                            <span className={`px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${statusBadge(comp.status)}`}>
+                                                                <i className={`${statusIcon(comp.status)} mr-1`}></i>
+                                                                {comp.status}
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-4 gap-4 mt-2">
+                                                            <div>
+                                                                <p className="text-xs text-gray-500">Sold Price</p>
+                                                                <p className="text-sm font-semibold text-gray-900">${comp.soldPrice.toLocaleString()}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-gray-500">Compensation ({comp.compensationRate}%)</p>
+                                                                <p className="text-sm font-semibold text-emerald-600">${comp.compensationAmount.toLocaleString()}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-gray-500">Sold Date</p>
+                                                                <p className="text-sm text-gray-700">{new Date(comp.soldAt).toLocaleDateString()}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-gray-500">
+                                                                    {comp.status === 'Paid' && comp.paidAt ? 'Paid Date' : 'Status'}
+                                                                </p>
+                                                                <p className="text-sm text-gray-700">
+                                                                    {comp.status === 'Paid' && comp.paidAt
+                                                                        ? new Date(comp.paidAt).toLocaleDateString()
+                                                                        : comp.status === 'Requested' ? 'Awaiting review' : 'Awaiting payment'}
+                                                                </p>
+                                                                {comp.status === 'Requested' && (
+                                                                    <button
+                                                                        onClick={() => openApproveModal(comp.id)}
+                                                                        className="mt-1 text-xs text-teal-600 hover:text-teal-700 cursor-pointer flex items-center gap-1"
+                                                                    >
+                                                                        <i className="ri-check-line text-xs"></i>Approve
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                            <Pagination currentPage={currentPage} totalPages={totalSellerPages} onPageChange={(p) => setCurrentPage(p)} />
+                        </>
                     )}
                 </div>
             </div>

@@ -22,6 +22,7 @@ namespace Marketplace
         private readonly ILogger<OrdersService> _logger;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly string _apiBaseUrl;
+        private readonly ICompensationService _compensationService;
 
         public OrdersService(
             ClaimsPrincipal user,
@@ -34,7 +35,8 @@ namespace Marketplace
             IPaymentGatewayFactory paymentGatewayFactory,
             IPublishEndpoint publishEndpoint,
             IConfiguration configuration,
-            ILogger<OrdersService> logger)
+            ILogger<OrdersService> logger,
+            ICompensationService compensationService)
         {
             _user = user;
             _cartRepository = cartRepository;
@@ -47,6 +49,7 @@ namespace Marketplace
             _logger = logger;
             _publishEndpoint = publishEndpoint;
             _apiBaseUrl = configuration.GetValue<string>("Api:BaseUrl") ?? "https://api.local";
+            _compensationService = compensationService;
         }
 
         public async Task<CheckoutResponse> CheckoutAsync(CheckoutRequest request)
@@ -265,6 +268,7 @@ namespace Marketplace
 
                 if (drawLot.ReadyToDraw)
                 {
+                    await _compensationService.CreateIfNotExists(paidOrder.Id, drawLot.Id, drawLot.Compensation);
                     await _publishEndpoint.Publish(new DrawLaunched(drawLot.Id));
 
                     _logger.LogInformation(

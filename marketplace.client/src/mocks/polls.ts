@@ -1,0 +1,68 @@
+export const mockPolls = [
+    {
+        id: 'poll-1',
+        question: 'Which charity direction should we prioritize next quarter?',
+        options: [
+            { id: 'opt-1', text: 'Education & Youth Development', votes: 142 },
+            { id: 'opt-2', text: 'Clean Water & Sanitation', votes: 98 },
+            { id: 'opt-3', text: 'Wildlife Conservation', votes: 67 },
+            { id: 'opt-4', text: 'Healthcare Access', votes: 113 },
+        ],
+        totalVotes: 420,
+        status: 'Active',
+        createdAt: '2025-11-01T08:00:00',
+    },
+    {
+        id: 'poll-2',
+        question: 'What type of fundraising event would you most likely attend?',
+        options: [
+            { id: 'opt-5', text: 'Charity Gala Dinner', votes: 89 },
+            { id: 'opt-6', text: 'Community Fun Run', votes: 156 },
+            { id: 'opt-7', text: 'Online Auction', votes: 73 },
+            { id: 'opt-8', text: 'Cultural Festival', votes: 112 },
+        ],
+        totalVotes: 430,
+        status: 'Active',
+        createdAt: '2025-10-20T10:30:00',
+    },
+    {
+        id: 'poll-3',
+        question: 'Which region needs the most immediate support?',
+        options: [
+            { id: 'opt-9', text: 'East Africa', votes: 201 },
+            { id: 'opt-10', text: 'South Asia', votes: 145 },
+            { id: 'opt-11', text: 'Southeast Asia', votes: 98 },
+            { id: 'opt-12', text: 'Latin America', votes: 76 },
+        ],
+        totalVotes: 520,
+        status: 'Closed',
+        createdAt: '2025-08-15T14:00:00',
+    },
+    {
+        id: 'poll-4',
+        question: 'How did you hear about our charity platform?',
+        options: [
+            { id: 'opt-13', text: 'Social Media', votes: 234 },
+            { id: 'opt-14', text: 'Friend or Family Referral', votes: 189 },
+            { id: 'opt-15', text: 'Search Engine', votes: 156 },
+            { id: 'opt-16', text: 'News Article or Blog', votes: 67 },
+            { id: 'opt-17', text: 'Community Event', votes: 45 },
+        ],
+        totalVotes: 691,
+        status: 'Active',
+        createdAt: '2025-12-01T09:00:00',
+    },
+    {
+        id: 'poll-5',
+        question: 'What feature would you most like to see added to the platform?',
+        options: [
+            { id: 'opt-18', text: 'Mobile App', votes: 178 },
+            { id: 'opt-19', text: 'Live Donation Tracking', votes: 134 },
+            { id: 'opt-20', text: 'Volunteer Matching System', votes: 92 },
+            { id: 'opt-21', text: 'Corporate Partnership Portal', votes: 61 },
+        ],
+        totalVotes: 465,
+        status: 'Closed',
+        createdAt: '2025-07-10T11:00:00',
+    },
+];

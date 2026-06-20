@@ -2,7 +2,7 @@ services:
   grafana:
     image: grafana/grafana:11.1.0
     ports:
-      - "3000:3000"
+      - "3300:3300"
     depends_on:
       - prometheus
       - loki

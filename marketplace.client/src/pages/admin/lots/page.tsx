@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { mockLots, mockCategories } from '../../../mocks/lots';
 import LotCard from './components/LotCard';
 import LotFormModal from './components/LotFormModal';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 6;
 
 interface Characteristic {
     key: string;
@@ -44,6 +47,7 @@ export default function LotsAdmin() {
     const [filterType, setFilterType] = useState<'All' | 'Simple' | 'Auction' | 'Draw'>('All');
     const [filterStage, setFilterStage] = useState<'All' | 'Created' | 'Approved' | 'Denied'>('All');
     const [filterActive, setFilterActive] = useState<'All' | 'Active' | 'Inactive'>('All');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const myLots = lots.filter(lot => lot.stage !== 'PendingApproval');
     const pendingLots = lots.filter(lot => lot.stage === 'PendingApproval');
@@ -251,19 +255,22 @@ export default function LotsAdmin() {
                         <p className="text-gray-500">No lots found</p>
                     </div>
                 ) : (
-                    <div className="grid gap-4">
-                        {filteredLots.map(lot => (
-                            <LotCard
-                                key={lot.id}
-                                lot={lot}
-                                onEdit={handleEditLot}
-                                onDelete={handleDeleteLot}
-                                onApprove={activeTab === 'pending' ? handleApproveLot : undefined}
-                                onDecline={activeTab === 'pending' ? handleDeclineLot : undefined}
-                                onToggleActive={activeTab === 'my-lots' ? handleToggleActive : undefined}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid gap-4">
+                            {filteredLots.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(lot => (
+                                <LotCard
+                                    key={lot.id}
+                                    lot={lot}
+                                    onEdit={handleEditLot}
+                                    onDelete={handleDeleteLot}
+                                    onApprove={activeTab === 'pending' ? handleApproveLot : undefined}
+                                    onDecline={activeTab === 'pending' ? handleDeclineLot : undefined}
+                                    onToggleActive={activeTab === 'my-lots' ? handleToggleActive : undefined}
+                                />
+                            ))}
+                        </div>
+                        <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredLots.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                    </>
                 )}
             </div>
 

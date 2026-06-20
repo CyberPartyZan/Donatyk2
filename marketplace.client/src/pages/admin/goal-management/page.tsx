@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { mockGoals, mockOrganizations } from '@/mocks/goals';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 5;
 
 interface Organization {
     id: string;
@@ -60,6 +63,9 @@ export default function GoalManagementAdmin() {
     const [uploadedFiles, setUploadedFiles] = useState<ProofDocument[]>([]);
     const [youtubeUrl, setYoutubeUrl] = useState('');
 
+    const [fulfilledPage, setFulfilledPage] = useState(1);
+    const [orgPage, setOrgPage] = useState(1);
+
     const [fulfilledSearch, setFulfilledSearch] = useState('');
     const [fulfilledActiveSearch, setFulfilledActiveSearch] = useState('');
     const [orgSearch, setOrgSearch] = useState('');
@@ -74,12 +80,24 @@ export default function GoalManagementAdmin() {
         g.organizationName.toLowerCase().includes(fulfilledActiveSearch.toLowerCase())
     );
 
+    const fulfilledTotalPages = Math.ceil(filteredReachedGoals.length / ITEMS_PER_PAGE);
+    const pagedFulfilledGoals = filteredReachedGoals.slice(
+        (fulfilledPage - 1) * ITEMS_PER_PAGE,
+        fulfilledPage * ITEMS_PER_PAGE
+    );
+
     const selectedOrg = selectedOrgId ? organizations.find(o => o.id === selectedOrgId) : null;
     const orgGoals = selectedOrgId ? goals.filter(g => g.organizationId === selectedOrgId) : [];
 
     const filteredOrganizations = organizations.filter(o =>
         o.name.toLowerCase().includes(orgActiveSearch.toLowerCase()) ||
         o.description.toLowerCase().includes(orgActiveSearch.toLowerCase())
+    );
+
+    const orgTotalPages = Math.ceil(filteredOrganizations.length / ITEMS_PER_PAGE);
+    const pagedOrganizations = filteredOrganizations.slice(
+        (orgPage - 1) * ITEMS_PER_PAGE,
+        orgPage * ITEMS_PER_PAGE
     );
 
     const handleOpenProcess = (goal: Goal) => {
@@ -199,89 +217,92 @@ export default function GoalManagementAdmin() {
                                 <p className="text-gray-500 text-sm">No reached goals yet</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {filteredReachedGoals.map(goal => {
-                                    const pct = getProgressPercent(goal.moneyRaised, goal.moneyBudget);
-                                    const isProcessed = !!goal.processedAt;
-                                    return (
-                                        <div key={goal.id} className={`bg-white rounded-lg border p-5 ${isProcessed ? 'border-emerald-200 bg-emerald-50/20' : 'border-amber-200'}`}>
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-                                                    <img src={getOrgAvatar(goal.organizationId)} alt={goal.organizationName} className="w-full h-full object-cover object-top" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-xs text-gray-400">{goal.organizationName}</span>
-                                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${isProcessed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                                    {isProcessed ? 'Processed' : 'Ready to Process'}
-                                                                </span>
+                            <>
+                                <div className="space-y-4">
+                                    {pagedFulfilledGoals.map(goal => {
+                                        const pct = getProgressPercent(goal.moneyRaised, goal.moneyBudget);
+                                        const isProcessed = !!goal.processedAt;
+                                        return (
+                                            <div key={goal.id} className={`bg-white rounded-lg border p-5 ${isProcessed ? 'border-emerald-200 bg-emerald-50/20' : 'border-amber-200'}`}>
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
+                                                        <img src={getOrgAvatar(goal.organizationId)} alt={goal.organizationName} className="w-full h-full object-cover object-top" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between mb-2">
+                                                            <div>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="text-xs text-gray-400">{goal.organizationName}</span>
+                                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${isProcessed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                                        {isProcessed ? 'Processed' : 'Ready to Process'}
+                                                                    </span>
+                                                                </div>
+                                                                <h3 className="text-lg font-semibold text-gray-900">{goal.title}</h3>
                                                             </div>
-                                                            <h3 className="text-lg font-semibold text-gray-900">{goal.title}</h3>
+                                                            {!isProcessed && (
+                                                                <button
+                                                                    onClick={() => handleOpenProcess(goal)}
+                                                                    className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-2"
+                                                                >
+                                                                    <i className="ri-check-double-line"></i>Process Goal
+                                                                </button>
+                                                            )}
                                                         </div>
-                                                        {!isProcessed && (
-                                                            <button
-                                                                onClick={() => handleOpenProcess(goal)}
-                                                                className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-2"
-                                                            >
-                                                                <i className="ri-check-double-line"></i>Process Goal
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">{goal.explanation}</p>
+                                                        <p className="text-sm text-gray-600 line-clamp-2 mb-3">{goal.explanation}</p>
 
-                                                    <div className="mb-3">
-                                                        <div className="flex items-center justify-between mb-1.5">
-                                                            <span className="text-sm font-semibold text-gray-900">${goal.moneyRaised.toLocaleString()} raised</span>
-                                                            <span className="text-sm text-gray-500">of ${goal.moneyBudget.toLocaleString()} budget</span>
+                                                        <div className="mb-3">
+                                                            <div className="flex items-center justify-between mb-1.5">
+                                                                <span className="text-sm font-semibold text-gray-900">${goal.moneyRaised.toLocaleString()} raised</span>
+                                                                <span className="text-sm text-gray-500">of ${goal.moneyBudget.toLocaleString()} budget</span>
+                                                            </div>
+                                                            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }}></div>
+                                                            </div>
                                                         </div>
-                                                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }}></div>
-                                                        </div>
-                                                    </div>
 
-                                                    {goal.approvementDocuments.length > 0 && (
-                                                        <div className="flex flex-wrap gap-2 mb-3">
-                                                            {goal.approvementDocuments.map((doc, idx) => (
-                                                                <a key={idx} href={doc.url} className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
-                                                                    <i className="ri-file-pdf-line text-red-500"></i>
-                                                                    {doc.name} ({doc.size})
-                                                                </a>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                                                        <i className="ri-link-m"></i>
-                                                        {goal.linkedLots.length} linked lot{goal.linkedLots.length !== 1 ? 's' : ''}
-                                                    </div>
-
-                                                    {isProcessed && goal.proofDocuments && goal.proofDocuments.length > 0 && (
-                                                        <div className="mt-3 pt-3 border-t border-gray-100">
-                                                            <p className="text-xs font-medium text-gray-700 mb-2 flex items-center gap-1">
-                                                                <i className="ri-camera-line text-emerald-600"></i>Proof Documents
-                                                            </p>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {goal.proofDocuments.map((doc, idx) => (
-                                                                    <a key={idx} href={doc.url} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 rounded-lg text-xs text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer">
-                                                                        <i className="ri-image-line"></i>
-                                                                        {doc.name}
-                                                                        <span className="text-emerald-400">({doc.size})</span>
+                                                        {goal.approvementDocuments.length > 0 && (
+                                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                                {goal.approvementDocuments.map((doc, idx) => (
+                                                                    <a key={idx} href={doc.url} className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+                                                                        <i className="ri-file-pdf-line text-red-500"></i>
+                                                                        {doc.name} ({doc.size})
                                                                     </a>
                                                                 ))}
                                                             </div>
-                                                            <p className="text-xs text-gray-400 mt-2">
-                                                                Processed on {new Date(goal.processedAt!).toLocaleString()}
-                                                            </p>
+                                                        )}
+
+                                                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                                                            <i className="ri-link-m"></i>
+                                                            {goal.linkedLots.length} linked lot{goal.linkedLots.length !== 1 ? 's' : ''}
                                                         </div>
-                                                    )}
+
+                                                        {isProcessed && goal.proofDocuments && goal.proofDocuments.length > 0 && (
+                                                            <div className="mt-3 pt-3 border-t border-gray-100">
+                                                                <p className="text-xs font-medium text-gray-700 mb-2 flex items-center gap-1">
+                                                                    <i className="ri-camera-line text-emerald-600"></i>Proof Documents
+                                                                </p>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {goal.proofDocuments.map((doc, idx) => (
+                                                                        <a key={idx} href={doc.url} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 rounded-lg text-xs text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer">
+                                                                            <i className="ri-image-line"></i>
+                                                                            {doc.name}
+                                                                            <span className="text-emerald-400">({doc.size})</span>
+                                                                        </a>
+                                                                    ))}
+                                                                </div>
+                                                                <p className="text-xs text-gray-400 mt-2">
+                                                                    Processed on {new Date(goal.processedAt!).toLocaleString()}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <Pagination currentPage={fulfilledPage} totalPages={fulfilledTotalPages} onPageChange={(p) => setFulfilledPage(p)} />
+                            </>
                         )}
                     </>
                 )}
@@ -408,7 +429,7 @@ export default function GoalManagementAdmin() {
                                 </div>
 
                                 <div className="grid gap-4">
-                                    {filteredOrganizations.map(org => (
+                                    {pagedOrganizations.map(org => (
                                         <button
                                             key={org.id}
                                             onClick={() => setSelectedOrgId(org.id)}
@@ -441,6 +462,7 @@ export default function GoalManagementAdmin() {
                                         </button>
                                     ))}
                                 </div>
+                                <Pagination currentPage={orgPage} totalPages={orgTotalPages} onPageChange={(p) => setOrgPage(p)} />
                             </>
                         )}
                     </>

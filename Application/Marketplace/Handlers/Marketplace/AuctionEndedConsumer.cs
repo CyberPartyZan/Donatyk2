@@ -12,17 +12,20 @@ namespace Marketplace
         private readonly ILotsRepository _lotsRepository;
         private readonly IPaymentGatewayFactory _paymentGatewayFactory;
         private readonly ILogger<AuctionEndedConsumer> _logger;
+        private readonly ICompensationService _compensationService;
 
         public AuctionEndedConsumer(
             IOrdersRepository ordersRepository,
             ILotsRepository lotsRepository,
             IPaymentGatewayFactory paymentGatewayFactory,
-            ILogger<AuctionEndedConsumer> logger)
+            ILogger<AuctionEndedConsumer> logger,
+            ICompensationService compensationService)
         {
             _ordersRepository = ordersRepository;
             _lotsRepository = lotsRepository;
             _paymentGatewayFactory = paymentGatewayFactory;
             _logger = logger;
+            _compensationService = compensationService;
         }
 
         public async Task Consume(ConsumeContext<AuctionEnded> context)
@@ -59,6 +62,7 @@ namespace Marketplace
 
             lot.Sell(lot.StockCount);
             await _lotsRepository.UpdateLot(lotId, lot);
+            await _compensationService.CreateIfNotExists(order.Id, lot.Id, lot.Compensation);
 
             _logger.LogInformation("Lot {LotId} stock set to 0 after auction capture.", lotId);
         }

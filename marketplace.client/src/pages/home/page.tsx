@@ -5,6 +5,8 @@ import { mockReports } from '@/mocks/reports';
 import { mockFaqs } from '@/mocks/faqs';
 
 export default function Home() {
+    const comingSoon = true; // Set to false to enable all features
+
     const [reportDateFilter, setReportDateFilter] = useState('');
     const [openFaqId, setOpenFaqId] = useState<string | null>(null);
     const [activeFaqCategory, setActiveFaqCategory] = useState<string>('All');
@@ -521,7 +523,7 @@ export default function Home() {
             </section>
 
             {/* FAQ Section */}
-            <section id="faq" className="py-20 px-6 bg-gradient-to-b from-white to-teal-50">
+            {!comingSoon && <section id="faq" className="py-20 px-6 bg-gradient-to-b from-white to-teal-50">
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center mb-12">
                         <h2 className="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
@@ -597,7 +599,7 @@ export default function Home() {
                         </div>
                     )}
                 </div>
-            </section>
+            </section>}
 
             {/* Footer */}
             <footer className="bg-gradient-to-br from-teal-500 to-emerald-600 text-white py-16 px-6">
@@ -653,7 +655,7 @@ export default function Home() {
                     <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-teal-50 text-sm">© 2025 All rights reserved.</p>
                         <a href="https://readdy.ai/?ref=logo" target="_blank" rel="noopener noreferrer" className="text-teal-50 hover:text-white text-sm transition-colors cursor-pointer">
-                            Powered by Readdy
+                            Powered by Okhy 
                         </a>
                     </div>
                 </div>

@@ -96,12 +96,16 @@ export default function GoalDetailPage() {
                                 </div>
                                 <h1 className="text-3xl font-bold text-white mb-2">{goal.title}</h1>
                                 {organization && (
-                                    <div className="flex items-center gap-3">
+                                    <Link
+                                        to={`/organization/${organization.id}`}
+                                        className="flex items-center gap-3 hover:bg-white/10 rounded-lg p-1 -m-1 transition-colors cursor-pointer group/org"
+                                    >
                                         <div className="w-10 h-10 rounded-full bg-white/20 overflow-hidden flex-shrink-0">
                                             <img src={organization.avatarImage} alt={organization.name} className="w-full h-full object-cover object-top" />
                                         </div>
-                                        <span className="text-white/90 font-medium">{organization.name}</span>
-                                    </div>
+                                        <span className="text-white/90 font-medium group-hover/org:text-white transition-colors">{organization.name}</span>
+                                        <i className="ri-arrow-right-s-line text-white/60 group-hover/org:text-white transition-colors"></i>
+                                    </Link>
                                 )}
                             </div>
 

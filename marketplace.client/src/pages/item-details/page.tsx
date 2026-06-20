@@ -30,6 +30,8 @@ function useAuctionCountdown(endsAt?: string) {
 }
 
 export default function ItemDetails() {
+    const comingSoon = true; // Set to true to hide content and show "Coming Soon" message
+
     const { id } = useParams();
     const navigate = useNavigate();
     const product = products.find((p) => p.id === id);
@@ -438,7 +440,7 @@ export default function ItemDetails() {
                             >
                                 Characteristics
                             </button>
-                            {goal && (
+                            {goal && !comingSoon && (
                                 <button
                                     onClick={() => setActiveTab('goal')}
                                     className={`py-4 font-semibold border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'goal' ? 'border-teal-500 text-teal-500' : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -531,8 +533,14 @@ export default function ItemDetails() {
                                                 </span>
                                             </div>
                                             <h3 className="text-lg font-bold text-gray-900 mb-1">{goal.title}</h3>
-                                            <p className="text-sm text-gray-600 mb-3">{goal.organizationName}</p>
-                                            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{goal.explanation}</p>
+                                            <Link
+                                                to={`/organization/${goal.organizationId}`}
+                                                className="text-sm text-teal-600 hover:text-teal-700 cursor-pointer inline-flex items-center gap-1 hover:underline"
+                                            >
+                                                {goal.organizationName}
+                                                <i className="ri-external-link-line text-xs"></i>
+                                            </Link>
+                                            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 mt-2">{goal.explanation}</p>
                                         </div>
                                         <div className="flex-shrink-0 flex flex-col items-center">
                                             <div className="relative w-20 h-20">

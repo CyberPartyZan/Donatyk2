@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { mockOrganizations, mockGoals } from '@/mocks/goals';
 import { charityDirections } from '@/mocks/charity-directions';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 5;
 
 interface Organization {
     id: string;
@@ -49,6 +52,22 @@ export default function GoalsAdmin() {
     const [showSplitModal, setShowSplitModal] = useState(false);
     const [splittingGoal, setSplittingGoal] = useState<Goal | null>(null);
     const [imagePreview, setImagePreview] = useState(organization?.avatarImage || '');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeSearchQuery, setActiveSearchQuery] = useState('');
+
+    const handleGoalSearch = () => {
+        setActiveSearchQuery(searchQuery.trim());
+    };
+
+    const allFilteredGoals = goals.filter(g => {
+        if (!activeSearchQuery) return true;
+        const q = activeSearchQuery.toLowerCase();
+        return (
+            g.title.toLowerCase().includes(q) ||
+            g.explanation.toLowerCase().includes(q) ||
+            (g.charityDirection && g.charityDirection.toLowerCase().includes(q))
+        );
+    });
 
     const [orgForm, setOrgForm] = useState({
         name: organization?.name || '',
@@ -67,6 +86,9 @@ export default function GoalsAdmin() {
         title: '', explanation: '', moneyBudget: '',
         charityDirection: 'Education, Science and Youth Development',
     });
+
+    const [goalsPage, setGoalsPage] = useState(1);
+    const pagedGoals = allFilteredGoals.slice((goalsPage - 1) * ITEMS_PER_PAGE, goalsPage * ITEMS_PER_PAGE);
 
     const [approvementUploads, setApprovementUploads] = useState<GoalDocument[]>([]);
     const [editApprovements, setEditApprovements] = useState<GoalDocument[]>([]);
@@ -283,13 +305,13 @@ export default function GoalsAdmin() {
 
     const getProgressPercent = (raised: number, budget: number) => Math.min(Math.round((raised / budget) * 100), 100);
 
-    const completedGoals = goals.filter(g => g.status === 'Reached').length;
-    const activeGoals = goals.filter(g => g.status === 'Active').length;
-    const totalRaised = goals.reduce((sum, g) => sum + g.moneyRaised, 0);
+    const completedGoals = allFilteredGoals.filter(g => g.status === 'Reached').length;
+    const activeGoals = allFilteredGoals.filter(g => g.status === 'Active').length;
+    const totalRaised = allFilteredGoals.reduce((sum, g) => sum + g.moneyRaised, 0);
 
     const getParentGoalTitle = (parentGoalId: string | null) => {
         if (!parentGoalId) return null;
-        const parent = goals.find(g => g.id === parentGoalId);
+        const parent = allFilteredGoals.find(g => g.id === parentGoalId);
         return parent?.title || 'Unknown Parent Goal';
     };
 
@@ -473,7 +495,7 @@ export default function GoalsAdmin() {
                         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                             <div>
                                 <h3 className="text-base font-semibold text-gray-900">Fundraising Goals</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">{goals.length} goal{goals.length !== 1 ? 's' : ''} created</p>
+                                <p className="text-xs text-gray-500 mt-0.5">{goals.length} goal{goals.length !== 1 ? 's' : ''} created{activeSearchQuery ? ` · ${allFilteredGoals.length} match` : ''}</p>
                             </div>
                             <button
                                 onClick={() => { setEditingGoal(null); resetGoalForm(); setShowGoalModal(true); }}
@@ -483,109 +505,137 @@ export default function GoalsAdmin() {
                             </button>
                         </div>
 
+                        {/* Search Panel */}
+                        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="relative flex-1">
+                                    <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                    <input
+                                        type="text"
+                                        placeholder="Search goals by title, explanation or charity direction..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleGoalSearch()}
+                                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleGoalSearch}
+                                    className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
+                                >
+                                    <i className="ri-search-line mr-1.5"></i>Search
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="p-6">
-                            {goals.length === 0 ? (
+                            {allFilteredGoals.length === 0 ? (
                                 <div className="text-center py-12">
                                     <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
                                         <i className="ri-flag-line text-5xl text-gray-300"></i>
                                     </div>
-                                    <p className="text-gray-500 text-sm mb-4">No goals created yet</p>
-                                    <button
-                                        onClick={() => { setEditingGoal(null); resetGoalForm(); setShowGoalModal(true); }}
-                                        className="px-5 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
-                                    >
-                                        <i className="ri-add-line mr-2"></i>Create Your First Goal
-                                    </button>
+                                    <p className="text-gray-500 text-sm mb-4">{activeSearchQuery ? 'No goals match your search' : 'No goals created yet'}</p>
+                                    {!activeSearchQuery && (
+                                        <button
+                                            onClick={() => { setEditingGoal(null); resetGoalForm(); setShowGoalModal(true); }}
+                                            className="px-5 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
+                                        >
+                                            <i className="ri-add-line mr-2"></i>Create Your First Goal
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
-                                <div className="grid gap-4">
-                                    {goals.map(goal => {
-                                        const pct = getProgressPercent(goal.moneyRaised, goal.moneyBudget);
-                                        const parentTitle = getParentGoalTitle(goal.parentGoalId);
-                                        return (
-                                            <div key={goal.id} className={`bg-white rounded-lg border p-5 ${goal.status === 'Reached' ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200'}`}>
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${goal.status === 'Reached' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                                {goal.status}
-                                                            </span>
-                                                            {goal.charityDirection && (
-                                                                <span className="px-2 py-0.5 text-xs bg-teal-50 text-teal-600 rounded-full">{goal.charityDirection}</span>
-                                                            )}
-                                                            {goal.parentGoalId && parentTitle && (
-                                                                <span className="px-2 py-0.5 text-xs bg-orange-50 text-orange-600 rounded-full flex items-center gap-1">
-                                                                    <i className="ri-git-branch-line"></i>From: {parentTitle}
+                                <>
+                                    <div className="grid gap-4">
+                                        {pagedGoals.map(goal => {
+                                            const pct = getProgressPercent(goal.moneyRaised, goal.moneyBudget);
+                                            const parentTitle = getParentGoalTitle(goal.parentGoalId);
+                                            return (
+                                                <div key={goal.id} className={`bg-white rounded-lg border p-5 ${goal.status === 'Reached' ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200'}`}>
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${goal.status === 'Reached' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                                    {goal.status}
                                                                 </span>
-                                                            )}
+                                                                {goal.charityDirection && (
+                                                                    <span className="px-2 py-0.5 text-xs bg-teal-50 text-teal-600 rounded-full">{goal.charityDirection}</span>
+                                                                )}
+                                                                {goal.parentGoalId && parentTitle && (
+                                                                    <span className="px-2 py-0.5 text-xs bg-orange-50 text-orange-600 rounded-full flex items-center gap-1">
+                                                                        <i className="ri-git-branch-line"></i>From: {parentTitle}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <h3 className="text-lg font-semibold text-gray-900">{goal.title}</h3>
+                                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{goal.explanation}</p>
                                                         </div>
-                                                        <h3 className="text-lg font-semibold text-gray-900">{goal.title}</h3>
-                                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{goal.explanation}</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 ml-4">
-                                                        <button onClick={() => handleEditGoal(goal)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer text-gray-500">
-                                                            <i className="ri-edit-line"></i>
-                                                        </button>
-                                                        {!goal.parentGoalId && (
-                                                            <button onClick={() => openSplitModal(goal)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-orange-50 transition-colors cursor-pointer text-orange-500" title="Split Goal">
-                                                                <i className="ri-git-branch-line"></i>
+                                                        <div className="flex items-center gap-2 ml-4">
+                                                            <button onClick={() => handleEditGoal(goal)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors cursor-pointer text-gray-500">
+                                                                <i className="ri-edit-line"></i>
                                                             </button>
-                                                        )}
-                                                        <button onClick={() => handleDeleteGoal(goal.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors cursor-pointer text-gray-500 hover:text-red-500">
-                                                            <i className="ri-delete-bin-line"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div className="mb-3">
-                                                    <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-sm font-semibold text-gray-900">${goal.moneyRaised.toLocaleString()} raised</span>
-                                                        <span className="text-sm text-gray-500">of ${goal.moneyBudget.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-500 ${goal.status === 'Reached' ? 'bg-emerald-500' : 'bg-teal-500'}`}
-                                                            style={{ width: `${pct}%` }}
-                                                        ></div>
-                                                    </div>
-                                                    <span className="text-xs text-gray-400 mt-1 block">{pct}% funded</span>
-                                                </div>
-
-                                                <div className="flex items-center gap-4 flex-wrap text-xs text-gray-500">
-                                                    {goal.timeLimitStart && (
-                                                        <span className="flex items-center gap-1">
-                                                            <i className="ri-calendar-line"></i>
-                                                            {new Date(goal.timeLimitStart).toLocaleDateString()} – {goal.timeLimitEnd ? new Date(goal.timeLimitEnd).toLocaleDateString() : 'Ongoing'}
-                                                        </span>
-                                                    )}
-                                                    <span className="flex items-center gap-1">
-                                                        <i className="ri-file-list-3-line"></i>
-                                                        {goal.approvementDocuments.length} document{goal.approvementDocuments.length !== 1 ? 's' : ''}
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <i className="ri-link-m"></i>
-                                                        {goal.linkedLots.length} linked lot{goal.linkedLots.length !== 1 ? 's' : ''}
-                                                    </span>
-                                                </div>
-
-                                                {goal.approvementDocuments.length > 0 && (
-                                                    <div className="mt-3 pt-3 border-t border-gray-100">
-                                                        <p className="text-xs font-medium text-gray-700 mb-2">Approvement Documents</p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {goal.approvementDocuments.map((doc, idx) => (
-                                                                <a key={idx} href={doc.url} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
-                                                                    <i className="ri-file-pdf-line text-red-500"></i>
-                                                                    {doc.name}
-                                                                    <span className="text-gray-400">({doc.size})</span>
-                                                                </a>
-                                                            ))}
+                                                            {!goal.parentGoalId && (
+                                                                <button onClick={() => openSplitModal(goal)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-orange-50 transition-colors cursor-pointer text-orange-500" title="Split Goal">
+                                                                    <i className="ri-git-branch-line"></i>
+                                                                </button>
+                                                            )}
+                                                            <button onClick={() => handleDeleteGoal(goal.id)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors cursor-pointer text-gray-500 hover:text-red-500">
+                                                                <i className="ri-delete-bin-line"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+
+                                                    <div className="mb-3">
+                                                        <div className="flex items-center justify-between mb-1.5">
+                                                            <span className="text-sm font-semibold text-gray-900">${goal.moneyRaised.toLocaleString()} raised</span>
+                                                            <span className="text-sm text-gray-500">of ${goal.moneyBudget.toLocaleString()}</span>
+                                                        </div>
+                                                        <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all duration-500 ${goal.status === 'Reached' ? 'bg-emerald-500' : 'bg-teal-500'}`}
+                                                                style={{ width: `${pct}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-xs text-gray-400 mt-1 block">{pct}% funded</span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-4 flex-wrap text-xs text-gray-500">
+                                                        {goal.timeLimitStart && (
+                                                            <span className="flex items-center gap-1">
+                                                                <i className="ri-calendar-line"></i>
+                                                                {new Date(goal.timeLimitStart).toLocaleDateString()} – {goal.timeLimitEnd ? new Date(goal.timeLimitEnd).toLocaleDateString() : 'Ongoing'}
+                                                            </span>
+                                                        )}
+                                                        <span className="flex items-center gap-1">
+                                                            <i className="ri-file-list-3-line"></i>
+                                                            {goal.approvementDocuments.length} document{goal.approvementDocuments.length !== 1 ? 's' : ''}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <i className="ri-link-m"></i>
+                                                            {goal.linkedLots.length} linked lot{goal.linkedLots.length !== 1 ? 's' : ''}
+                                                        </span>
+                                                    </div>
+
+                                                    {goal.approvementDocuments.length > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-gray-100">
+                                                            <p className="text-xs font-medium text-gray-700 mb-2">Approvement Documents</p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {goal.approvementDocuments.map((doc, idx) => (
+                                                                    <a key={idx} href={doc.url} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+                                                                        <i className="ri-file-pdf-line text-red-500"></i>
+                                                                        {doc.name}
+                                                                        <span className="text-gray-400">({doc.size})</span>
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <Pagination currentPage={goalsPage} totalPages={Math.ceil(allFilteredGoals.length / ITEMS_PER_PAGE)} onPageChange={(p) => setGoalsPage(p)} />
+                                </>
                             )}
                         </div>
                     </div>

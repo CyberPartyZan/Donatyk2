@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { mockShipments } from '@/mocks/shipments';
+import Pagination from '@/components/base/Pagination';
+
+const ITEMS_PER_PAGE = 5;
 
 interface Shipment {
     id: string;
@@ -23,15 +26,21 @@ export default function ShipmentsAdmin() {
     const [shipments, setShipments] = useState<Shipment[]>(mockShipments);
     const [activeTab, setActiveTab] = useState<'all' | 'unprocessed'>('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeSearchQuery, setActiveSearchQuery] = useState('');
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [trackingInput, setTrackingInput] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const handleSearch = () => {
+        setActiveSearchQuery(searchQuery.trim());
+    };
 
     const unprocessed = shipments.filter(s => s.status === 'Pending');
     const processed = shipments.filter(s => s.status !== 'Pending');
     const currentList = activeTab === 'all' ? shipments : unprocessed;
 
     const filtered = currentList.filter(s => {
-        const q = searchQuery.toLowerCase();
+        const q = activeSearchQuery.toLowerCase();
         return (
             s.lotName.toLowerCase().includes(q) ||
             s.orderNumber.toLowerCase().includes(q) ||
@@ -117,15 +126,24 @@ export default function ShipmentsAdmin() {
                             )}
                         </button>
                     </div>
-                    <div className="relative w-64">
-                        <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                        <input
-                            type="text"
-                            placeholder="Search shipments..."
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        />
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-64">
+                            <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                            <input
+                                type="text"
+                                placeholder="Search shipments..."
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            />
+                        </div>
+                        <button
+                            onClick={handleSearch}
+                            className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                            <i className="ri-search-line mr-1.5"></i>Search
+                        </button>
                     </div>
                 </div>
 
@@ -138,73 +156,76 @@ export default function ShipmentsAdmin() {
                         <p className="text-gray-500 text-sm">No shipments found</p>
                     </div>
                 ) : (
-                    <div className="grid gap-4">
-                        {filtered.map(shipment => (
-                            <div key={shipment.id} className="bg-white rounded-lg border border-gray-200 p-5">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-20 h-20 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-                                        <img src={shipment.lotImage} alt={shipment.lotName} className="w-full h-full object-cover object-top" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div>
-                                                <h3 className="text-base font-semibold text-gray-900">{shipment.lotName}</h3>
-                                                <p className="text-sm text-gray-600">Order #{shipment.orderNumber} • Buyer: {shipment.buyerName}</p>
+                    <>
+                        <div className="grid gap-4">
+                            {filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(shipment => (
+                                <div key={shipment.id} className="bg-white rounded-lg border border-gray-200 p-5">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-20 h-20 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
+                                            <img src={shipment.lotImage} alt={shipment.lotName} className="w-full h-full object-cover object-top" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div>
+                                                    <h3 className="text-base font-semibold text-gray-900">{shipment.lotName}</h3>
+                                                    <p className="text-sm text-gray-600">Order #{shipment.orderNumber} • Buyer: {shipment.buyerName}</p>
+                                                </div>
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap ${statusColors[shipment.status]}`}>
+                                                    <i className={statusIcons[shipment.status]}></i>
+                                                    {shipment.status}
+                                                </span>
                                             </div>
-                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap ${statusColors[shipment.status]}`}>
-                                                <i className={statusIcons[shipment.status]}></i>
-                                                {shipment.status}
-                                            </span>
+
+                                            <div className="grid grid-cols-2 gap-3 mt-3">
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">Carrier</p>
+                                                    <p className="text-sm font-medium text-gray-900">{shipment.carrier}</p>
+                                                    {shipment.status !== 'Pending' && (
+                                                        <p className="text-xs text-gray-500 font-mono">{shipment.trackingNumber}</p>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">Recipient</p>
+                                                    <p className="text-sm font-medium text-gray-900">{shipment.recipientName}</p>
+                                                    <p className="text-xs text-gray-500">{shipment.recipientPhone}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-3">
+                                                <p className="text-xs text-gray-500 mb-0.5">Shipping Address</p>
+                                                <p className="text-sm text-gray-700">{shipment.address}</p>
+                                            </div>
+
+                                            {shipment.notes && (
+                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                                    <i className="ri-information-line"></i>{shipment.notes}
+                                                </p>
+                                            )}
+
+                                            {shipment.processedAt && (
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    Processed: {new Date(shipment.processedAt).toLocaleString()}
+                                                    {shipment.deliveredAt && ` • Delivered: ${new Date(shipment.deliveredAt).toLocaleString()}`}
+                                                </p>
+                                            )}
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-3 mt-3">
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">Carrier</p>
-                                                <p className="text-sm font-medium text-gray-900">{shipment.carrier}</p>
-                                                {shipment.status !== 'Pending' && (
-                                                    <p className="text-xs text-gray-500 font-mono">{shipment.trackingNumber}</p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">Recipient</p>
-                                                <p className="text-sm font-medium text-gray-900">{shipment.recipientName}</p>
-                                                <p className="text-xs text-gray-500">{shipment.recipientPhone}</p>
-                                            </div>
+                                        <div className="flex-shrink-0">
+                                            {shipment.status === 'Pending' && (
+                                                <button
+                                                    onClick={() => openProcessModal(shipment.id)}
+                                                    className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
+                                                >
+                                                    <i className="ri-play-circle-line mr-1.5"></i>Process
+                                                </button>
+                                            )}
                                         </div>
-
-                                        <div className="mt-3">
-                                            <p className="text-xs text-gray-500 mb-0.5">Shipping Address</p>
-                                            <p className="text-sm text-gray-700">{shipment.address}</p>
-                                        </div>
-
-                                        {shipment.notes && (
-                                            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                                <i className="ri-information-line"></i>{shipment.notes}
-                                            </p>
-                                        )}
-
-                                        {shipment.processedAt && (
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                Processed: {new Date(shipment.processedAt).toLocaleString()}
-                                                {shipment.deliveredAt && ` • Delivered: ${new Date(shipment.deliveredAt).toLocaleString()}`}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="flex-shrink-0">
-                                        {shipment.status === 'Pending' && (
-                                            <button
-                                                onClick={() => openProcessModal(shipment.id)}
-                                                className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
-                                            >
-                                                <i className="ri-play-circle-line mr-1.5"></i>Process
-                                            </button>
-                                        )}
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                        <Pagination currentPage={currentPage} totalPages={Math.ceil(filtered.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                    </>
                 )}
             </div>
 
