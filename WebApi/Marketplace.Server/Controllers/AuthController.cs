@@ -11,22 +11,34 @@ namespace Marketplace.Server.Controllers
         private readonly IAuthService _authService;
 
         private const string RefreshCookieName = "refreshToken";
-        private static CookieOptions RefreshCookieOptions =>
-            new()
-            {
-                HttpOnly = true,
-                Secure = true,           // HTTPS only
-                SameSite = SameSiteMode.Strict, // or Lax
-                Expires = DateTime.UtcNow.AddDays(14),
-                // TODO: Check if works properly
-                Path = "/api/auth/refresh"
-            };
+        private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(14);
 
-        // TODO: Add external logins (Google, Facebook, etc.)
         public AuthController(IAuthService authService)
         {
             _authService = authService;
         }
+
+        private static AuthResponse ToClientAuthResponse(AuthResponse tokens) =>
+            tokens with { RefreshToken = string.Empty };
+
+        private CookieOptions BuildRefreshCookieOptions() =>
+            new()
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.Add(RefreshTokenLifetime),
+                Path = "/api/auth"
+            };
+
+        private static CookieOptions BuildRefreshCookieDeleteOptions() =>
+            new()
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/api/auth"
+            };
 
         [AllowAnonymous]
         [HttpPost("login")]
@@ -41,17 +53,11 @@ namespace Marketplace.Server.Controllers
 
             if (tokens.RequiresEmailConfirmation == true)
             {
-                var redirectUrl = "/email-confirmation";
-                if (!string.IsNullOrWhiteSpace(request.Email))
-                {
-                    redirectUrl = $"/email-confirmation?email={Uri.EscapeDataString(request.Email)}";
-                }
-
-                return Results.Redirect(redirectUrl, permanent: false);
+                return Results.Ok(ToClientAuthResponse(tokens));
             }
 
-            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
-            return Results.Ok(tokens);
+            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, BuildRefreshCookieOptions());
+            return Results.Ok(ToClientAuthResponse(tokens));
         }
 
         [AllowAnonymous]
@@ -69,8 +75,8 @@ namespace Marketplace.Server.Controllers
             if (tokens is null)
                 return Results.Unauthorized();
 
-            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
-            return Results.Ok(tokens);
+            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, BuildRefreshCookieOptions());
+            return Results.Ok(ToClientAuthResponse(tokens));
         }
 
         [AllowAnonymous]
@@ -190,16 +196,16 @@ namespace Marketplace.Server.Controllers
             if (tokens is null)
                 return Results.Unauthorized();
 
-            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, RefreshCookieOptions);
-            return Results.Ok(tokens);
+            Response.Cookies.Append(RefreshCookieName, tokens.RefreshToken, BuildRefreshCookieOptions());
+            return Results.Ok(ToClientAuthResponse(tokens));
         }
 
+        [Authorize]
         [HttpPost("logout")]
         public async Task<IResult> Logout()
         {
             await _authService.LogoutAsync();
-
-            Response.Cookies.Delete(RefreshCookieName, RefreshCookieOptions);
+            Response.Cookies.Delete(RefreshCookieName, BuildRefreshCookieDeleteOptions());
             return Results.Ok();
         }
     }

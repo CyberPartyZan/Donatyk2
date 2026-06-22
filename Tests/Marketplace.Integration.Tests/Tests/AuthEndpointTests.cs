@@ -45,7 +45,7 @@ public class AuthEndpointTests : IntegrationTestsBase
 
         var payload = await response.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.False(string.IsNullOrWhiteSpace(payload?.AccessToken));
-        Assert.False(string.IsNullOrWhiteSpace(payload?.RefreshToken));
+        Assert.True(string.IsNullOrWhiteSpace(payload?.RefreshToken)); // no refresh token leak in body
         Assert.NotNull(GetRefreshCookieValue(response));
     }
 
@@ -64,7 +64,7 @@ public class AuthEndpointTests : IntegrationTestsBase
     }
 
     [Fact]
-    public async Task Login_ReturnsRedirect_WhenEmailNotConfirmed()
+    public async Task Login_ReturnsRequiresEmailConfirmation_ForUnconfirmedEmail()
     {
         var user = await CreateUserAsync(emailConfirmed: false);
 
@@ -74,8 +74,12 @@ public class AuthEndpointTests : IntegrationTestsBase
             Password = DefaultPassword
         });
 
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("/email-confirmation", response.Headers.Location?.OriginalString);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+        Assert.True(payload?.RequiresEmailConfirmation);
+        Assert.True(string.IsNullOrWhiteSpace(payload?.AccessToken));
+        Assert.True(string.IsNullOrWhiteSpace(payload?.RefreshToken));
     }
 
     [Fact]
@@ -126,7 +130,7 @@ public class AuthEndpointTests : IntegrationTestsBase
 
         var payload = await refreshResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.False(string.IsNullOrWhiteSpace(payload?.AccessToken));
-        Assert.False(string.IsNullOrWhiteSpace(payload?.RefreshToken));
+        Assert.True(string.IsNullOrWhiteSpace(payload?.RefreshToken)); // no refresh token leak
     }
 
     [Fact]
@@ -235,6 +239,25 @@ public class AuthEndpointTests : IntegrationTestsBase
 
         Assert.Equal(originalEmail, reloaded!.Email);
         Assert.Equal(originalEmail, reloaded.UserName);
+    }
+
+    [Fact]
+    public async Task Login_SetsRefreshCookie_AsHttpOnlySecureAndSameSiteNone()
+    {
+        var user = await CreateUserAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = user.Email,
+            Password = DefaultPassword
+        });
+
+        Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
+        var cookie = cookies.First(c => c.StartsWith("refreshToken=", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Contains("HttpOnly", cookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Secure", cookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SameSite=None", cookie, StringComparison.OrdinalIgnoreCase);
     }
 
     private Task<ApplicationUser> CreateUserAsync(bool emailConfirmed = true, string? email = null, Guid? userId = null) =>

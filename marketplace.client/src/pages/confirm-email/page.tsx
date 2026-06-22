@@ -6,27 +6,27 @@ export default function ConfirmEmailPage() {
     const { account, confirmEmail } = useAuth();
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+
+    const userId = searchParams.get('userId');
     const token = searchParams.get('token');
 
     useEffect(() => {
         const doConfirm = async () => {
-            if (!token) {
+            if (!userId || !token) {
                 setStatus('error');
                 return;
             }
+
             try {
-                const ok = await confirmEmail();
-                if (ok) {
-                    setStatus('success');
-                } else {
-                    setStatus('error');
-                }
+                const ok = await confirmEmail(userId, token);
+                setStatus(ok ? 'success' : 'error');
             } catch {
                 setStatus('error');
             }
         };
-        doConfirm();
-    }, [token, confirmEmail]);
+
+        void doConfirm();
+    }, [userId, token, confirmEmail]);
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">

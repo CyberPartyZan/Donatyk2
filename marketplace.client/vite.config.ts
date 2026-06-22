@@ -5,6 +5,7 @@ import AutoImport from "unplugin-auto-import/vite";
 
 const base = process.env.BASE_PATH || "/";
 const isPreview = process.env.IS_PREVIEW ? true : false;
+const backend = process.env.VITE_BACKEND_URL || "https://localhost:7077";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -83,6 +84,14 @@ export default defineConfig({
         watch: {
             usePolling: true,
             interval: 150,
+        },
+        proxy: {
+            "/api": {
+                target: backend,
+                changeOrigin: true,
+                secure: false,
+                rewrite: (path) => path, // keep /api prefix
+            },
         },
     },
 });

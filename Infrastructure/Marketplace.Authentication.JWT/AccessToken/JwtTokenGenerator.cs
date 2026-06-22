@@ -42,6 +42,7 @@ namespace Marketplace.Authentication.JWT
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
             };
 
             var roles = await _userManager.GetRolesAsync(user);

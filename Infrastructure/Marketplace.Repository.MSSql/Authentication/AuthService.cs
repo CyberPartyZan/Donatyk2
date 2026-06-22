@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 // TODO: Namespace should be Repository?
 namespace Marketplace.Authentication
@@ -13,7 +14,7 @@ namespace Marketplace.Authentication
     // TODO: Move whole Identity to separate project? Or at least to Marketplace.Repository.MSSql?
     public class AuthService : IAuthService
     {
-        private readonly ClaimsPrincipal _user;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenGenerator _jwt;
@@ -22,7 +23,7 @@ namespace Marketplace.Authentication
         private readonly IAuthRepository _authRepository;
 
         public AuthService(
-            ClaimsPrincipal user,
+            IHttpContextAccessor httpContextAccessor,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IJwtTokenGenerator jwt,
@@ -30,7 +31,7 @@ namespace Marketplace.Authentication
             INotificationService notificationService,
             IAuthRepository authRepository)
         {
-            _user = user;
+            _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
             _signInManager = signInManager;
             _jwt = jwt;
@@ -182,7 +183,7 @@ namespace Marketplace.Authentication
         public async Task LogoutAsync()
         {
             var userId = Guid.Parse(
-                _user.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+                CurrentUser.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
 
             await _authRepository.RevokeRefreshTokensAsync(userId);
         }
@@ -294,7 +295,7 @@ namespace Marketplace.Authentication
                 throw new ArgumentException("RedirectUrl is required.", nameof(request.RedirectUrl));
             }
 
-            var userIdClaim = _user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var userIdClaim = CurrentUser.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (string.IsNullOrWhiteSpace(userIdClaim))
             {
                 throw new InvalidOperationException("Authenticated user context is required.");
@@ -452,5 +453,9 @@ namespace Marketplace.Authentication
             url = QueryHelpers.AddQueryString(url, "token", encodedToken);
             return url;
         }
+
+        private ClaimsPrincipal CurrentUser =>
+            _httpContextAccessor.HttpContext?.User
+            ?? throw new InvalidOperationException("Authenticated user context is required.");
     }
 }

@@ -1,10 +1,14 @@
-import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AdminPanel() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { logout, account } = useAuth();
+    const { logout, account, isLoggedIn } = useAuth();
+
+    if (!isLoggedIn) {
+        return <Navigate to="/login" replace />;
+    }
 
     const isAdmin = account?.isAdmin ?? false;
 
