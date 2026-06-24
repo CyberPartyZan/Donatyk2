@@ -11,15 +11,8 @@ namespace Marketplace.Repository.MSSql
             _db = db;
         }
 
-        public async Task<IEnumerable<Lot>> GetAll(LotSearchQuery query)
+        private static IQueryable<LotEntity> ApplyFilters(IQueryable<LotEntity> q, LotSearchQuery query)
         {
-            var q = _db.Lots
-                .Include(l => l.Seller)
-                .Include(l => l.Category)
-                .Include(l => l.Characteristics)
-                .Include(l => l.Images)
-                .AsQueryable();
-
             if (!string.IsNullOrWhiteSpace(query?.SearchText))
             {
                 q = q.Where(e => e.Name.Contains(query.SearchText) || e.Description.Contains(query.SearchText));
@@ -45,7 +38,7 @@ namespace Marketplace.Repository.MSSql
                 q = q.Where(e => e.Type == query.Type.Value);
             }
 
-            if (query?.Stage is not null) // NEW
+            if (query?.Stage is not null)
             {
                 q = q.Where(e => e.Stage == query.Stage.Value);
             }
@@ -85,6 +78,20 @@ namespace Marketplace.Repository.MSSql
                 q = q.Where(e => e.StockCount > 0);
             }
 
+            return q;
+        }
+
+        public async Task<IEnumerable<Lot>> GetAll(LotSearchQuery query)
+        {
+            var q = _db.Lots
+                .Include(l => l.Seller)
+                .Include(l => l.Category)
+                .Include(l => l.Characteristics)
+                .Include(l => l.Images)
+                .AsQueryable();
+
+            q = ApplyFilters(q, query);
+
             var pageNumber = query?.PageNumber > 0 ? query.PageNumber : 1;
             var pageSize = query?.PageSize > 0 ? query.PageSize : 20;
 
@@ -95,6 +102,12 @@ namespace Marketplace.Repository.MSSql
                 .ToListAsync();
 
             return entities.Select(e => CreateFromEntity(e));
+        }
+
+        public async Task<int> GetTotalCount(LotSearchQuery query)
+        {
+            var q = ApplyFilters(_db.Lots.AsQueryable(), query);
+            return await q.CountAsync();
         }
 
         public async Task<Lot?> GetLotById(Guid id)

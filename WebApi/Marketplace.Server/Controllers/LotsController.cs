@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace Marketplace.Server.Controllers
 {
     [Authorize]
@@ -21,7 +19,11 @@ namespace Marketplace.Server.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAll([FromQuery] LotSearchQuery query)
         {
-            var results = await _lotsService.GetAll(query);
+            var effectiveQuery = query ?? new LotSearchQuery();
+            var totalCount = await _lotsService.GetTotalCount(effectiveQuery);
+            var results = await _lotsService.GetAll(effectiveQuery);
+
+            Response.Headers["X-Total-Count"] = totalCount.ToString();
             return Ok(results);
         }
 

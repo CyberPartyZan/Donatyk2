@@ -193,6 +193,12 @@ namespace Marketplace
             await _lotsRepository.UpdateLot(id, existing);
         }
 
+        public async Task<int> GetTotalCount(LotSearchQuery query)
+        {
+            var effectiveQuery = query ?? throw new ArgumentNullException(nameof(query));
+            return await _lotsRepository.GetTotalCount(effectiveQuery);
+        }
+
         private Guid GetCurrentUserIdOrThrow()
         {
             var userIdValue = _user.FindFirstValue(ClaimTypes.NameIdentifier);

@@ -347,6 +347,41 @@ namespace Marketplace.Unit.Tests.Services
             repo.Verify(r => r.UpdateLot(lot.Id, lot), Times.Once);
         }
 
+        [Fact]
+        public async Task GetTotalCount_WhenQueryIsNull_UsesDefaultQuery()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var repo = fixture.Freeze<Mock<ILotsRepository>>();
+            repo.Setup(r => r.GetTotalCount(It.IsAny<LotSearchQuery>()))
+                .ReturnsAsync(7);
+
+            var service = fixture.Create<LotsService>();
+
+            var count = await service.GetTotalCount(null!);
+
+            Assert.Equal(7, count);
+            repo.Verify(r => r.GetTotalCount(It.Is<LotSearchQuery>(q => q != null)), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetTotalCount_ReturnsRepositoryValue()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var query = new LotSearchQuery { Stage = LotStage.PendingApproval };
+            var repo = fixture.Freeze<Mock<ILotsRepository>>();
+            repo.Setup(r => r.GetTotalCount(query)).ReturnsAsync(3);
+
+            var service = fixture.Create<LotsService>();
+
+            var count = await service.GetTotalCount(query);
+
+            Assert.Equal(3, count);
+        }
+
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 

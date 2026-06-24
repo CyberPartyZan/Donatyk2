@@ -167,6 +167,72 @@ public class LotsEndpointTests : IntegrationTestsBase
         Assert.DoesNotContain(payload!, lot => lot.Id == deniedLot.Id);
     }
 
+    [Fact]
+    public async Task GetLots_WithSearchTextAndTypeFilter_ReturnsOnlyMatchingLots()
+    {
+        var matching = await SeedLotAsync(configure: l =>
+        {
+            l.Name = "Admin Search Auction Match";
+            l.Type = LotType.Auction;
+            l.Stage = LotStage.Approved;
+            l.EndOfAuction = DateTime.UtcNow.AddDays(1);
+            l.AuctionStepPercent = 5;
+        });
+
+        await SeedLotAsync(configure: l =>
+        {
+            l.Name = "Admin Search Auction Match But Simple";
+            l.Type = LotType.Simple;
+            l.Stage = LotStage.Approved;
+        });
+
+        await SeedLotAsync(configure: l =>
+        {
+            l.Name = "Completely Different Name";
+            l.Type = LotType.Auction;
+            l.Stage = LotStage.Approved;
+            l.EndOfAuction = DateTime.UtcNow.AddDays(1);
+            l.AuctionStepPercent = 5;
+        });
+
+        var response = await _client.GetAsync("/api/lots?searchText=Admin%20Search%20Auction%20Match&type=Auction");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<List<LotDto>>();
+        Assert.NotNull(payload);
+
+        Assert.Contains(payload!, lot => lot.Id == matching.Id);
+        Assert.DoesNotContain(payload!, lot => lot.Name.Contains("But Simple", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(payload!, lot => lot.Name.Contains("Completely Different", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task GetLots_SetsTotalCountHeader_ForSameFilter()
+    {
+        var marker = $"count-filter-{Guid.NewGuid():N}";
+
+        await SeedLotAsync(configure: l =>
+        {
+            l.Name = $"{marker}-approved";
+            l.Stage = LotStage.Approved;
+        });
+
+        await SeedLotAsync(configure: l =>
+        {
+            l.Name = $"{marker}-denied";
+            l.Stage = LotStage.Denied;
+        });
+
+        var response = await _client.GetAsync($"/api/lots?searchText={marker}&stage=Approved&pageNumber=1&pageSize=20");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("X-Total-Count", out var values));
+
+        var totalCount = int.Parse(values!.Single());
+        Assert.Equal(1, totalCount);
+    }
+
     private Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null) =>
         IntegrationTestsHelper.SeedLotAsync(_factory.Services, configure: configure);
 }
