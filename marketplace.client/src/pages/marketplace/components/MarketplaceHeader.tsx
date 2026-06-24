@@ -5,9 +5,17 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface MarketplaceHeaderProps {
     onCategoriesClick: () => void;
+    searchText: string;
+    onSearchTextChange: (value: string) => void;
+    onSearch: () => void;
 }
 
-export default function MarketplaceHeader({ onCategoriesClick }: MarketplaceHeaderProps) {
+export default function MarketplaceHeader({
+    onCategoriesClick,
+    searchText,
+    onSearchTextChange,
+    onSearch,
+}: MarketplaceHeaderProps) {
     const [cartOpen, setCartOpen] = useState(false);
     const { isLoggedIn } = useAuth();
 
@@ -38,9 +46,19 @@ export default function MarketplaceHeader({ onCategoriesClick }: MarketplaceHead
                                 <input
                                     type="text"
                                     placeholder="Search for products..."
+                                    value={searchText}
+                                    onChange={(e) => onSearchTextChange(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            onSearch();
+                                        }
+                                    }}
                                     className="w-full px-5 py-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                                 />
-                                <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-teal-500 text-white rounded-lg flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer">
+                                <button
+                                    onClick={onSearch}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-teal-500 text-white rounded-lg flex items-center justify-center hover:bg-teal-600 transition-colors cursor-pointer"
+                                >
                                     <i className="ri-search-line text-lg"></i>
                                 </button>
                             </div>

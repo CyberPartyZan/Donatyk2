@@ -1,22 +1,41 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { products } from '../../../mocks/products';
 import AuctionCountdown from './AuctionCountdown';
 
 interface ProductGridProps {
-    filters: any;
+    lots: Array<{
+        id: string;
+        name: string;
+        price: number;
+        discount: number;
+        image: string;
+        lotType: 'simple' | 'auction' | 'draw';
+        createdAt: string;
+        auctionEndsAt?: string;
+        ticketPrice?: number;
+        ticketsSold?: number;
+    }>;
+    filters: {
+        minPrice: string;
+        maxPrice: string;
+        minDiscount: string;
+        maxDiscount: string;
+        lotType: string[];
+    };
     sortBy: string;
+    isLoading: boolean;
+    error: string | null;
 }
 
-export default function ProductGrid({ filters, sortBy }: ProductGridProps) {
+export default function ProductGrid({ lots, filters, sortBy, isLoading, error }: ProductGridProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12;
 
-    const filteredProducts = products.filter((product) => {
-        if (filters.minPrice && product.price < parseFloat(filters.minPrice)) return false;
-        if (filters.maxPrice && product.price > parseFloat(filters.maxPrice)) return false;
-        if (filters.minDiscount && product.discount < parseFloat(filters.minDiscount)) return false;
-        if (filters.maxDiscount && product.discount > parseFloat(filters.maxDiscount)) return false;
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [lots, sortBy, filters]);
+
+    const filteredProducts = lots.filter((product) => {
         if (filters.lotType.length > 0 && !filters.lotType.includes(product.lotType)) return false;
         return true;
     });
@@ -37,6 +56,22 @@ export default function ProductGrid({ filters, sortBy }: ProductGridProps) {
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="text-center py-16">
+                <p className="text-gray-500 text-lg">Loading lots...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-16">
+                <p className="text-red-500 text-lg">{error}</p>
+            </div>
+        );
+    }
+
     return (
         <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-product-shop>
@@ -54,7 +89,7 @@ export default function ProductGrid({ filters, sortBy }: ProductGridProps) {
                             />
                             {product.discount > 0 && (
                                 <div className="absolute top-3 right-3 px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full whitespace-nowrap">
-                                    -{product.discount}%
+                                    -{Math.round(product.discount)}%
                                 </div>
                             )}
                             {product.lotType === 'auction' && (
@@ -81,9 +116,6 @@ export default function ProductGrid({ filters, sortBy }: ProductGridProps) {
                                         <div className="flex flex-col gap-0.5">
                                             <span className="text-xl font-bold text-teal-500">
                                                 ${(product.ticketPrice ?? 1).toFixed(2)} / ticket
-                                            </span>
-                                            <span className="text-sm text-gray-500">
-                                                {Math.max(0, Math.floor(product.price / (product.ticketPrice ?? 1)) - (product.ticketsSold ?? 0))} tickets left
                                             </span>
                                         </div>
                                     ) : product.discount > 0 ? (

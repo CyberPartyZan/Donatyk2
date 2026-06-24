@@ -163,7 +163,7 @@ export default function Home() {
             </section>
 
             {/* Media Section — Reports, Events & News */}
-            <section className="py-20 px-6 bg-white">
+            {!comingSoon && <section className="py-20 px-6 bg-white">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold text-gray-900 mb-4">Media & Reports</h2>
@@ -301,6 +301,7 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+            }
 
             {/* Service Details */}
             <section id="about" className="py-20 px-6 bg-white">
