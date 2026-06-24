@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { categories as initialCategories } from '../../../mocks/categories';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import CategoryCard from './components/CategoryCard';
 import AddCategoryModal from './components/AddCategoryModal';
 import Pagination from '@/components/base/Pagination';
 
 const ITEMS_PER_PAGE = 9;
+const ACCESS_TOKEN_KEY = 'auth_access_token';
 
 interface Category {
     id: string;
@@ -14,34 +14,204 @@ interface Category {
     parentId: string | null;
 }
 
+interface ApiCategoryDto {
+    id: string;
+    name?: string;
+    title?: string;
+    description?: string;
+    parentId?: string | null;
+    itemCount?: number;
+    subCategories?: ApiCategoryDto[];
+}
+
+interface CategoryMutationDto {
+    id?: string;
+    name: string;
+    description: string;
+    parentId: string | null;
+    subCategories: ApiCategoryDto[];
+}
+
+const flattenCategories = (apiCategories: ApiCategoryDto[]): Category[] => {
+    const result: Category[] = [];
+
+    const walk = (nodes: ApiCategoryDto[], inheritedParentId: string | null = null) => {
+        for (const node of nodes) {
+            const currentParentId = node.parentId ?? inheritedParentId ?? null;
+
+            result.push({
+                id: node.id,
+                title: node.name ?? node.title ?? '',
+                description: node.description ?? '',
+                itemCount: node.itemCount ?? 0,
+                parentId: currentParentId,
+            });
+
+            if (node.subCategories?.length) {
+                walk(node.subCategories, node.id);
+            }
+        }
+    };
+
+    walk(apiCategories);
+
+    const map = new Map<string, Category>();
+    for (const category of result) {
+        map.set(category.id, category);
+    }
+
+    return Array.from(map.values());
+};
+
+const getAuthHeader = (): Record<string, string> => {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const getResponseMessage = async (response: Response): Promise<string> => {
+    try {
+        const payload = await response.json() as { message?: string; title?: string; detail?: string };
+        return payload.message ?? payload.detail ?? payload.title ?? `Request failed: ${response.status}`;
+    } catch {
+        return `Request failed: ${response.status}`;
+    }
+};
+
 export default function CategoriesPage() {
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [mutationError, setMutationError] = useState<string | null>(null);
+
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
+    const loadCategories = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/categories');
+            if (!response.ok) {
+                throw new Error(`Failed to load categories: ${response.status}`);
+            }
+
+            const data = (await response.json()) as ApiCategoryDto[];
+            const normalized = flattenCategories(Array.isArray(data) ? data : []);
+            setCategories(normalized);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to load categories');
+            setCategories([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        void loadCategories();
+    }, [loadCategories]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
     const editingCategory = editingCategoryId ? categories.find(c => c.id === editingCategoryId) || null : null;
 
-    const handleAddCategory = (title: string, description: string, parentId: string | null) => {
-        const newCategory: Category = {
-            id: String(Date.now()),
-            title,
-            description,
-            itemCount: 0,
-            parentId
+    const handleAddCategory = async (title: string, description: string, parentId: string | null): Promise<boolean> => {
+        setMutationError(null);
+
+        const payload: CategoryMutationDto = {
+            name: title.trim(),
+            description: description.trim(),
+            parentId,
+            subCategories: [],
         };
-        setCategories([newCategory, ...categories]);
+
+        try {
+            const response = await fetch('/api/categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader(),
+                },
+                credentials: 'include',
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                setMutationError(await getResponseMessage(response));
+                return false;
+            }
+
+            await loadCategories();
+            setCurrentPage(1);
+            return true;
+        } catch (e) {
+            setMutationError(e instanceof Error ? e.message : 'Failed to create category');
+            return false;
+        }
     };
 
-    const handleEditCategory = (id: string, title: string, description: string, parentId: string | null) => {
-        setCategories(categories.map(cat =>
-            cat.id === id ? { ...cat, title, description, parentId } : cat
-        ));
+    const handleEditCategory = async (id: string, title: string, description: string, parentId: string | null): Promise<boolean> => {
+        setMutationError(null);
+
+        const payload: CategoryMutationDto = {
+            id,
+            name: title.trim(),
+            description: description.trim(),
+            parentId,
+            subCategories: [],
+        };
+
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader(),
+                },
+                credentials: 'include',
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                setMutationError(await getResponseMessage(response));
+                return false;
+            }
+
+            await loadCategories();
+            return true;
+        } catch (e) {
+            setMutationError(e instanceof Error ? e.message : 'Failed to update category');
+            return false;
+        }
     };
 
-    const handleDeleteCategory = (id: string) => {
-        setCategories(categories.filter(cat => cat.id !== id));
+    const handleDeleteCategory = async (id: string): Promise<boolean> => {
+        setMutationError(null);
+
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    ...getAuthHeader(),
+                },
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                setMutationError(await getResponseMessage(response));
+                return false;
+            }
+
+            await loadCategories();
+            return true;
+        } catch (e) {
+            setMutationError(e instanceof Error ? e.message : 'Failed to delete category');
+            return false;
+        }
     };
 
     const getParentTitle = (parentId: string | null) => {
@@ -49,9 +219,27 @@ export default function CategoriesPage() {
         return categories.find(c => c.id === parentId)?.title || null;
     };
 
-    const filteredCategories = categories.filter(cat =>
-        cat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cat.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredCategories = useMemo(() => {
+        const q = searchQuery.toLowerCase().trim();
+        if (!q) return categories;
+
+        return categories.filter(cat =>
+            cat.title.toLowerCase().includes(q) ||
+            cat.description.toLowerCase().includes(q)
+        );
+    }, [categories, searchQuery]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredCategories.length / ITEMS_PER_PAGE));
+
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
+    const pagedCategories = useMemo(
+        () => filteredCategories.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+        [filteredCategories, currentPage]
     );
 
     return (
@@ -77,13 +265,16 @@ export default function CategoriesPage() {
                             />
                         </div>
                         <button
-                            onClick={() => { setEditingCategoryId(null); setIsAddModalOpen(true); }}
+                            onClick={() => { setMutationError(null); setEditingCategoryId(null); setIsAddModalOpen(true); }}
                             className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors whitespace-nowrap"
                         >
                             <i className="ri-add-line mr-2"></i>
                             Add Category
                         </button>
                     </div>
+                    {mutationError && (
+                        <p className="mt-3 text-sm text-red-600">{mutationError}</p>
+                    )}
                 </div>
 
                 {/* Stats */}
@@ -130,16 +321,31 @@ export default function CategoriesPage() {
                     </div>
                 </div>
 
-                {/* Categories Grid */}
-                {filteredCategories.length > 0 ? (
+                {isLoading ? (
+                    <div className="bg-white rounded-lg border border-gray-200 p-12 text-center text-gray-600">
+                        Loading categories...
+                    </div>
+                ) : error ? (
+                    <div className="bg-white rounded-lg border border-red-200 p-12 text-center">
+                        <h3 className="text-lg font-semibold text-red-700 mb-2">Failed to load categories</h3>
+                        <p className="text-sm text-gray-600 mb-4">{error}</p>
+                        <button
+                            onClick={() => void loadCategories()}
+                            className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                ) : filteredCategories.length > 0 ? (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredCategories.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(category => (
+                            {pagedCategories.map(category => (
                                 <CategoryCard
                                     key={category.id}
                                     category={category}
                                     parentTitle={getParentTitle(category.parentId)}
                                     onEdit={(id) => {
+                                        setMutationError(null);
                                         setEditingCategoryId(id);
                                         setIsAddModalOpen(true);
                                     }}
@@ -147,7 +353,11 @@ export default function CategoriesPage() {
                                 />
                             ))}
                         </div>
-                        <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredCategories.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={(p) => setCurrentPage(p)}
+                        />
                     </>
                 ) : (
                     <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
@@ -160,7 +370,7 @@ export default function CategoriesPage() {
                         </p>
                         {!searchQuery && (
                             <button
-                                onClick={() => { setEditingCategoryId(null); setIsAddModalOpen(true); }}
+                                onClick={() => { setMutationError(null); setEditingCategoryId(null); setIsAddModalOpen(true); }}
                                 className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors whitespace-nowrap"
                             >
                                 <i className="ri-add-line mr-2"></i>

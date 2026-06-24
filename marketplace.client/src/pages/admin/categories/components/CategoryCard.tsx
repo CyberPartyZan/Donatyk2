@@ -10,15 +10,23 @@ interface CategoryCardProps {
     };
     parentTitle: string | null;
     onEdit: (id: string) => void;
-    onDelete: (id: string) => void;
+    onDelete: (id: string) => Promise<boolean> | boolean;
 }
 
 export default function CategoryCard({ category, parentTitle, onEdit, onDelete }: CategoryCardProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleDelete = () => {
-        onDelete(category.id);
-        setShowDeleteConfirm(false);
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            const success = await onDelete(category.id);
+            if (success !== false) {
+                setShowDeleteConfirm(false);
+            }
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     return (
@@ -76,14 +84,16 @@ export default function CategoryCard({ category, parentTitle, onEdit, onDelete }
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                                 className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors whitespace-nowrap cursor-pointer"
+                                disabled={isDeleting}
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={handleDelete}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer"
+                                onClick={() => void handleDelete()}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer disabled:opacity-70"
+                                disabled={isDeleting}
                             >
-                                Delete Category
+                                {isDeleting ? 'Deleting...' : 'Delete Category'}
                             </button>
                         </div>
                     </div>

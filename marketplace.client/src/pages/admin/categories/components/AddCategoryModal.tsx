@@ -11,8 +11,8 @@ interface Category {
 interface AddCategoryModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAdd: (title: string, description: string, parentId: string | null) => void;
-    onEdit?: (id: string, title: string, description: string, parentId: string | null) => void;
+    onAdd: (title: string, description: string, parentId: string | null) => Promise<boolean> | boolean;
+    onEdit?: (id: string, title: string, description: string, parentId: string | null) => Promise<boolean> | boolean;
     editingCategory?: Category | null;
     categories: Category[];
 }
@@ -23,6 +23,8 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
     const [parentId, setParentId] = useState<string | null>(null);
     const [parentSearch, setParentSearch] = useState('');
     const [showParentDropdown, setShowParentDropdown] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const isEditing = !!editingCategory;
@@ -33,11 +35,13 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
             setDescription(editingCategory.description);
             setParentId(editingCategory.parentId);
             setParentSearch(editingCategory.parentId ? categories.find(c => c.id === editingCategory.parentId)?.title || '' : '');
+            setSubmitError(null);
         } else if (isOpen && !editingCategory) {
             setTitle('');
             setDescription('');
             setParentId(null);
             setParentSearch('');
+            setSubmitError(null);
         }
     }, [isOpen, editingCategory, categories]);
 
@@ -60,15 +64,26 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
 
     const selectedParent = parentId ? categories.find(c => c.id === parentId) : null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (title.trim() && description.trim()) {
-            if (isEditing && onEdit) {
-                onEdit(editingCategory.id, title, description, parentId);
-            } else {
-                onAdd(title, description, parentId);
+        if (!title.trim() || !description.trim()) return;
+
+        setIsSubmitting(true);
+        setSubmitError(null);
+
+        try {
+            const success = isEditing && onEdit
+                ? await onEdit(editingCategory.id, title, description, parentId)
+                : await onAdd(title, description, parentId);
+
+            if (success === false) {
+                setSubmitError('Unable to save category. Please try again.');
+                return;
             }
+
             onClose();
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -77,6 +92,7 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
         setDescription('');
         setParentId(null);
         setParentSearch('');
+        setSubmitError(null);
         onClose();
     };
 
@@ -90,6 +106,7 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
                     <button
                         onClick={handleClose}
                         className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                        disabled={isSubmitting}
                     >
                         <i className="ri-close-line text-xl"></i>
                     </button>
@@ -107,6 +124,7 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                             placeholder="e.g., Electronics, Fashion, Home & Garden"
                             required
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -121,6 +139,7 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                             placeholder="Describe what types of items belong to this category..."
                             required
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -129,7 +148,7 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
                             Parent Category <span className="text-gray-400 text-xs">(optional)</span>
                         </label>
                         <div
-                            onClick={() => setShowParentDropdown(!showParentDropdown)}
+                            onClick={() => !isSubmitting && setShowParentDropdown(!showParentDropdown)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer flex items-center justify-between bg-white"
                         >
                             {selectedParent ? (
@@ -156,6 +175,7 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
                                             placeholder="Search categories..."
                                             className="w-full pl-7 pr-3 py-1.5 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-teal-500"
                                             onClick={(e) => e.stopPropagation()}
+                                            disabled={isSubmitting}
                                         />
                                     </div>
                                 </div>
@@ -195,20 +215,24 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, onEdit, editi
                         )}
                     </div>
 
+                    {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"
                             onClick={handleClose}
                             className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors whitespace-nowrap"
+                            disabled={isSubmitting}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors whitespace-nowrap"
+                            className="flex-1 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-md hover:bg-teal-700 transition-colors whitespace-nowrap disabled:opacity-70"
+                            disabled={isSubmitting}
                         >
                             <i className={`${isEditing ? 'ri-edit-line' : 'ri-add-line'} mr-2`}></i>
-                            {isEditing ? 'Save Changes' : 'Add Category'}
+                            {isSubmitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Add Category')}
                         </button>
                     </div>
                 </form>
