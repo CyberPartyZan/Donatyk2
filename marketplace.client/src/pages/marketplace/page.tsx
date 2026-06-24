@@ -1,25 +1,168 @@
-
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
 import MarketplaceHeader from './components/MarketplaceHeader';
 import CategoryMenu from './components/CategoryMenu';
 import FilterSidebar from './components/FilterSidebar';
 import ProductGrid from './components/ProductGrid';
 
+type LotTypeFilter = 'simple' | 'auction' | 'draw';
+
+interface MarketplaceFilters {
+    minPrice: string;
+    maxPrice: string;
+    minDiscount: string;
+    maxDiscount: string;
+    lotType: LotTypeFilter[];
+}
+
+interface MoneyDto {
+    amount: number;
+    currency: number | string;
+}
+
+interface ApiImageDto {
+    url: string;
+}
+
+interface ApiLotDto {
+    id: string;
+    name: string;
+    price: MoneyDto;
+    discountedPrice: MoneyDto | null;
+    discount: number;
+    type: number | string;
+    stage: number | string;
+    isActive: boolean;
+    createdAt: string;
+    endOfAuction?: string | null;
+    ticketPrice?: MoneyDto | null;
+    images?: ApiImageDto[];
+}
+
+interface MarketplaceLot {
+    id: string;
+    name: string;
+    price: number;
+    discount: number;
+    image: string;
+    lotType: LotTypeFilter;
+    createdAt: string;
+    auctionEndsAt?: string;
+    ticketPrice?: number;
+    ticketsSold?: number;
+}
+
+const defaultFilters: MarketplaceFilters = {
+    minPrice: '',
+    maxPrice: '',
+    minDiscount: '',
+    maxDiscount: '',
+    lotType: [],
+};
+
+const mapLotType = (type: number | string): LotTypeFilter => {
+    if (typeof type === 'string') {
+        const normalized = type.toLowerCase();
+        if (normalized === 'auction') return 'auction';
+        if (normalized === 'draw') return 'draw';
+        return 'simple';
+    }
+
+    if (type === 1) return 'auction';
+    if (type === 2) return 'draw';
+    return 'simple';
+};
+
+const isApprovedStage = (stage: number | string): boolean => {
+    if (typeof stage === 'string') {
+        return stage.toLowerCase() === 'approved';
+    }
+
+    return stage === 5;
+};
+
 export default function Marketplace() {
     const [showCategories, setShowCategories] = useState(false);
-    const [filters, setFilters] = useState({
-        minPrice: '',
-        maxPrice: '',
-        minDiscount: '',
-        maxDiscount: '',
-        lotType: [] as string[],
-    });
+    const [filters, setFilters] = useState<MarketplaceFilters>(defaultFilters);
+    const [appliedFilters, setAppliedFilters] = useState<MarketplaceFilters>(defaultFilters);
+    const [searchText, setSearchText] = useState('');
+    const [activeSearchText, setActiveSearchText] = useState('');
     const [sortBy, setSortBy] = useState('date');
+    const [lots, setLots] = useState<MarketplaceLot[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [requestVersion, setRequestVersion] = useState(0);
+
+    const applySearch = () => {
+        setActiveSearchText(searchText.trim());
+        setAppliedFilters({ ...filters });
+        setRequestVersion((v) => v + 1);
+    };
+
+    const fetchLots = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const params = new URLSearchParams();
+
+            if (activeSearchText) params.set('searchText', activeSearchText);
+            if (appliedFilters.minPrice) params.set('minPrice', appliedFilters.minPrice);
+            if (appliedFilters.maxPrice) params.set('maxPrice', appliedFilters.maxPrice);
+            if (appliedFilters.minDiscount) params.set('minDiscount', appliedFilters.minDiscount);
+            if (appliedFilters.maxDiscount) params.set('maxDiscount', appliedFilters.maxDiscount);
+
+            params.set('pageNumber', '1');
+            params.set('pageSize', '200');
+
+            const response = await fetch(`/api/lots?${params.toString()}`);
+            if (!response.ok) {
+                throw new Error(`Failed to load lots: ${response.status}`);
+            }
+
+            const data = (await response.json()) as ApiLotDto[];
+
+            const mapped = data
+                .filter((x) => x.isActive && isApprovedStage(x.stage))
+                .map<MarketplaceLot>((x) => {
+                    const price = Number(x.price?.amount ?? 0);
+                    const discounted = x.discountedPrice ? Number(x.discountedPrice.amount) : price;
+                    const effectiveDiscount = price > 0 ? ((price - discounted) / price) * 100 : 0;
+
+                    return {
+                        id: x.id,
+                        name: x.name,
+                        price,
+                        discount: Number.isFinite(x.discount) && x.discount > 0 ? x.discount : effectiveDiscount,
+                        image: x.images?.[0]?.url || 'https://placehold.co/600x600?text=No+Image',
+                        lotType: mapLotType(x.type),
+                        createdAt: x.createdAt,
+                        auctionEndsAt: x.endOfAuction ?? undefined,
+                        ticketPrice: x.ticketPrice ? Number(x.ticketPrice.amount) : undefined,
+                        ticketsSold: 0,
+                    };
+                });
+
+            setLots(mapped);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Unknown error');
+            setLots([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [activeSearchText, appliedFilters, requestVersion]);
+
+    useEffect(() => {
+        void fetchLots();
+    }, [fetchLots]);
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <MarketplaceHeader onCategoriesClick={() => setShowCategories(!showCategories)} />
+            <MarketplaceHeader
+                onCategoriesClick={() => setShowCategories(!showCategories)}
+                searchText={searchText}
+                onSearchTextChange={setSearchText}
+                onSearch={applySearch}
+            />
 
             {showCategories && (
                 <CategoryMenu onClose={() => setShowCategories(false)} />
@@ -46,7 +189,13 @@ export default function Marketplace() {
                             </div>
                         </div>
 
-                        <ProductGrid filters={filters} sortBy={sortBy} />
+                        <ProductGrid
+                            lots={lots}
+                            filters={appliedFilters}
+                            sortBy={sortBy}
+                            isLoading={isLoading}
+                            error={error}
+                        />
                     </div>
                 </div>
             </div>
