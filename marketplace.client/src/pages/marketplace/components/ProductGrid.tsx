@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import AuctionCountdown from './AuctionCountdown';
+import Pagination from '@/components/base/Pagination';
 
 interface ProductGridProps {
     lots: Array<{
@@ -25,36 +26,38 @@ interface ProductGridProps {
     sortBy: string;
     isLoading: boolean;
     error: string | null;
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
 }
 
-export default function ProductGrid({ lots, filters, sortBy, isLoading, error }: ProductGridProps) {
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 12;
+export default function ProductGrid({
+    lots,
+    filters,
+    sortBy,
+    isLoading,
+    error,
+    currentPage,
+    totalPages,
+    onPageChange,
+}: ProductGridProps) {
+    const filteredProducts = useMemo(
+        () =>
+            lots.filter((product) => {
+                if (filters.lotType.length > 0 && !filters.lotType.includes(product.lotType)) return false;
+                return true;
+            }),
+        [lots, filters]
+    );
 
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [lots, sortBy, filters]);
-
-    const filteredProducts = lots.filter((product) => {
-        if (filters.lotType.length > 0 && !filters.lotType.includes(product.lotType)) return false;
-        return true;
-    });
-
-    const sortedProducts = [...filteredProducts].sort((a, b) => {
-        if (sortBy === 'price-low') return a.price - b.price;
-        if (sortBy === 'price-high') return b.price - a.price;
-        if (sortBy === 'date') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        return 0;
-    });
-
-    const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
-    const displayedProducts = sortedProducts.slice(0, currentPage * itemsPerPage);
-
-    const loadMore = () => {
-        if (currentPage < totalPages) {
-            setCurrentPage(currentPage + 1);
-        }
-    };
+    const displayedProducts = useMemo(() => {
+        return [...filteredProducts].sort((a, b) => {
+            if (sortBy === 'price-low') return a.price - b.price;
+            if (sortBy === 'price-high') return b.price - a.price;
+            if (sortBy === 'date') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            return 0;
+        });
+    }, [filteredProducts, sortBy]);
 
     if (isLoading) {
         return (
@@ -97,9 +100,7 @@ export default function ProductGrid({ lots, filters, sortBy, isLoading, error }:
                                     <div className="px-3 py-1 bg-amber-500 text-white text-sm font-medium rounded-full whitespace-nowrap">
                                         Auction
                                     </div>
-                                    {product.auctionEndsAt && (
-                                        <AuctionCountdown endsAt={product.auctionEndsAt} />
-                                    )}
+                                    {product.auctionEndsAt && <AuctionCountdown endsAt={product.auctionEndsAt} />}
                                 </div>
                             )}
                             {product.lotType === 'draw' && (
@@ -123,14 +124,10 @@ export default function ProductGrid({ lots, filters, sortBy, isLoading, error }:
                                             <span className="text-xl font-bold text-teal-500">
                                                 ${(product.price * (1 - product.discount / 100)).toFixed(2)}
                                             </span>
-                                            <span className="text-sm text-gray-400 line-through">
-                                                ${product.price.toFixed(2)}
-                                            </span>
+                                            <span className="text-sm text-gray-400 line-through">${product.price.toFixed(2)}</span>
                                         </div>
                                     ) : (
-                                        <span className="text-xl font-bold text-teal-500">
-                                            ${product.price.toFixed(2)}
-                                        </span>
+                                        <span className="text-xl font-bold text-teal-500">${product.price.toFixed(2)}</span>
                                     )}
                                 </div>
                             </div>
@@ -142,15 +139,8 @@ export default function ProductGrid({ lots, filters, sortBy, isLoading, error }:
                 ))}
             </div>
 
-            {currentPage < totalPages && (
-                <div className="mt-8 text-center">
-                    <button
-                        onClick={loadMore}
-                        className="px-8 py-3 bg-white border-2 border-teal-500 text-teal-500 rounded-lg hover:bg-teal-50 transition-colors font-semibold whitespace-nowrap cursor-pointer"
-                    >
-                        Load More
-                    </button>
-                </div>
+            {displayedProducts.length > 0 && (
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
             )}
 
             {displayedProducts.length === 0 && (

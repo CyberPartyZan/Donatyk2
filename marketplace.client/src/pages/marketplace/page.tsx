@@ -51,6 +51,8 @@ interface MarketplaceLot {
     ticketsSold?: number;
 }
 
+const PAGE_SIZE = 12;
+
 const defaultFilters: MarketplaceFilters = {
     minPrice: '',
     maxPrice: '',
@@ -87,6 +89,9 @@ export default function Marketplace() {
     const [searchText, setSearchText] = useState('');
     const [activeSearchText, setActiveSearchText] = useState('');
     const [sortBy, setSortBy] = useState('date');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+
     const [lots, setLots] = useState<MarketplaceLot[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -95,6 +100,7 @@ export default function Marketplace() {
     const applySearch = () => {
         setActiveSearchText(searchText.trim());
         setAppliedFilters({ ...filters });
+        setCurrentPage(1);
         setRequestVersion((v) => v + 1);
     };
 
@@ -111,8 +117,9 @@ export default function Marketplace() {
             if (appliedFilters.minDiscount) params.set('minDiscount', appliedFilters.minDiscount);
             if (appliedFilters.maxDiscount) params.set('maxDiscount', appliedFilters.maxDiscount);
 
-            params.set('pageNumber', '1');
-            params.set('pageSize', '200');
+            params.set('stage', 'Approved');
+            params.set('pageNumber', String(currentPage));
+            params.set('pageSize', String(PAGE_SIZE));
 
             const response = await fetch(`/api/lots?${params.toString()}`);
             if (!response.ok) {
@@ -143,13 +150,24 @@ export default function Marketplace() {
                 });
 
             setLots(mapped);
+
+            const totalCountHeader = response.headers.get('X-Total-Count');
+            const totalCount = totalCountHeader ? Number(totalCountHeader) : NaN;
+
+            if (Number.isFinite(totalCount) && totalCount >= 0) {
+                setTotalPages(Math.max(1, Math.ceil(totalCount / PAGE_SIZE)));
+            } else {
+                const hasNextPage = data.length === PAGE_SIZE;
+                setTotalPages(hasNextPage ? currentPage + 1 : currentPage);
+            }
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Unknown error');
             setLots([]);
+            setTotalPages(1);
         } finally {
             setIsLoading(false);
         }
-    }, [activeSearchText, appliedFilters, requestVersion]);
+    }, [activeSearchText, appliedFilters, currentPage, requestVersion]);
 
     useEffect(() => {
         void fetchLots();
@@ -164,9 +182,7 @@ export default function Marketplace() {
                 onSearch={applySearch}
             />
 
-            {showCategories && (
-                <CategoryMenu onClose={() => setShowCategories(false)} />
-            )}
+            {showCategories && <CategoryMenu onClose={() => setShowCategories(false)} />}
 
             <div className="max-w-[1600px] mx-auto px-6 py-8">
                 <div className="flex gap-8">
@@ -195,6 +211,9 @@ export default function Marketplace() {
                             sortBy={sortBy}
                             isLoading={isLoading}
                             error={error}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
                         />
                     </div>
                 </div>
