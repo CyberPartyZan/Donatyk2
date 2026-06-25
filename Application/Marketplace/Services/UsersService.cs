@@ -17,6 +17,11 @@ namespace Marketplace
             return users.Select(ToDto);
         }
 
+        public Task<int> GetTotalCount(string? search)
+        {
+            return _usersRepository.GetTotalCount(search);
+        }
+
         public async Task<UserDto?> GetById(Guid id)
         {
             var user = await _usersRepository.GetById(id);

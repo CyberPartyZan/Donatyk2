@@ -20,7 +20,10 @@ namespace Marketplace.Server.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
+            var totalCount = await _usersService.GetTotalCount(search);
             var users = await _usersService.GetAll(search, page, pageSize);
+
+            Response.Headers["X-Total-Count"] = totalCount.ToString();
             return Ok(users);
         }
 

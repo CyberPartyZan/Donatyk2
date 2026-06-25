@@ -13,14 +13,7 @@ namespace Marketplace.Repository.MSSql
 
         public async Task<IEnumerable<User>> GetAll(string? search, int page, int pageSize)
         {
-            var usersQuery = _db.Users.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                usersQuery = usersQuery.Where(u =>
-                    u.Email!.Contains(search) ||
-                    u.UserName!.Contains(search));
-            }
+            var usersQuery = BuildUsersQuery(search);
 
             var entities = await usersQuery
                 .OrderByDescending(u => u.CreatedAt)
@@ -29,6 +22,11 @@ namespace Marketplace.Repository.MSSql
                 .ToListAsync();
 
             return entities.Select(ToModel);
+        }
+
+        public Task<int> GetTotalCount(string? search)
+        {
+            return BuildUsersQuery(search).CountAsync();
         }
 
         public async Task<User?> GetById(Guid id)
@@ -53,6 +51,20 @@ namespace Marketplace.Repository.MSSql
 
             ApplyDomainValues(user, entity);
             await _db.SaveChangesAsync();
+        }
+
+        private IQueryable<ApplicationUser> BuildUsersQuery(string? search)
+        {
+            var usersQuery = _db.Users.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                usersQuery = usersQuery.Where(u =>
+                    u.Email!.Contains(search) ||
+                    u.UserName!.Contains(search));
+            }
+
+            return usersQuery;
         }
 
         private static User ToModel(ApplicationUser entity)

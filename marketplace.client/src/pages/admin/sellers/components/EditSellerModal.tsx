@@ -17,10 +17,11 @@ interface Seller {
 interface EditSellerModalProps {
     seller: Seller;
     onClose: () => void;
-    onSave: (seller: Seller) => void;
+    onSave: (seller: Seller) => Promise<void>;
+    isSaving?: boolean;
 }
 
-export default function EditSellerModal({ seller, onClose, onSave }: EditSellerModalProps) {
+export default function EditSellerModal({ seller, onClose, onSave, isSaving = false }: EditSellerModalProps) {
     const [formData, setFormData] = useState({
         name: seller.name,
         description: seller.description,
@@ -44,9 +45,9 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({
+        await onSave({
             ...seller,
             ...formData
         });
@@ -59,7 +60,8 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
                     <h2 className="text-xl font-semibold text-gray-900">Edit Seller Information</h2>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                        disabled={isSaving}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
                     >
                         <i className="ri-close-line text-xl"></i>
                     </button>
@@ -84,6 +86,7 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
                                     accept="image/*"
                                     onChange={handleImageChange}
                                     className="hidden"
+                                    disabled={isSaving}
                                 />
                             </label>
                         </div>
@@ -99,6 +102,7 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                             required
+                            disabled={isSaving}
                         />
                     </div>
 
@@ -112,6 +116,7 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
                             rows={4}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm resize-none"
                             required
+                            disabled={isSaving}
                         />
                     </div>
 
@@ -125,6 +130,7 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                             required
+                            disabled={isSaving}
                         />
                     </div>
 
@@ -138,6 +144,7 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
                             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                             required
+                            disabled={isSaving}
                         />
                     </div>
 
@@ -145,15 +152,17 @@ export default function EditSellerModal({ seller, onClose, onSave }: EditSellerM
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+                            disabled={isSaving}
+                            className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap disabled:opacity-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap"
+                            disabled={isSaving}
+                            className="flex-1 px-4 py-2 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Save Changes
+                            {isSaving ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>
                 </form>

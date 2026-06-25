@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { mockSellers } from '../../../mocks/sellers';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import SellerCard from './components/SellerCard';
 import SellerDetailModal from './components/SellerDetailModal';
 import EditSellerModal from './components/EditSellerModal';
 import Pagination from '@/components/base/Pagination';
+import { deleteSeller, getSellers, updateSeller, type SellerApiDto } from '@/api/sellers';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -21,30 +21,122 @@ interface Seller {
     rating: number;
 }
 
+const mapApiSeller = (dto: SellerApiDto): Seller => ({
+    id: dto.id,
+    name: dto.name ?? '',
+    description: dto.description ?? '',
+    email: dto.email ?? '',
+    phoneNumber: dto.phoneNumber ?? '',
+    avatarImage: dto.avatarImageUrl ?? '',
+    createdAt: new Date().toISOString(),
+    totalLots: 0,
+    approvedLots: 0,
+    totalSales: 0,
+    rating: 0,
+});
+
+const toApiSeller = (seller: Seller): SellerApiDto => ({
+    id: seller.id,
+    name: seller.name,
+    description: seller.description,
+    email: seller.email,
+    phoneNumber: seller.phoneNumber,
+    avatarImageUrl: seller.avatarImage,
+});
+
 export default function SellersAdmin() {
-    const [sellers, setSellers] = useState<Seller[]>(mockSellers);
+    const [sellers, setSellers] = useState<Seller[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSearchQuery, setActiveSearchQuery] = useState('');
     const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
     const [editingSeller, setEditingSeller] = useState<Seller | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [deletingSellerId, setDeletingSellerId] = useState<string | null>(null);
+    const [error, setError] = useState<string>('');
+
+    const fetchSellers = useCallback(async () => {
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const payload = await getSellers({
+                search: activeSearchQuery,
+                page: 1,
+                pageSize: 500,
+            });
+
+            setSellers((payload ?? []).map(mapApiSeller));
+        } catch (e) {
+            const message = e instanceof Error ? e.message : 'Failed to load sellers.';
+            setError(message);
+            setSellers([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [activeSearchQuery]);
+
+    useEffect(() => {
+        void fetchSellers();
+    }, [fetchSellers]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeSearchQuery]);
 
     const handleSearch = () => {
         setActiveSearchQuery(searchQuery.trim());
     };
 
-    const filteredSellers = sellers.filter(seller =>
-        seller.name.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
-        seller.email.toLowerCase().includes(activeSearchQuery.toLowerCase())
+    const filteredSellers = useMemo(() => sellers, [sellers]);
+
+    const totalPages = Math.ceil(filteredSellers.length / ITEMS_PER_PAGE);
+    const pagedSellers = filteredSellers.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
     );
 
-    const handleDelete = (id: string) => {
-        setSellers(sellers.filter(s => s.id !== id));
+    useEffect(() => {
+        if (totalPages > 0 && currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
+    const handleDelete = async (id: string) => {
+        setDeletingSellerId(id);
+        setError('');
+
+        try {
+            await deleteSeller(id);
+            setSellers(prev => prev.filter(s => s.id !== id));
+            setSelectedSeller(prev => (prev?.id === id ? null : prev));
+            setEditingSeller(prev => (prev?.id === id ? null : prev));
+        } catch (e) {
+            const message = e instanceof Error ? e.message : 'Failed to delete seller.';
+            setError(message);
+            throw e;
+        } finally {
+            setDeletingSellerId(null);
+        }
     };
 
-    const handleSave = (updatedSeller: Seller) => {
-        setSellers(sellers.map(s => s.id === updatedSeller.id ? updatedSeller : s));
-        setEditingSeller(null);
+    const handleSave = async (updatedSeller: Seller) => {
+        setIsSaving(true);
+        setError('');
+
+        try {
+            await updateSeller(updatedSeller.id, toApiSeller(updatedSeller));
+            setSellers(prev => prev.map(s => (s.id === updatedSeller.id ? updatedSeller : s)));
+            setSelectedSeller(prev => (prev?.id === updatedSeller.id ? updatedSeller : prev));
+            setEditingSeller(null);
+        } catch (e) {
+            const message = e instanceof Error ? e.message : 'Failed to update seller.';
+            setError(message);
+            throw e;
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -80,10 +172,18 @@ export default function SellersAdmin() {
                         <i className="ri-search-line mr-1.5"></i>Search
                     </button>
                 </div>
+
+                {error && (
+                    <div className="mt-4 px-4 py-3 rounded-md bg-red-50 text-red-700 text-sm border border-red-200">
+                        {error}
+                    </div>
+                )}
             </div>
 
             <div className="p-6">
-                {filteredSellers.length === 0 ? (
+                {isLoading ? (
+                    <div className="text-center py-12 text-gray-600">Loading sellers...</div>
+                ) : filteredSellers.length === 0 ? (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i className="ri-store-2-line text-gray-400 text-2xl"></i>
@@ -96,17 +196,22 @@ export default function SellersAdmin() {
                 ) : (
                     <>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {filteredSellers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(seller => (
+                            {pagedSellers.map(seller => (
                                 <SellerCard
                                     key={seller.id}
                                     seller={seller}
                                     onEdit={setEditingSeller}
                                     onDelete={handleDelete}
                                     onView={setSelectedSeller}
+                                    isDeleting={deletingSellerId === seller.id}
                                 />
                             ))}
                         </div>
-                        <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredSellers.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={(p) => setCurrentPage(p)}
+                        />
                     </>
                 )}
             </div>
@@ -124,6 +229,7 @@ export default function SellersAdmin() {
                     seller={editingSeller}
                     onClose={() => setEditingSeller(null)}
                     onSave={handleSave}
+                    isSaving={isSaving}
                 />
             )}
         </div>

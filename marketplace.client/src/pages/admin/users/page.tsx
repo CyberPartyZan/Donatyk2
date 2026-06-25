@@ -1,55 +1,163 @@
-import { useState } from 'react';
-import { mockUsers } from '../../../mocks/users';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Pagination from '@/components/base/Pagination';
 
 const ITEMS_PER_PAGE = 10;
+const ACCESS_TOKEN_KEY = 'auth_access_token';
+
+interface ApiUserDto {
+    id: string;
+    email: string;
+    emailConfirmed: boolean;
+    lockoutEnabled: boolean;
+    lockoutEnd?: string | null;
+}
 
 interface User {
     id: string;
     email: string;
     emailConfirmed: boolean;
     lockoutEnabled: boolean;
-    lockoutDate: string | null;
-    registeredAt: string;
-    lastLogin: string;
+    lockoutEnd: string | null;
 }
 
+const getAuthHeader = (): Record<string, string> => {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const getResponseMessage = async (response: Response): Promise<string> => {
+    try {
+        const payload = await response.json() as { message?: string; title?: string; detail?: string };
+        return payload.message ?? payload.detail ?? payload.title ?? `Request failed: ${response.status}`;
+    } catch {
+        return `Request failed: ${response.status}`;
+    }
+};
+
+const mapApiUser = (dto: ApiUserDto): User => ({
+    id: dto.id,
+    email: dto.email,
+    emailConfirmed: dto.emailConfirmed,
+    lockoutEnabled: dto.lockoutEnabled,
+    lockoutEnd: dto.lockoutEnd ?? null,
+});
+
 export default function UsersAdmin() {
-    const [users, setUsers] = useState<User[]>(mockUsers);
+    const [users, setUsers] = useState<User[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSearchQuery, setActiveSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalUsers, setTotalUsers] = useState(0);
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [mutationError, setMutationError] = useState<string | null>(null);
+
+    const loadUsers = useCallback(async (search: string, page: number) => {
+        setIsLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams({
+            page: String(page),
+            pageSize: String(ITEMS_PER_PAGE),
+        });
+
+        if (search.trim()) {
+            params.set('search', search.trim());
+        }
+
+        try {
+            const response = await fetch(`/api/users?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    ...getAuthHeader(),
+                },
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error(await getResponseMessage(response));
+            }
+
+            const data = (await response.json()) as ApiUserDto[];
+            setUsers((Array.isArray(data) ? data : []).map(mapApiUser));
+
+            const totalCountHeader = response.headers.get('X-Total-Count');
+            const totalCount = totalCountHeader ? Number(totalCountHeader) : NaN;
+            setTotalUsers(Number.isFinite(totalCount) && totalCount >= 0 ? totalCount : data.length);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to load users');
+            setUsers([]);
+            setTotalUsers(0);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        void loadUsers(activeSearchQuery, currentPage);
+    }, [activeSearchQuery, currentPage, loadUsers]);
 
     const handleSearch = () => {
+        setCurrentPage(1);
         setActiveSearchQuery(searchQuery.trim());
     };
 
-    const filteredUsers = users.filter(user =>
-        user.email.toLowerCase().includes(activeSearchQuery.toLowerCase())
-    );
+    const handleUnlock = async (user: User) => {
+        setMutationError(null);
 
-    const handleUnlock = (userId: string) => {
-        setUsers(users.map(user =>
-            user.id === userId
-                ? { ...user, lockoutEnabled: false, lockoutDate: null }
-                : user
-        ));
+        try {
+            const response = await fetch(`/api/users/${user.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader(),
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    id: user.id,
+                    email: user.email,
+                    emailConfirmed: user.emailConfirmed,
+                    lockoutEnabled: false,
+                    lockoutEnd: user.lockoutEnd,
+                }),
+            });
+
+            if (!response.ok) {
+                setMutationError(await getResponseMessage(response));
+                return;
+            }
+
+            setUsers(prev =>
+                prev.map(u => (u.id === user.id ? { ...u, lockoutEnabled: false } : u))
+            );
+        } catch (e) {
+            setMutationError(e instanceof Error ? e.message : 'Failed to unlock user');
+        }
     };
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return '—';
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
     const isLocked = (user: User) => {
-        if (!user.lockoutEnabled || !user.lockoutDate) return false;
-        return new Date(user.lockoutDate) > new Date();
+        if (!user.lockoutEnabled || !user.lockoutEnd) return false;
+        return new Date(user.lockoutEnd) > new Date();
     };
+
+    const lockedCount = useMemo(() => users.filter(isLocked).length, [users]);
+    const hasNextPage = users.length === ITEMS_PER_PAGE;
+    const totalPages = useMemo(
+        () => Math.max(1, Math.ceil(totalUsers / ITEMS_PER_PAGE)),
+        [totalUsers]
+    );
 
     return (
         <div className="bg-white rounded-lg shadow-sm">
@@ -62,13 +170,11 @@ export default function UsersAdmin() {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
                             <i className="ri-user-line text-gray-600"></i>
-                            <span className="text-sm font-medium text-gray-900">{users.length} Total Users</span>
+                            <span className="text-sm font-medium text-gray-900">{totalUsers} Total Users</span>
                         </div>
                         <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-lg">
                             <i className="ri-lock-line text-red-600"></i>
-                            <span className="text-sm font-medium text-red-900">
-                                {users.filter(u => isLocked(u)).length} Locked
-                            </span>
+                            <span className="text-sm font-medium text-red-900">{lockedCount} Locked</span>
                         </div>
                     </div>
                 </div>
@@ -92,10 +198,15 @@ export default function UsersAdmin() {
                         <i className="ri-search-line mr-1.5"></i>Search
                     </button>
                 </div>
+
+                {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+                {mutationError && <p className="mt-2 text-sm text-red-600">{mutationError}</p>}
             </div>
 
             <div className="overflow-x-auto">
-                {filteredUsers.length === 0 ? (
+                {isLoading ? (
+                    <div className="text-center py-12 text-gray-600">Loading users...</div>
+                ) : users.length === 0 ? (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i className="ri-user-line text-gray-400 text-2xl"></i>
@@ -110,28 +221,15 @@ export default function UsersAdmin() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Email
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Email Confirmed
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Lockout Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Lockout Date
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Last Login
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Confirmed</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lockout Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lockout Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(user => (
+                                {users.map(user => (
                                     <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-2">
@@ -168,15 +266,12 @@ export default function UsersAdmin() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {user.lockoutDate ? formatDate(user.lockoutDate) : '—'}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {formatDate(user.lastLogin)}
+                                            {formatDate(user.lockoutEnd)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {isLocked(user) ? (
                                                 <button
-                                                    onClick={() => handleUnlock(user.id)}
+                                                    onClick={() => void handleUnlock(user)}
                                                     className="inline-flex items-center gap-1 px-3 py-1 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap cursor-pointer"
                                                 >
                                                     <i className="ri-lock-unlock-line"></i>
@@ -191,7 +286,11 @@ export default function UsersAdmin() {
                             </tbody>
                         </table>
                         <div className="p-4">
-                            <Pagination currentPage={currentPage} totalPages={Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} onPageChange={(p) => setCurrentPage(p)} />
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={(p) => setCurrentPage(Math.max(1, p))}
+                            />
                         </div>
                     </>
                 )}

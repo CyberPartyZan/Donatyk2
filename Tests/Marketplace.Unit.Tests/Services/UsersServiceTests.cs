@@ -159,6 +159,21 @@ namespace Marketplace.Unit.Tests.Services
                 u.Email == dto.Email)), Times.Once);
         }
 
+        [Fact]
+        public async Task GetTotalCount_ReturnsRepositoryValue()
+        {
+            var fixture = CreateFixture();
+            var repo = fixture.Freeze<Mock<IUsersRepository>>();
+            repo.Setup(r => r.GetTotalCount("query")).ReturnsAsync(42);
+
+            var service = fixture.Create<UsersService>();
+
+            var result = await service.GetTotalCount("query");
+
+            Assert.Equal(42, result);
+            repo.Verify(r => r.GetTotalCount("query"), Times.Once);
+        }
+
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 

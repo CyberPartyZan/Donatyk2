@@ -88,6 +88,31 @@ public class UsersEndpointTests : IntegrationTestsBase
         Assert.Equal(dto.LockoutEnd, updated.LockoutEnd);
     }
 
+    [Fact]
+    public async Task GetAll_SetsTotalCountHeader_ForSameFilter()
+    {
+        var marker = $"users-count-{Guid.NewGuid():N}";
+
+        await SeedUserAsync(user =>
+        {
+            var email = $"{marker}@example.com";
+            user.Email = email;
+            user.NormalizedEmail = email.ToUpperInvariant();
+            user.UserName = email;
+            user.NormalizedUserName = email.ToUpperInvariant();
+        });
+
+        await SeedUserAsync();
+
+        var response = await _client.GetAsync($"/api/users?search={Uri.EscapeDataString(marker)}&page=1&pageSize=20");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("X-Total-Count", out var values));
+
+        var totalCount = int.Parse(values!.Single());
+        Assert.Equal(1, totalCount);
+    }
+
     private Task<ApplicationUser> SeedUserAsync(Action<ApplicationUser>? configure = null) =>
         IntegrationTestsHelper.SeedUserAsync(_factory.Services, configure);
 }

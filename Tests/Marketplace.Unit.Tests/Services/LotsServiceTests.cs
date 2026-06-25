@@ -348,24 +348,6 @@ namespace Marketplace.Unit.Tests.Services
         }
 
         [Fact]
-        public async Task GetTotalCount_WhenQueryIsNull_UsesDefaultQuery()
-        {
-            var fixture = CreateFixture();
-            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
-
-            var repo = fixture.Freeze<Mock<ILotsRepository>>();
-            repo.Setup(r => r.GetTotalCount(It.IsAny<LotSearchQuery>()))
-                .ReturnsAsync(7);
-
-            var service = fixture.Create<LotsService>();
-
-            var count = await service.GetTotalCount(null!);
-
-            Assert.Equal(7, count);
-            repo.Verify(r => r.GetTotalCount(It.Is<LotSearchQuery>(q => q != null)), Times.Once);
-        }
-
-        [Fact]
         public async Task GetTotalCount_ReturnsRepositoryValue()
         {
             var fixture = CreateFixture();

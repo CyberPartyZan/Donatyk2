@@ -17,16 +17,21 @@ interface Seller {
 interface SellerCardProps {
     seller: Seller;
     onEdit: (seller: Seller) => void;
-    onDelete: (id: string) => void;
+    onDelete: (id: string) => Promise<void>;
     onView: (seller: Seller) => void;
+    isDeleting?: boolean;
 }
 
-export default function SellerCard({ seller, onEdit, onDelete, onView }: SellerCardProps) {
+export default function SellerCard({ seller, onEdit, onDelete, onView, isDeleting = false }: SellerCardProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    const handleDelete = () => {
-        onDelete(seller.id);
-        setShowDeleteConfirm(false);
+    const handleDelete = async () => {
+        try {
+            await onDelete(seller.id);
+            setShowDeleteConfirm(false);
+        } catch {
+            // Error is handled by parent page.
+        }
     };
 
     return (
@@ -94,7 +99,8 @@ export default function SellerCard({ seller, onEdit, onDelete, onView }: SellerC
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
-                            className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors whitespace-nowrap"
+                            disabled={isDeleting}
+                            className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i className="ri-delete-bin-line"></i>
                         </button>
@@ -120,15 +126,17 @@ export default function SellerCard({ seller, onEdit, onDelete, onView }: SellerC
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
-                                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap disabled:opacity-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap"
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Delete Seller
+                                {isDeleting ? 'Deleting...' : 'Delete Seller'}
                             </button>
                         </div>
                     </div>
