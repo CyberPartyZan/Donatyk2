@@ -1,4 +1,6 @@
-﻿namespace Marketplace.Repository.MSSql
+﻿using Marketplace.Repository.MSSql.Entities;
+
+namespace Marketplace.Repository.MSSql
 {
     internal class LotEntity
     {
@@ -25,7 +27,7 @@
         public virtual ICollection<TicketEntity> Tickets { get; set; } = new List<TicketEntity>();
         public virtual ICollection<BidEntity> BidHistory { get; set; } = new List<BidEntity>();
         public virtual ICollection<CharacteristicEntity> Characteristics { get; set; } = new List<CharacteristicEntity>();
-        public virtual ICollection<ImageEntity> Images { get; set; } = new List<ImageEntity>();
+        public virtual ICollection<BlobEntity> Images { get; set; } = new List<BlobEntity>();
         public bool IsDeleted { get; set; }
     }
 }

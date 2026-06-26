@@ -15,8 +15,8 @@ namespace Marketplace.BlobStorage
                 .AddOptions<MinIOOptions>()
                 .Bind(configuration.GetSection(MinIOOptions.SectionName))
                 .Validate(o => !string.IsNullOrWhiteSpace(o.Endpoint), "MinIO endpoint must be configured.")
-                .Validate(o => !string.IsNullOrWhiteSpace(o.AccessKey), "MinIO access key must be configured.")
-                .Validate(o => !string.IsNullOrWhiteSpace(o.SecretKey), "MinIO secret key must be configured.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.Login), "MinIO login must be configured.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.Password), "MinIO password must be configured.")
                 .Validate(o => !string.IsNullOrWhiteSpace(o.BucketName), "MinIO bucket name must be configured.")
                 .ValidateOnStart();
 
@@ -25,7 +25,7 @@ namespace Marketplace.BlobStorage
                 var options = sp.GetRequiredService<IOptions<MinIOOptions>>().Value;
                 var clientBuilder = new MinioClient()
                     .WithEndpoint(options.Endpoint)
-                    .WithCredentials(options.AccessKey, options.SecretKey);
+                    .WithCredentials(options.Login, options.Password);
 
                 if (options.UseSsl)
                 {
