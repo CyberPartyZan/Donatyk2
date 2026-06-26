@@ -16,6 +16,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Hangfire;
 using Marketplace.Payment;
+using Marketplace.BlobStorage;
 
 namespace Marketplace.Server
 {
@@ -74,6 +75,7 @@ namespace Marketplace.Server
             builder.Services.AddAuthenticationServices();
             builder.Services.AddNotificationServices(builder.Configuration);
             builder.Services.AddCacheServices(builder.Configuration);
+            builder.Services.AddBlobStorageServices(builder.Configuration);
             builder.Services.AddMarketplaceServices(
                 builder.Configuration["MassTransit:EndpointPrefix"]);
             builder.Services.AddPaymentServices(builder.Configuration);

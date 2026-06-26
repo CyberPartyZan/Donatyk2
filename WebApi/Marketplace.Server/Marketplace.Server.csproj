@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\Application\Marketplace\Marketplace.csproj" />
     <ProjectReference Include="..\..\Domain\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Marketplace.Authentication.JWT\Marketplace.Authentication.JWT.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Marketplace.BlobStorage.MinIO\Marketplace.BlobStorage.MinIO.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Marketplace.Cache.Redis\Marketplace.Cache.Redis.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Marketplace.Notification\Marketplace.Notification.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Marketplace.Payment.ThirdParty\Marketplace.Payment.ThirdParty.csproj" />
