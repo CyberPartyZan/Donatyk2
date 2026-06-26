@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Marketplace.Repository.MSSql.Configurations;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,8 +24,8 @@ namespace Marketplace.Repository.MSSql
         public DbSet<ShipmentEntity> Shipments { get; set; }
         public DbSet<ShippingAddressEntity> ShippingAddresses { get; set; }
         public DbSet<DeliveryPreferencesEntity> DeliveryPreferences { get; set; }
-        public DbSet<ImageEntity> Images { get; set; }
         public DbSet<CompensationEntity> Compensations { get; set; }
+        public DbSet<BlobEntity> Blobs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,8 +46,8 @@ namespace Marketplace.Repository.MSSql
             modelBuilder.ApplyConfiguration(new ShipmentConfiguration());
             modelBuilder.ApplyConfiguration(new ShippingAddressConfiguration());
             modelBuilder.ApplyConfiguration(new DeliveryPreferencesConfiguration());
-            modelBuilder.ApplyConfiguration(new ImageConfiguration());
             modelBuilder.ApplyConfiguration(new CompensationConfiguration());
+            modelBuilder.ApplyConfiguration(new BlobConfiguration());
         }
     }
 }

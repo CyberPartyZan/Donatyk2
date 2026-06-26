@@ -198,12 +198,11 @@ namespace Marketplace.Repository.MSSql
                     Value = c.Value,
                     LotId = lotId
                 }).ToList(),
-                Images = lot.Images.Select(i => new ImageEntity
+                Images = lot.Images.Select(i => new BlobEntity
                 {
                     Id = i.Id,
-                    Url = i.Url,
-                    Data = i.Data?.ToArray(),
-                    LotId = lotId
+                    FilePath = i.FilePath,
+                    Key = i.Key,
                 }).ToList()
             };
 
@@ -282,23 +281,6 @@ namespace Marketplace.Repository.MSSql
                     Id = Guid.NewGuid(),
                     Key = c.Key,
                     Value = c.Value,
-                    LotId = existing.Id
-                });
-            }
-
-            // Replace images
-            foreach (var image in existing.Images.ToList())
-                _db.Entry(image).State = EntityState.Deleted;
-
-            existing.Images.Clear();
-
-            foreach (var image in lot.Images)
-            {
-                existing.Images.Add(new ImageEntity
-                {
-                    Id = image.Id,
-                    Url = image.Url,
-                    Data = image.Data?.ToArray(),
                     LotId = existing.Id
                 });
             }

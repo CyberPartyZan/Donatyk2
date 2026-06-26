@@ -37,7 +37,7 @@
             bool isDrawn = false,
             bool isDeleted = false,
             Characteristic[]? characteristics = null,
-            Image[]? images = null)
+            Blob[]? images = null)
             : base(id, name, description, price, compensation, stockCount, discountedPrice, type, stage, seller, isActive, isCompensationPaid, category, declineReason, isDeleted, characteristics, images)
         {
             if (ticketPrice is null || ticketPrice.Amount <= 0)

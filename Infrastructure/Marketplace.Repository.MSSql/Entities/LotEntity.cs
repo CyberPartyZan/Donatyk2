@@ -1,6 +1,4 @@
-﻿using Marketplace.Repository.MSSql.Entities;
-
-namespace Marketplace.Repository.MSSql
+﻿namespace Marketplace.Repository.MSSql
 {
     internal class LotEntity
     {

@@ -34,7 +34,7 @@
         public Category Category { get; set; }
         public Money Profit => Price - Compensation;
         public Characteristic[] Characteristics { get; private set; }
-        public Image[] Images { get; private set; }
+        public Blob[] Images { get; private set; }
 
         public Lot(
             Guid id,
@@ -53,7 +53,7 @@
             string? declineReason = null,
             bool isDeleted = false,
             Characteristic[]? characteristics = null,
-            Image[]? images = null)
+            Blob[]? images = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Lot name cannot be null or whitespace.", nameof(name));
@@ -105,7 +105,7 @@
             Category = category;
             IsDeleted = isDeleted;
             Characteristics = characteristics ?? Array.Empty<Characteristic>();
-            Images = images ?? Array.Empty<Image>();
+            Images = images ?? Array.Empty<Blob>();
         }
 
         public virtual void Sell(int quantity)

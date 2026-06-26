@@ -134,7 +134,7 @@ namespace Marketplace.Unit.Tests.Services
             dto.Stage = LotStage.Approved; // should be overridden
             dto.Images =
             [
-                new ImageDto { Id = Guid.NewGuid(), Url = "https://example.com/cover.png", Data = null }
+                new BlobDto { Id = Guid.NewGuid(), FilePath = "https://example.com/cover.png", Key = "null" }
             ];
 
             Lot? capturedLot = null;
@@ -155,7 +155,7 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal(userId, capturedLot.Seller.UserId);
             Assert.Equal(dto.Name, capturedLot.Name);
             Assert.Single(capturedLot.Images);
-            Assert.Equal("https://example.com/cover.png", capturedLot.Images[0].Url);
+            Assert.Equal("https://example.com/cover.png", capturedLot.Images[0].FilePath);
         }
 
         [Fact]

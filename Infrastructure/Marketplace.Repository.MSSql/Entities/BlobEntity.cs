@@ -1,4 +1,4 @@
-﻿namespace Marketplace.Repository.MSSql.Entities
+﻿namespace Marketplace.Repository.MSSql
 {
     internal class BlobEntity
     {

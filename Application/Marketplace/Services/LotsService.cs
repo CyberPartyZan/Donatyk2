@@ -214,13 +214,13 @@ namespace Marketplace
                 ? Array.Empty<Characteristic>()
                 : dtos.Select(c => new Characteristic(c.Key, c.Value)).ToArray();
 
-        private static Image[] MapImages(ImageDto[]? dtos) =>
+        private static Blob[] MapImages(BlobDto[]? dtos) =>
             dtos is null or { Length: 0 }
-                ? Array.Empty<Image>()
-                : dtos.Select(i => new Image(
+                ? Array.Empty<Blob>()
+                : dtos.Select(i => new Blob(
                     i.Id == Guid.Empty ? Guid.NewGuid() : i.Id,
-                    i.Url,
-                    i.Data)).ToArray();
+                    i.FilePath,
+                    i.Key)).ToArray();
 
         private static LotDto ToDto(Lot lot)
         {
@@ -263,11 +263,11 @@ namespace Marketplace
                     .Select(c => new CharacteristicDto { Key = c.Key, Value = c.Value })
                     .ToArray(),
                 Images = lot.Images
-                    .Select(i => new ImageDto
+                    .Select(i => new BlobDto
                     {
                         Id = i.Id,
-                        Url = i.Url,
-                        Data = i.Data is null ? null : i.Data.ToArray()
+                        Key = i.Key,
+                        FilePath = i.FilePath
                     })
                     .ToArray()
             };

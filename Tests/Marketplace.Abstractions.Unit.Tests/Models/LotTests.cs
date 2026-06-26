@@ -252,8 +252,7 @@
         {
             var images = new[]
             {
-                new Image(Guid.NewGuid(), "https://example.com/1.png", null),
-                new Image(Guid.NewGuid(), null, new byte[] { 10, 20 })
+                new Blob(Guid.NewGuid(), "https://example.com/1.png", "null"),
             };
 
             var lot = new Lot(
@@ -272,9 +271,8 @@
                 category: CreateCategory(),
                 images: images);
 
-            Assert.Equal(2, lot.Images.Length);
-            Assert.Equal(images[0].Url, lot.Images[0].Url);
-            Assert.Equal(images[1].Data, lot.Images[1].Data);
+            Assert.Equal(1, lot.Images.Length);
+            Assert.Equal(images[0].FilePath, lot.Images[0].FilePath);
         }
 
         private static Money CreateMoney(decimal amount) => new(amount, Currency.USD);
