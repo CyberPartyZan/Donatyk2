@@ -4,6 +4,7 @@
     {
         Task<Guid> Create(Compensation compensation);
         Task<Compensation?> Get(Guid id);
+        Task<CompensationReadModel?> GetReadModel(Guid id);
         Task<IReadOnlyCollection<CompensationReadModel>> GetBySellerId(Guid sellerId, CompensationStatus? status = null);
         Task<(IReadOnlyCollection<CompensationReadModel> Items, int TotalGroups)> GetAll(int page, int pageSize, CompensationStatus? status = null);
         Task Update(IReadOnlyCollection<Compensation> compensations);

@@ -1,7 +1,10 @@
 ﻿using AutoFixture;
 using AutoFixture.AutoMoq;
+using Marketplace.BlobStorage;
 using Marketplace.Repository;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Moq;
+using System.Security.Claims;
 
 namespace Marketplace.Unit.Tests.Services
 {
@@ -80,6 +83,83 @@ namespace Marketplace.Unit.Tests.Services
                 c.All(x => x.Status == CompensationStatus.Requested))), Times.Once);
         }
 
+        [Fact]
+        public async Task GetApprovementDocumentUrl_ReturnsUrl_ForOwner()
+        {
+            var compensationId = Guid.NewGuid();
+            var ownerUserId = Guid.NewGuid();
+            var repo = new Mock<ICompensationRepository>();
+            var blobStorage = new Mock<IBlobStorageService>();
+
+            var principal = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim(JwtRegisteredClaimNames.Sub, ownerUserId.ToString())],
+                "test"));
+
+            repo.Setup(r => r.GetReadModel(compensationId)).ReturnsAsync(new CompensationReadModel
+            {
+                Id = compensationId,
+                LotId = Guid.NewGuid(),
+                OrderId = Guid.NewGuid(),
+                Amount = new Money(10m, Currency.USD),
+                Status = CompensationStatus.Paid,
+                SellerId = Guid.NewGuid(),
+                SellerUserId = ownerUserId,
+                SellerName = "Seller",
+                ApprovementDocument = new BlobDto
+                {
+                    Id = Guid.NewGuid(),
+                    FilePath = "compensations/approvals",
+                    Key = "abc123"
+                }
+            });
+
+            blobStorage.Setup(x => x.GetPresignedGetUrlAsync("abc123", "compensations/approvals", 600))
+                .ReturnsAsync("https://minio/presigned");
+
+            var service = new CompensationService(repo.Object, principal, blobStorage.Object);
+
+            var url = await service.GetApprovementDocumentUrl(compensationId);
+
+            Assert.Equal("https://minio/presigned", url);
+        }
+
+        [Fact]
+        public async Task GetApprovementDocumentUrl_Throws_ForNonOwnerNonAdmin()
+        {
+            var compensationId = Guid.NewGuid();
+            var repo = new Mock<ICompensationRepository>();
+            var blobStorage = new Mock<IBlobStorageService>();
+
+            var principal = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString())],
+                "test"));
+
+            repo.Setup(r => r.GetReadModel(compensationId)).ReturnsAsync(new CompensationReadModel
+            {
+                Id = compensationId,
+                LotId = Guid.NewGuid(),
+                OrderId = Guid.NewGuid(),
+                Amount = new Money(10m, Currency.USD),
+                Status = CompensationStatus.Paid,
+                SellerId = Guid.NewGuid(),
+                SellerUserId = Guid.NewGuid(),
+                SellerName = "Seller",
+                ApprovementDocument = new BlobDto
+                {
+                    Id = Guid.NewGuid(),
+                    FilePath = "compensations/approvals",
+                    Key = "abc123"
+                }
+            });
+
+            var service = new CompensationService(repo.Object, principal, blobStorage.Object);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                service.GetApprovementDocumentUrl(compensationId));
+
+            blobStorage.Verify(x => x.GetPresignedGetUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
+        }
+
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 
@@ -98,6 +178,7 @@ namespace Marketplace.Unit.Tests.Services
                 Amount = new Money(10m, Currency.USD),
                 Status = status,
                 SellerId = sellerId ?? Guid.NewGuid(),
+                SellerUserId = Guid.NewGuid(),
                 SellerName = sellerName
             };
     }

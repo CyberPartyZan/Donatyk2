@@ -9,6 +9,7 @@
         public CompensationStatus Status { get; set; }
         public Guid SellerId { get; set; }
         public string SellerName { get; set; } = string.Empty;
+        public BlobDto? ApprovementDocument { get; set; }
     }
 
     public sealed class CompensationSellerGroupDto
@@ -34,6 +35,8 @@
         public Money Amount { get; set; } = null!;
         public CompensationStatus Status { get; set; }
         public Guid SellerId { get; set; }
+        public Guid SellerUserId { get; set; }
         public string SellerName { get; set; } = string.Empty;
+        public BlobDto? ApprovementDocument { get; set; }
     }
 }

@@ -33,11 +33,41 @@ namespace Marketplace.Repository.MSSql
             return e is null ? null : new Compensation(e.Id, e.OrderId, e.LotId, e.Amount, e.Status);
         }
 
+        public async Task<CompensationReadModel?> GetReadModel(Guid id)
+        {
+            return await _db.Compensations
+                .AsNoTracking()
+                .Include(c => c.Lot).ThenInclude(l => l.Seller)
+                .Include(c => c.ApprovementDocument)
+                .Where(c => c.Id == id)
+                .Select(c => new CompensationReadModel
+                {
+                    Id = c.Id,
+                    OrderId = c.OrderId,
+                    LotId = c.LotId,
+                    Amount = c.Amount,
+                    Status = c.Status,
+                    SellerId = c.Lot.Seller.Id,
+                    SellerUserId = c.Lot.Seller.UserId,
+                    SellerName = c.Lot.Seller.Name,
+                    ApprovementDocument = c.ApprovementDocument == null
+                        ? null
+                        : new BlobDto
+                        {
+                            Id = c.ApprovementDocument.Id,
+                            Key = c.ApprovementDocument.Key,
+                            FilePath = c.ApprovementDocument.FilePath
+                        }
+                })
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<IReadOnlyCollection<CompensationReadModel>> GetBySellerId(Guid sellerId, CompensationStatus? status = null)
         {
             var q = _db.Compensations
                 .AsNoTracking()
                 .Include(c => c.Lot).ThenInclude(l => l.Seller)
+                .Include(c => c.ApprovementDocument)
                 .Where(c => c.Lot.Seller.Id == sellerId);
 
             if (status.HasValue)
@@ -51,7 +81,16 @@ namespace Marketplace.Repository.MSSql
                 Amount = c.Amount,
                 Status = c.Status,
                 SellerId = c.Lot.Seller.Id,
-                SellerName = c.Lot.Seller.Name
+                SellerUserId = c.Lot.Seller.UserId,
+                SellerName = c.Lot.Seller.Name,
+                ApprovementDocument = c.ApprovementDocument == null
+                    ? null
+                    : new BlobDto
+                    {
+                        Id = c.ApprovementDocument.Id,
+                        Key = c.ApprovementDocument.Key,
+                        FilePath = c.ApprovementDocument.FilePath
+                    }
             }).ToListAsync();
         }
 
@@ -66,6 +105,7 @@ namespace Marketplace.Repository.MSSql
             var baseQuery = _db.Compensations
                 .AsNoTracking()
                 .Include(c => c.Lot).ThenInclude(l => l.Seller)
+                .Include(c => c.ApprovementDocument)
                 .AsQueryable();
 
             if (status.HasValue)
@@ -97,7 +137,16 @@ namespace Marketplace.Repository.MSSql
                     Amount = c.Amount,
                     Status = c.Status,
                     SellerId = c.Lot.Seller.Id,
-                    SellerName = c.Lot.Seller.Name
+                    SellerUserId = c.Lot.Seller.UserId,
+                    SellerName = c.Lot.Seller.Name,
+                    ApprovementDocument = c.ApprovementDocument == null
+                        ? null
+                        : new BlobDto
+                        {
+                            Id = c.ApprovementDocument.Id,
+                            Key = c.ApprovementDocument.Key,
+                            FilePath = c.ApprovementDocument.FilePath
+                        }
                 })
                 .ToListAsync();
 

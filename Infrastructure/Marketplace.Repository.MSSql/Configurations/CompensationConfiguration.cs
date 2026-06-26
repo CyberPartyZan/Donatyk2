@@ -33,6 +33,12 @@ namespace Marketplace.Repository.MSSql
                 .HasForeignKey(x => x.LotId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(x => x.ApprovementDocument)
+                .WithMany()
+                .HasForeignKey(x => x.ApprovementDocumentId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
             builder.HasIndex(x => new { x.OrderId, x.LotId }).IsUnique();
         }
     }

@@ -90,6 +90,25 @@ namespace Marketplace.BlobStorage
             return output;
         }
 
+        public Task<string> GetPresignedGetUrlAsync(string key, string filePath, int expirySeconds = 600)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                throw new ArgumentException("Key is required.", nameof(key));
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException("File path is required.", nameof(filePath));
+            if (expirySeconds <= 0)
+                throw new ArgumentOutOfRangeException(nameof(expirySeconds), "Expiry should be greater than zero.");
+
+            var objectName = BuildObjectName(filePath, key);
+
+            var args = new PresignedGetObjectArgs()
+                .WithBucket(_options.BucketName)
+                .WithObject(objectName)
+                .WithExpiry(expirySeconds);
+
+            return _minioClient.PresignedGetObjectAsync(args);
+        }
+
         private async Task EnsureBucketExistsAsync()
         {
             var existsArgs = new BucketExistsArgs().WithBucket(_options.BucketName);

@@ -9,5 +9,6 @@
         Task<CompensationGroupedPageDto> GetAll(int page, int pageSize, CompensationStatus? status = null);
         Task Update(IReadOnlyCollection<Guid> ids, CompensationStatus status);
         Task<int> RequestCompensation(Guid sellerId);
+        Task<string> GetApprovementDocumentUrl(Guid compensationId);
     }
 }

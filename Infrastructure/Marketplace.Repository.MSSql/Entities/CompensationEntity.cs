@@ -8,6 +8,9 @@
         public Money Amount { get; set; } = null!;
         public CompensationStatus Status { get; set; }
 
+        public Guid? ApprovementDocumentId { get; set; }
+        public virtual BlobEntity? ApprovementDocument { get; set; }
+
         public virtual OrderEntity Order { get; set; } = null!;
         public virtual LotEntity Lot { get; set; } = null!;
     }
