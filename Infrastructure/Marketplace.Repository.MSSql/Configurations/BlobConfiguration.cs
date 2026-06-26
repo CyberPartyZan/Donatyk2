@@ -11,6 +11,7 @@ namespace Marketplace.Repository.MSSql.Configurations
 
             builder.Property(x => x.FilePath).IsRequired();
             builder.Property(x => x.Key).IsRequired();
+            builder.Property(x => x.FileName).IsRequired().HasMaxLength(255);
         }
     }
 }

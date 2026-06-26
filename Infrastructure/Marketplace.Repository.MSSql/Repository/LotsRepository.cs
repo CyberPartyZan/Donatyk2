@@ -203,6 +203,7 @@ namespace Marketplace.Repository.MSSql
                     Id = i.Id,
                     FilePath = i.FilePath,
                     Key = i.Key,
+                    FileName = i.FileName
                 }).ToList()
             };
 

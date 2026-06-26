@@ -219,8 +219,9 @@ namespace Marketplace
                 ? Array.Empty<Blob>()
                 : dtos.Select(i => new Blob(
                     i.Id == Guid.Empty ? Guid.NewGuid() : i.Id,
-                    i.FilePath,
-                    i.Key)).ToArray();
+                    i.FilePath ?? string.Empty,
+                    i.Key ?? string.Empty,
+                    i.FileName ?? string.Empty)).ToArray();
 
         private static LotDto ToDto(Lot lot)
         {
@@ -267,7 +268,8 @@ namespace Marketplace
                     {
                         Id = i.Id,
                         Key = i.Key,
-                        FilePath = i.FilePath
+                        FilePath = i.FilePath,
+                        FileName = i.FileName
                     })
                     .ToArray()
             };
