@@ -1,9 +1,41 @@
-import { useState } from 'react';
-import { mockCompensations } from '@/mocks/compensations';
-import { mockSellers } from '@/mocks/sellers';
+import { useEffect, useState } from 'react';
 import Pagination from '@/components/base/Pagination';
 
 const ITEMS_PER_PAGE = 5;
+const ACCESS_TOKEN_KEY = 'auth_access_token';
+
+interface MoneyDto {
+    amount: number;
+    currency: number | string;
+}
+
+interface CompensationApiDto {
+    id: string;
+    orderId: string;
+    lotId: string;
+    amount: MoneyDto;
+    status: 'Paid' | 'Pending' | 'Requested' | string;
+    sellerId: string;
+    sellerName: string;
+    soldPrice: number;
+    soldDate: string;
+    buyerName: string;
+    lotName: string;
+    lotImage: string;
+}
+
+interface CompensationGroupApiDto {
+    sellerId: string;
+    sellerName: string;
+    compensations: CompensationApiDto[];
+}
+
+interface CompensationPageApiDto {
+    page: number;
+    pageSize: number;
+    totalGroups: number;
+    items: CompensationGroupApiDto[];
+}
 
 interface Compensation {
     id: string;
@@ -22,17 +54,13 @@ interface Compensation {
     sellerName?: string;
 }
 
-const allCompensations: Compensation[] = mockCompensations.map(comp => {
-    const sellerId = comp.id === 'comp-1' || comp.id === 'comp-2' || comp.id === 'comp-3' || comp.id === 'comp-4' || comp.id === 'comp-5' || comp.id === 'comp-6' || comp.id === 'comp-7' ? 'seller-1' : 'seller-2';
-    return {
-        ...comp,
-        sellerId,
-        sellerName: mockSellers.find(s => s.id === sellerId)?.name || 'Premium Luxury Goods'
-    };
-});
+const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export default function CompensationsAdmin() {
-    const [compensations, setCompensations] = useState<Compensation[]>(allCompensations);
+    const [compensations, setCompensations] = useState<Compensation[]>([]);
     const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'requests'>('requests');
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSearchQuery, setActiveSearchQuery] = useState('');
@@ -44,6 +72,81 @@ export default function CompensationsAdmin() {
     const [approvalFileName, setApprovalFileName] = useState('');
     const [processError, setProcessError] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalGroups, setTotalGroups] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadError, setLoadError] = useState('');
+
+    useEffect(() => {
+        const load = async () => {
+            setIsLoading(true);
+            setLoadError('');
+
+            try {
+                const params = new URLSearchParams();
+                params.set('page', String(currentPage));
+                params.set('pageSize', String(ITEMS_PER_PAGE));
+
+                if (activeTab === 'pending') params.set('status', 'Pending');
+                if (activeTab === 'requests') params.set('status', 'Requested');
+
+                const response = await fetch(`/api/compensation?${params.toString()}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { ...getAuthHeaders() }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load compensations (${response.status})`);
+                }
+
+                const data = (await response.json()) as CompensationPageApiDto;
+                setTotalGroups(data.totalGroups);
+
+                const mapped = data.items.flatMap(group =>
+                    group.compensations.map(c => {
+                        const soldPrice = Number(c.soldPrice ?? 0);
+                        const compAmount = Number(c.amount?.amount ?? 0);
+                        const compensationRate = soldPrice > 0
+                            ? Math.round((compAmount / soldPrice) * 100)
+                            : 0;
+
+                        const status = String(c.status).toLowerCase() === 'paid'
+                            ? 'Paid'
+                            : String(c.status).toLowerCase() === 'requested'
+                                ? 'Requested'
+                                : 'Pending';
+
+                        return {
+                            id: c.id,
+                            lotId: c.lotId,
+                            lotName: c.lotName || 'Unknown lot',
+                            lotImage: c.lotImage || 'https://placehold.co/120x120?text=No+Image',
+                            soldAt: c.soldDate,
+                            soldPrice,
+                            compensationAmount: compAmount,
+                            compensationRate,
+                            buyerName: c.buyerName || 'Unknown buyer',
+                            status,
+                            paidAt: null,
+                            transactionId: c.orderId,
+                            sellerId: c.sellerId,
+                            sellerName: c.sellerName
+                        } satisfies Compensation;
+                    })
+                );
+
+                setCompensations(mapped);
+            } catch (e) {
+                setCompensations([]);
+                setTotalGroups(0);
+                setLoadError(e instanceof Error ? e.message : 'Failed to load compensations.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        void load();
+    }, [activeTab, currentPage]);
 
     const pendingComps = compensations.filter(c => c.status === 'Pending');
     const requestedComps = compensations.filter(c => c.status === 'Requested');
@@ -105,24 +208,37 @@ export default function CompensationsAdmin() {
         }
     };
 
-    const handleProcessPayments = () => {
+    const handleProcessPayments = async () => {
         if (!approvalFile) {
             setProcessError('Please upload a PDF approval document to confirm payment.');
             return;
         }
-        const now = new Date().toISOString();
-        setCompensations(prev =>
-            prev.map(c =>
-                selectedIds.has(c.id) && (c.status === 'Pending' || c.status === 'Requested')
-                    ? { ...c, status: 'Paid' as const, paidAt: now }
-                    : c
-            )
-        );
-        setSelectedIds(new Set());
-        setProcessModalOpen(false);
-        setApprovalFile(null);
-        setApprovalFileName('');
-        setProcessError('');
+
+        if (selectedProcessable.length === 0) {
+            setProcessError('Please select at least one compensation to process.');
+            return;
+        }
+
+        try {
+            await processCompensations(selectedProcessable, approvalFile);
+
+            const now = new Date().toISOString();
+            setCompensations(prev =>
+                prev.map(c =>
+                    selectedProcessable.includes(c.id) && (c.status === 'Pending' || c.status === 'Requested')
+                        ? { ...c, status: 'Paid' as const, paidAt: now }
+                        : c
+                )
+            );
+
+            setSelectedIds(new Set());
+            setProcessModalOpen(false);
+            setApprovalFile(null);
+            setApprovalFileName('');
+            setProcessError('');
+        } catch (e) {
+            setProcessError(e instanceof Error ? e.message : 'Failed to process compensations.');
+        }
     };
 
     const openApproveModal = (id: string) => {
@@ -133,29 +249,37 @@ export default function CompensationsAdmin() {
         setApproveModalOpen(true);
     };
 
-    const handleSingleApprove = () => {
+    const handleSingleApprove = async () => {
         if (!approvalFile || !approvingId) {
             setProcessError('Please upload a PDF approval document to confirm payment.');
             return;
         }
-        const now = new Date().toISOString();
-        setCompensations(prev =>
-            prev.map(c =>
-                c.id === approvingId
-                    ? { ...c, status: 'Paid' as const, paidAt: now }
-                    : c
-            )
-        );
-        setApproveModalOpen(false);
-        setApprovingId(null);
-        setApprovalFile(null);
-        setApprovalFileName('');
-        setProcessError('');
+
+        try {
+            await processCompensations([approvingId], approvalFile);
+
+            const now = new Date().toISOString();
+            setCompensations(prev =>
+                prev.map(c =>
+                    c.id === approvingId
+                        ? { ...c, status: 'Paid' as const, paidAt: now }
+                        : c
+                )
+            );
+
+            setApproveModalOpen(false);
+            setApprovingId(null);
+            setApprovalFile(null);
+            setApprovalFileName('');
+            setProcessError('');
+        } catch (e) {
+            setProcessError(e instanceof Error ? e.message : 'Failed to approve compensation.');
+        }
     };
 
     const sellerList = Object.values(groupedBySeller);
-    const totalSellerPages = Math.ceil(sellerList.length / ITEMS_PER_PAGE);
-    const pagedSellerList = sellerList.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalSellerPages = Math.max(1, Math.ceil(totalGroups / ITEMS_PER_PAGE));
+    const pagedSellerList = sellerList; // API is already paged by seller groups
 
     const stats = {
         total: compensations.length,
@@ -176,6 +300,28 @@ export default function CompensationsAdmin() {
         if (status === 'Paid') return 'ri-check-double-line';
         if (status === 'Requested') return 'ri-question-answer-line';
         return 'ri-time-line';
+    };
+
+    // add this helper inside CompensationsAdmin (near other handlers)
+    const processCompensations = async (ids: string[], file: File): Promise<number> => {
+        const formData = new FormData();
+        ids.forEach(id => formData.append('ids', id)); // matches [FromForm] List<Guid> ids
+        formData.append('approvementDocument', file);  // matches [FromForm] IFormFile approvementDocument
+
+        const response = await fetch('/api/compensation/process', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { ...getAuthHeaders() }, // do not set Content-Type for FormData
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `Failed to process compensations (${response.status})`);
+        }
+
+        const data = (await response.json()) as { updated: number };
+        return data.updated;
     };
 
     return (
@@ -277,7 +423,11 @@ export default function CompensationsAdmin() {
                 </div>
 
                 <div className="p-6">
-                    {filteredComps.length === 0 ? (
+                    {isLoading ? (
+                        <div className="text-center py-12 text-sm text-gray-500">Loading compensations...</div>
+                    ) : loadError ? (
+                        <div className="text-center py-12 text-sm text-red-600">{loadError}</div>
+                    ) : filteredComps.length === 0 ? (
                         <div className="text-center py-12">
                             <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
                                 <i className="ri-money-dollar-circle-line text-5xl text-gray-300"></i>

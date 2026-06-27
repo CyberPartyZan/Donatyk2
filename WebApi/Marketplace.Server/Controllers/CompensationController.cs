@@ -22,6 +22,41 @@ namespace Marketplace.Server.Controllers
             return Ok(new { updated });
         }
 
+        [HttpPost("process")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Process(
+            [FromForm] List<Guid> ids,
+            [FromForm] IFormFile approvementDocument)
+        {
+            if (ids is null || ids.Count == 0)
+                return BadRequest("At least one compensation id is required.");
+
+            if (approvementDocument is null || approvementDocument.Length == 0)
+                return BadRequest("Approval document is required.");
+
+            if (!approvementDocument.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Approval document must be a PDF file.");
+
+            try
+            {
+                using var stream = approvementDocument.OpenReadStream();
+                var updated = await _compensationService.Process(ids, stream, approvementDocument.FileName);
+                return Ok(new { updated });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("seller/{sellerId:guid}")]
         public async Task<IActionResult> GetBySeller(Guid sellerId, [FromQuery] CompensationStatus? status = null)
         {

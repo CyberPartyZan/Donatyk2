@@ -10,5 +10,10 @@
         Task Update(IReadOnlyCollection<Guid> ids, CompensationStatus status);
         Task<int> RequestCompensation(Guid sellerId);
         Task<string> GetApprovementDocumentUrl(Guid compensationId);
+
+        Task<int> Process(
+            IReadOnlyCollection<Guid> ids,
+            Stream approvementDocumentStream,
+            string approvementFileName);
     }
 }

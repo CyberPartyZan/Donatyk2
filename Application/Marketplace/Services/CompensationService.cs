@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.IO;
+using System.Security.Claims;
 using Marketplace.BlobStorage;
 using Marketplace.Repository;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -7,6 +8,8 @@ namespace Marketplace
 {
     public class CompensationService : ICompensationService
     {
+        private const string ApprovementDocumentFilePath = "compensations/approvals";
+
         private readonly ICompensationRepository _compensationRepository;
         private readonly ClaimsPrincipal _user;
         private readonly IBlobStorageService _blobStorageService;
@@ -159,7 +162,51 @@ namespace Marketplace
             Status = x.Status,
             SellerId = x.SellerId,
             SellerName = x.SellerName,
-            ApprovementDocument = x.ApprovementDocument
+            ApprovementDocument = x.ApprovementDocument,
+
+            SoldPrice = x.SoldPrice,
+            SoldDate = x.SoldDate,
+            BuyerName = x.BuyerName,
+            LotName = x.LotName,
+            LotImage = x.LotImage
         };
+
+        public async Task<int> Process(
+            IReadOnlyCollection<Guid> ids,
+            Stream approvementDocumentStream,
+            string approvementFileName)
+        {
+            if (ids is null || ids.Count == 0)
+                throw new ArgumentException("At least one compensation id is required.", nameof(ids));
+
+            if (approvementDocumentStream is null || !approvementDocumentStream.CanRead)
+                throw new ArgumentException("Approval document stream is invalid.", nameof(approvementDocumentStream));
+
+            if (string.IsNullOrWhiteSpace(approvementFileName))
+                throw new ArgumentException("Approval document file name is required.", nameof(approvementFileName));
+
+            var distinctIds = ids
+                .Where(x => x != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            if (distinctIds.Count == 0)
+                throw new ArgumentException("At least one valid compensation id is required.", nameof(ids));
+
+            var safeFileName = Path.GetFileName(approvementFileName.Trim());
+
+            var key = await _blobStorageService.UploadAsync(approvementDocumentStream, ApprovementDocumentFilePath);
+
+            try
+            {
+                var blob = new Blob(Guid.NewGuid(), ApprovementDocumentFilePath, key, safeFileName);
+                return await _compensationRepository.Process(distinctIds, blob);
+            }
+            catch
+            {
+                await _blobStorageService.DeleteAsync(key, ApprovementDocumentFilePath);
+                throw;
+            }
+        }
     }
 }

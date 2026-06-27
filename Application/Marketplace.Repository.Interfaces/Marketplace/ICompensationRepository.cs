@@ -9,5 +9,6 @@
         Task<(IReadOnlyCollection<CompensationReadModel> Items, int TotalGroups)> GetAll(int page, int pageSize, CompensationStatus? status = null);
         Task Update(IReadOnlyCollection<Compensation> compensations);
         Task<bool> Exists(Guid orderId, Guid lotId);
+        Task<int> Process(IReadOnlyCollection<Guid> ids, Blob approvementDocument);
     }
 }

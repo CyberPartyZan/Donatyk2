@@ -160,6 +160,62 @@ namespace Marketplace.Unit.Tests.Services
             blobStorage.Verify(x => x.GetPresignedGetUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
         }
 
+        [Fact]
+        public async Task Process_UploadsApprovementDocument_AndProcessesBatch()
+        {
+            var fixture = CreateFixture();
+            var repo = fixture.Freeze<Mock<ICompensationRepository>>();
+            var blobStorage = fixture.Freeze<Mock<IBlobStorageService>>();
+
+            var id1 = Guid.NewGuid();
+            var id2 = Guid.NewGuid();
+
+            blobStorage.Setup(x => x.UploadAsync(It.IsAny<Stream>(), "compensations/approvals"))
+                .ReturnsAsync("blob-key");
+
+            repo.Setup(x => x.Process(
+                    It.IsAny<IReadOnlyCollection<Guid>>(),
+                    It.IsAny<Blob>()))
+                .ReturnsAsync(2);
+
+            var service = fixture.Create<CompensationService>();
+            using var stream = new MemoryStream([1, 2, 3]);
+
+            var updated = await service.Process([id1, id2], stream, "approval.pdf");
+
+            Assert.Equal(2, updated);
+
+            repo.Verify(x => x.Process(
+                It.Is<IReadOnlyCollection<Guid>>(ids => ids.Count == 2 && ids.Contains(id1) && ids.Contains(id2)),
+                It.Is<Blob>(b =>
+                    b.FilePath == "compensations/approvals" &&
+                    b.Key == "blob-key" &&
+                    b.FileName == "approval.pdf")),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Process_DeletesUploadedBlob_WhenRepositoryFails()
+        {
+            var fixture = CreateFixture();
+            var repo = fixture.Freeze<Mock<ICompensationRepository>>();
+            var blobStorage = fixture.Freeze<Mock<IBlobStorageService>>();
+
+            blobStorage.Setup(x => x.UploadAsync(It.IsAny<Stream>(), "compensations/approvals"))
+                .ReturnsAsync("blob-key");
+
+            repo.Setup(x => x.Process(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<Blob>()))
+                .ThrowsAsync(new InvalidOperationException("No compensations are eligible for processing."));
+
+            var service = fixture.Create<CompensationService>();
+            using var stream = new MemoryStream([1, 2, 3]);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.Process([Guid.NewGuid()], stream, "approval.pdf"));
+
+            blobStorage.Verify(x => x.DeleteAsync("blob-key", "compensations/approvals"), Times.Once);
+        }
+
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 
@@ -179,7 +235,12 @@ namespace Marketplace.Unit.Tests.Services
                 Status = status,
                 SellerId = sellerId ?? Guid.NewGuid(),
                 SellerUserId = Guid.NewGuid(),
-                SellerName = sellerName
+                SellerName = sellerName,
+                SoldPrice = 100m,
+                SoldDate = DateTime.UtcNow,
+                BuyerName = "buyer@test.local",
+                LotName = "Lot #1",
+                LotImage = "lots/img/key"
             };
     }
 }

@@ -37,7 +37,9 @@ namespace Marketplace.Repository.MSSql
         {
             return await _db.Compensations
                 .AsNoTracking()
+                .Include(c => c.Order).ThenInclude(o => o.Items)
                 .Include(c => c.Lot).ThenInclude(l => l.Seller)
+                .Include(c => c.Lot).ThenInclude(l => l.Images)
                 .Include(c => c.ApprovementDocument)
                 .Where(c => c.Id == id)
                 .Select(c => new CompensationReadModel
@@ -56,8 +58,27 @@ namespace Marketplace.Repository.MSSql
                         {
                             Id = c.ApprovementDocument.Id,
                             Key = c.ApprovementDocument.Key,
-                            FilePath = c.ApprovementDocument.FilePath
-                        }
+                            FilePath = c.ApprovementDocument.FilePath,
+                            FileName = c.ApprovementDocument.FileName
+                        },
+
+                    SoldPrice = c.Order.Items
+                        .Where(i => i.LotId == c.LotId)
+                        .Select(i => i.UnitPrice.Amount * i.Quantity)
+                        .FirstOrDefault(),
+                    SoldDate = c.Order.CreatedAt,
+                    BuyerName = _db.ApplicationUsers
+                        .Where(u => u.Id == c.Order.CustomerId)
+                        .Select(u => u.UserName ?? u.Email ?? string.Empty)
+                        .FirstOrDefault() ?? string.Empty,
+                    LotName = c.Order.Items
+                        .Where(i => i.LotId == c.LotId)
+                        .Select(i => i.NameSnapshot)
+                        .FirstOrDefault() ?? c.Lot.Name,
+                    LotImage = c.Lot.Images
+                        .OrderBy(i => i.Id)
+                        .Select(i => i.FilePath + "/" + i.Key)
+                        .FirstOrDefault() ?? string.Empty
                 })
                 .FirstOrDefaultAsync();
         }
@@ -66,7 +87,9 @@ namespace Marketplace.Repository.MSSql
         {
             var q = _db.Compensations
                 .AsNoTracking()
+                .Include(c => c.Order).ThenInclude(o => o.Items)
                 .Include(c => c.Lot).ThenInclude(l => l.Seller)
+                .Include(c => c.Lot).ThenInclude(l => l.Images)
                 .Include(c => c.ApprovementDocument)
                 .Where(c => c.Lot.Seller.Id == sellerId);
 
@@ -89,22 +112,40 @@ namespace Marketplace.Repository.MSSql
                     {
                         Id = c.ApprovementDocument.Id,
                         Key = c.ApprovementDocument.Key,
-                        FilePath = c.ApprovementDocument.FilePath
-                    }
+                        FilePath = c.ApprovementDocument.FilePath,
+                        FileName = c.ApprovementDocument.FileName
+                    },
+
+                SoldPrice = c.Order.Items
+                    .Where(i => i.LotId == c.LotId)
+                    .Select(i => i.UnitPrice.Amount * i.Quantity)
+                    .FirstOrDefault(),
+                SoldDate = c.Order.CreatedAt,
+                BuyerName = _db.ApplicationUsers
+                    .Where(u => u.Id == c.Order.CustomerId)
+                    .Select(u => u.UserName ?? u.Email ?? string.Empty)
+                    .FirstOrDefault() ?? string.Empty,
+                LotName = c.Order.Items
+                    .Where(i => i.LotId == c.LotId)
+                    .Select(i => i.NameSnapshot)
+                    .FirstOrDefault() ?? c.Lot.Name,
+                LotImage = c.Lot.Images
+                    .OrderBy(i => i.Id)
+                    .Select(i => i.FilePath + "/" + i.Key)
+                    .FirstOrDefault() ?? string.Empty
             }).ToListAsync();
         }
 
-        public async Task<(IReadOnlyCollection<CompensationReadModel> Items, int TotalGroups)> GetAll(
-            int page,
-            int pageSize,
-            CompensationStatus? status = null)
+        public async Task<(IReadOnlyCollection<CompensationReadModel> Items, int TotalGroups)> GetAll(int page, int pageSize, CompensationStatus? status = null)
         {
             if (page <= 0) page = 1;
             if (pageSize <= 0) pageSize = 20;
 
             var baseQuery = _db.Compensations
                 .AsNoTracking()
+                .Include(c => c.Order).ThenInclude(o => o.Items)
                 .Include(c => c.Lot).ThenInclude(l => l.Seller)
+                .Include(c => c.Lot).ThenInclude(l => l.Images)
                 .Include(c => c.ApprovementDocument)
                 .AsQueryable();
 
@@ -145,8 +186,27 @@ namespace Marketplace.Repository.MSSql
                         {
                             Id = c.ApprovementDocument.Id,
                             Key = c.ApprovementDocument.Key,
-                            FilePath = c.ApprovementDocument.FilePath
-                        }
+                            FilePath = c.ApprovementDocument.FilePath,
+                            FileName = c.ApprovementDocument.FileName
+                        },
+
+                    SoldPrice = c.Order.Items
+                        .Where(i => i.LotId == c.LotId)
+                        .Select(i => i.UnitPrice.Amount * i.Quantity)
+                        .FirstOrDefault(),
+                    SoldDate = c.Order.CreatedAt,
+                    BuyerName = _db.ApplicationUsers
+                        .Where(u => u.Id == c.Order.CustomerId)
+                        .Select(u => u.UserName ?? u.Email ?? string.Empty)
+                        .FirstOrDefault() ?? string.Empty,
+                    LotName = c.Order.Items
+                        .Where(i => i.LotId == c.LotId)
+                        .Select(i => i.NameSnapshot)
+                        .FirstOrDefault() ?? c.Lot.Name,
+                    LotImage = c.Lot.Images
+                        .OrderBy(i => i.Id)
+                        .Select(i => i.FilePath + "/" + i.Key)
+                        .FirstOrDefault() ?? string.Empty
                 })
                 .ToListAsync();
 
@@ -189,5 +249,58 @@ namespace Marketplace.Repository.MSSql
 
         public Task<bool> Exists(Guid orderId, Guid lotId) =>
             _db.Compensations.AnyAsync(c => c.OrderId == orderId && c.LotId == lotId);
+
+        public async Task<int> Process(IReadOnlyCollection<Guid> ids, Blob approvementDocument)
+        {
+            ArgumentNullException.ThrowIfNull(approvementDocument);
+
+            if (ids.Count == 0)
+                return 0;
+
+            var requestedIds = ids
+                .Where(x => x != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            if (requestedIds.Count == 0)
+                return 0;
+
+            var entities = await _db.Compensations
+                .Where(x => requestedIds.Contains(x.Id))
+                .ToListAsync();
+
+            if (entities.Count != requestedIds.Count)
+            {
+                var missing = requestedIds.Except(entities.Select(e => e.Id)).First();
+                throw new KeyNotFoundException($"Compensation '{missing}' not found.");
+            }
+
+            var processable = entities
+                .Where(x => x.Status == CompensationStatus.Pending || x.Status == CompensationStatus.Requested)
+                .ToList();
+
+            if (processable.Count == 0)
+                throw new InvalidOperationException("No compensations are eligible for processing.");
+
+            var blobEntity = new BlobEntity
+            {
+                Id = approvementDocument.Id,
+                FilePath = approvementDocument.FilePath,
+                Key = approvementDocument.Key,
+                FileName = approvementDocument.FileName
+            };
+
+            _db.Blobs.Add(blobEntity);
+
+            // TODO: Move this logic to a domain model or application service layer, and only update compesation here.
+            foreach (var entity in processable)
+            {
+                entity.Status = CompensationStatus.Paid;
+                entity.ApprovementDocumentId = blobEntity.Id;
+            }
+
+            await _db.SaveChangesAsync();
+            return processable.Count;
+        }
     }
 }

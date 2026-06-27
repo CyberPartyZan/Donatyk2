@@ -10,6 +10,12 @@
         public Guid SellerId { get; set; }
         public string SellerName { get; set; } = string.Empty;
         public BlobDto? ApprovementDocument { get; set; }
+
+        public decimal SoldPrice { get; set; }
+        public DateTime SoldDate { get; set; }
+        public string BuyerName { get; set; } = string.Empty;
+        public string LotName { get; set; } = string.Empty;
+        public string LotImage { get; set; } = string.Empty;
     }
 
     public sealed class CompensationSellerGroupDto
@@ -38,5 +44,11 @@
         public Guid SellerUserId { get; set; }
         public string SellerName { get; set; } = string.Empty;
         public BlobDto? ApprovementDocument { get; set; }
+
+        public decimal SoldPrice { get; set; }
+        public DateTime SoldDate { get; set; }
+        public string BuyerName { get; set; } = string.Empty;
+        public string LotName { get; set; } = string.Empty;
+        public string LotImage { get; set; } = string.Empty;
     }
 }
