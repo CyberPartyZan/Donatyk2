@@ -223,9 +223,10 @@ internal static class IntegrationTestsHelper
         int stockCount = 10,
         LotType type = LotType.Simple,
         LotStage stage = LotStage.PendingApproval,
+        SellerEntity? sellerEntry = null,
         Action<LotEntity>? configure = null)
     {
-        var seller = await SeedSellerAsync(services);
+        var seller = sellerEntry ?? await SeedSellerAsync(services);
         var category = await SeedCategoryAsync(services);
 
         using var scope = services.CreateScope();

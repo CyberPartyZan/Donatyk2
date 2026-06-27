@@ -134,7 +134,7 @@ namespace Marketplace.Unit.Tests.Services
             dto.Stage = LotStage.Approved; // should be overridden
             dto.Images =
             [
-                new BlobDto { Id = Guid.NewGuid(), FilePath = "https://example.com/cover.png", Key = "null" }
+                new BlobDto { Id = Guid.NewGuid(), FilePath = "https://example.com/cover.png", Key = "null", FileName = "test.file" }
             ];
 
             Lot? capturedLot = null;
@@ -481,9 +481,9 @@ namespace Marketplace.Unit.Tests.Services
                     Avatar = new BlobDto
                     {
                         Id = Guid.NewGuid(),
-                        FilePath = string.Empty,
-                        Key = string.Empty,
-                        FileName = string.Empty
+                        FilePath = "test/folder",
+                        Key = "test",
+                        FileName = "test.file"
                     }
                 },
                 Category = new CategoryDto
@@ -510,7 +510,7 @@ namespace Marketplace.Unit.Tests.Services
                 "Seller description",
                 "seller@example.com",
                 "+1234567890",
-                new Blob(Guid.NewGuid(), string.Empty, string.Empty, string.Empty),
+                new Blob(Guid.NewGuid(), "test/folder", "test", "test.file"),
                 userId ?? Guid.NewGuid());
     }
 }
