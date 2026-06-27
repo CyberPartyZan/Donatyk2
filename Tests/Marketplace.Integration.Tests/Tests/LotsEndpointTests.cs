@@ -71,7 +71,13 @@ public class LotsEndpointTests : IntegrationTestsBase
                 Description = "Updated seller description",
                 Email = "updated.seller@example.com",
                 PhoneNumber = "+15555550101",
-                AvatarImageUrl = "https://example.com/avatar.png"
+                Avatar = new BlobDto
+                {
+                    Id = seededLot.Seller.Avatar.Id,
+                    FilePath = seededLot.Seller.Avatar.FilePath,
+                    Key = seededLot.Seller.Avatar.Key,
+                    FileName = seededLot.Seller.Avatar.FileName
+                }
             },
             Category = new CategoryDto
             {
@@ -231,6 +237,44 @@ public class LotsEndpointTests : IntegrationTestsBase
 
         var totalCount = int.Parse(values!.Single());
         Assert.Equal(1, totalCount);
+    }
+
+    [Fact]
+    public async Task GetStatistic_ReturnsLotCounters()
+    {
+        var seller = await IntegrationTestsHelper.SeedSellerAsync(_factory.Services);
+
+        await IntegrationTestsHelper.SeedLotAsync(_factory.Services, configure: l =>
+        {
+            l.SellerId = seller.Id;
+            l.Stage = LotStage.Approved;
+            l.IsActive = true;
+        });
+
+        await IntegrationTestsHelper.SeedLotAsync(_factory.Services, configure: l =>
+        {
+            l.SellerId = seller.Id;
+            l.Stage = LotStage.PendingApproval;
+            l.IsActive = true;
+        });
+
+        await IntegrationTestsHelper.SeedLotAsync(_factory.Services, configure: l =>
+        {
+            l.SellerId = seller.Id;
+            l.Stage = LotStage.Denied;
+            l.IsActive = false;
+        });
+
+        var response = await _client.GetAsync($"/api/lots/statistics?sellerId={seller.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<LotStatisticsDto>();
+        Assert.NotNull(payload);
+        Assert.Equal(3, payload!.Total);
+        Assert.Equal(1, payload.Approved);
+        Assert.Equal(1, payload.Pending);
+        Assert.Equal(2, payload.Active);
     }
 
     private Task<LotEntity> SeedLotAsync(Action<LotEntity>? configure = null) =>

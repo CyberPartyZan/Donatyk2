@@ -73,7 +73,13 @@ namespace Marketplace
                 dto.Seller.Description,
                 dto.Seller.Email,
                 dto.Seller.PhoneNumber,
-                dto.Seller.AvatarImageUrl,
+                dto.Seller.Avatar is not null
+                    ? new Blob(
+                        dto.Seller.Avatar.Id == Guid.Empty ? Guid.NewGuid() : dto.Seller.Avatar.Id,
+                        dto.Seller.Avatar.FilePath ?? string.Empty,
+                        dto.Seller.Avatar.Key ?? string.Empty,
+                        dto.Seller.Avatar.FileName ?? string.Empty)
+                    : null,
                 userId);
 
             var category = new Category(
@@ -118,7 +124,13 @@ namespace Marketplace
                 dto.Seller.Description,
                 dto.Seller.Email,
                 dto.Seller.PhoneNumber,
-                dto.Seller.AvatarImageUrl,
+                dto.Seller.Avatar is not null
+                    ? new Blob(
+                        dto.Seller.Avatar.Id == Guid.Empty ? Guid.NewGuid() : dto.Seller.Avatar.Id,
+                        dto.Seller.Avatar.FilePath ?? string.Empty,
+                        dto.Seller.Avatar.Key ?? string.Empty,
+                        dto.Seller.Avatar.FileName ?? string.Empty)
+                    : null,
                 sellerUserId);
 
             var category = new Category(
@@ -199,6 +211,48 @@ namespace Marketplace
             return await _lotsRepository.GetTotalCount(effectiveQuery);
         }
 
+        public async Task<LotStatisticsDto> GetStatistic(LotSearchQuery query)
+        {
+            var effectiveQuery = query ?? new LotSearchQuery();
+
+            var total = await _lotsRepository.GetTotalCount(CloneQuery(effectiveQuery, stage: null, getInactive: null));
+            var approved = await _lotsRepository.GetTotalCount(CloneQuery(effectiveQuery, stage: LotStage.Approved, getInactive: null));
+            var pending = await _lotsRepository.GetTotalCount(CloneQuery(effectiveQuery, stage: LotStage.PendingApproval, getInactive: null));
+            var active = await _lotsRepository.GetTotalCount(CloneQuery(effectiveQuery, stage: null, getInactive: false));
+
+            return new LotStatisticsDto
+            {
+                Total = total,
+                Approved = approved,
+                Pending = pending,
+                Active = active
+            };
+        }
+
+        private static LotSearchQuery CloneQuery(
+            LotSearchQuery source,
+            LotStage? stage,
+            bool? getInactive)
+        {
+            return new LotSearchQuery
+            {
+                SearchText = source.SearchText,
+                MinPrice = source.MinPrice,
+                MaxPrice = source.MaxPrice,
+                SellerId = source.SellerId,
+                Type = source.Type,
+                Stage = stage,
+                MinDiscount = source.MinDiscount,
+                MaxDiscount = source.MaxDiscount,
+                CategoryId = source.CategoryId,
+                GetDeleted = source.GetDeleted,
+                GetExhausted = source.GetExhausted,
+                GetInactive = getInactive,
+                PageNumber = source.PageNumber,
+                PageSize = source.PageSize
+            };
+        }
+
         private Guid GetCurrentUserIdOrThrow()
         {
             var userIdValue = _user.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -245,7 +299,15 @@ namespace Marketplace
                     Description = lot.Seller.Description,
                     Email = lot.Seller.Email,
                     PhoneNumber = lot.Seller.PhoneNumber,
-                    AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty
+                    Avatar = lot.Seller.Avatar is not null
+                        ? new BlobDto
+                        {
+                            Id = lot.Seller.Avatar.Id,
+                            FilePath = lot.Seller.Avatar.FilePath,
+                            Key = lot.Seller.Avatar.Key,
+                            FileName = lot.Seller.Avatar.FileName
+                        }
+                        : null
                 },
                 Category = new CategoryDto
                 {

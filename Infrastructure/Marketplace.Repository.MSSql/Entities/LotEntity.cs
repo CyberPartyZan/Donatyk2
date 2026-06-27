@@ -12,6 +12,7 @@
         public LotType Type { get; set; }
         public LotStage Stage { get; set; }
         public string? DeclineReason { get; set; }
+        public Guid SellerId { get; set; }
         public virtual SellerEntity Seller { get; set; }
         public bool IsActive { get; set; }
         public bool IsCompensationPaid { get; set; }

@@ -9,23 +9,18 @@ namespace Marketplace.Repository.MSSql
         {
             builder.HasKey(s => s.Id);
 
-            builder.Property(s => s.Name)
-                   .IsRequired()
-                   .HasMaxLength(100);
+            builder.Property(s => s.Name).IsRequired().HasMaxLength(100);
+            builder.Property(s => s.Description).IsRequired().HasMaxLength(1000);
+            builder.Property(s => s.Email).IsRequired().HasMaxLength(255);
+            builder.Property(s => s.PhoneNumber).IsRequired().HasMaxLength(20);
 
-            builder.Property(s => s.Description)
-                   .IsRequired()
-                   .HasMaxLength(1000);
+            builder.HasOne(s => s.User);
 
-            builder.Property(s => s.Email)
-                   .IsRequired()
-                   .HasMaxLength(255);
-
-            builder.Property(s => s.PhoneNumber)
-                   .IsRequired()
-                   .HasMaxLength(20);
-
-            builder.HasOne(x => x.User);
+            builder.HasOne(s => s.Avatar)
+                .WithMany()
+                .HasForeignKey(s => s.AvatarId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
         }
     }
 }

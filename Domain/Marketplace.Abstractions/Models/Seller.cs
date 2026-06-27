@@ -9,29 +9,24 @@ namespace Marketplace
         public string Description { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public string? AvatarImageUrl { get; set; }
+        public Blob? Avatar { get; set; }
         public Guid UserId { get; set; }
 
-        public Seller(Guid id, string name, string description, string email, string phoneNumber, string? avatarImageUrl, Guid userId)
+        public Seller(Guid id, string name, string description, string email, string phoneNumber, Blob? avatar, Guid userId)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Seller name cannot be null or whitespace.", nameof(name));
-
             if (string.IsNullOrWhiteSpace(description))
                 throw new ArgumentException("Seller description cannot be null or whitespace.", nameof(description));
-
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Seller email cannot be null or whitespace.", nameof(email));
-
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId must be a valid GUID.", nameof(userId));
 
-            // Basic RFC-like email check (sufficient for most cases; not exhaustive)
             const string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             if (!Regex.IsMatch(email, emailPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                 throw new ArgumentException("Seller email is not a valid email address.", nameof(email));
 
-            // E.164 phone number format (international). Adjust pattern if you need local formats.
             const string phonePattern = @"^\+?[1-9]\d{1,14}$";
             if (string.IsNullOrWhiteSpace(phoneNumber))
                 throw new ArgumentException("Seller phone number cannot be null or whitespace.", nameof(phoneNumber));
@@ -43,7 +38,7 @@ namespace Marketplace
             Description = description;
             Email = email;
             PhoneNumber = phoneNumber;
-            AvatarImageUrl = avatarImageUrl;
+            Avatar = avatar;
             UserId = userId;
         }
     }

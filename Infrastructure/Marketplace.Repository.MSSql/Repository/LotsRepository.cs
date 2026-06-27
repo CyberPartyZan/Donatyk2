@@ -78,6 +78,13 @@ namespace Marketplace.Repository.MSSql
                 q = q.Where(e => e.StockCount > 0);
             }
 
+            if (query?.GetInactive is not null)
+            {
+                q = query.GetInactive.Value
+                    ? q.Where(e => !e.IsActive)
+                    : q.Where(e => e.IsActive);
+            }
+
             return q;
         }
 
@@ -178,7 +185,15 @@ namespace Marketplace.Repository.MSSql
                     Description = lot.Seller.Description,
                     Email = lot.Seller.Email,
                     PhoneNumber = lot.Seller.PhoneNumber,
-                    AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty,
+                    Avatar = lot.Seller.Avatar is not null
+                        ? new BlobEntity
+                        {
+                            Id = lot.Seller.Avatar.Id == Guid.Empty ? Guid.NewGuid() : lot.Seller.Avatar.Id,
+                            FilePath = lot.Seller.Avatar.FilePath ?? string.Empty,
+                            Key = lot.Seller.Avatar.Key ?? string.Empty,
+                            FileName = lot.Seller.Avatar.FileName ?? string.Empty
+                        }
+                        : null,
                     UserId = lot.Seller.UserId,
                     CreatedAt = DateTime.UtcNow
                 },
@@ -259,7 +274,15 @@ namespace Marketplace.Repository.MSSql
                 seller.Description = lot.Seller.Description;
                 seller.Email = lot.Seller.Email;
                 seller.PhoneNumber = lot.Seller.PhoneNumber;
-                seller.AvatarImageUrl = lot.Seller.AvatarImageUrl ?? string.Empty;
+                seller.Avatar = lot.Seller.Avatar is not null
+                    ? new BlobEntity
+                    {
+                        Id = lot.Seller.Avatar.Id == Guid.Empty ? Guid.NewGuid() : lot.Seller.Avatar.Id,
+                        FilePath = lot.Seller.Avatar.FilePath ?? string.Empty,
+                        Key = lot.Seller.Avatar.Key ?? string.Empty,
+                        FileName = lot.Seller.Avatar.FileName ?? string.Empty
+                    }
+                    : null;
                 seller.UserId = lot.Seller.UserId;
                 seller.IsDeleted = seller.IsDeleted;
 
@@ -320,7 +343,13 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.Description,
                         sellerEntity.Email,
                         sellerEntity.PhoneNumber,
-                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.Avatar is not null
+                            ? new Blob(
+                                sellerEntity.Avatar.Id == Guid.Empty ? Guid.NewGuid() : sellerEntity.Avatar.Id,
+                                sellerEntity.Avatar.FilePath ?? string.Empty,
+                                sellerEntity.Avatar.Key ?? string.Empty,
+                                sellerEntity.Avatar.FileName ?? string.Empty)
+                            : null,
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
@@ -345,7 +374,13 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.Description,
                         sellerEntity.Email,
                         sellerEntity.PhoneNumber,
-                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.Avatar is not null
+                            ? new Blob(
+                                sellerEntity.Avatar.Id == Guid.Empty ? Guid.NewGuid() : sellerEntity.Avatar.Id,
+                                sellerEntity.Avatar.FilePath ?? string.Empty,
+                                sellerEntity.Avatar.Key ?? string.Empty,
+                                sellerEntity.Avatar.FileName ?? string.Empty)
+                            : null,
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
@@ -375,7 +410,13 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.Description,
                         sellerEntity.Email,
                         sellerEntity.PhoneNumber,
-                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.Avatar is not null
+                            ? new Blob(
+                                sellerEntity.Avatar.Id == Guid.Empty ? Guid.NewGuid() : sellerEntity.Avatar.Id,
+                                sellerEntity.Avatar.FilePath ?? string.Empty,
+                                sellerEntity.Avatar.Key ?? string.Empty,
+                                sellerEntity.Avatar.FileName ?? string.Empty)
+                            : null,
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,

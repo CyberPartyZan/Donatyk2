@@ -4,6 +4,7 @@
     {
         Task<IEnumerable<LotDto>> GetAll(LotSearchQuery query);
         Task<int> GetTotalCount(LotSearchQuery query);
+        Task<LotStatisticsDto> GetStatistic(LotSearchQuery query);
         Task<LotDto?> GetLotById(Guid id);
         Task<Guid> CreateLot(LotDto lot);
         Task UpdateLot(Guid id, LotDto lot);

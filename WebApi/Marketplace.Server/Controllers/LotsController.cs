@@ -111,5 +111,14 @@ namespace Marketplace.Server.Controllers
                 return NotFound();
             }
         }
+
+        [HttpGet("statistics")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetStatistic([FromQuery] LotSearchQuery query)
+        {
+            var effectiveQuery = query ?? new LotSearchQuery();
+            var stats = await _lotsService.GetStatistic(effectiveQuery);
+            return Ok(stats);
+        }
     }
 }

@@ -177,6 +177,14 @@ internal static class IntegrationTestsHelper
 
         var sellerUser = BuildSellerUser();
 
+        var avatar = new BlobEntity
+        {
+            Id = Guid.NewGuid(),
+            FilePath = "sellers/avatars",
+            Key = Guid.NewGuid().ToString("N"),
+            FileName = "seed-avatar.png"
+        };
+
         var seller = new SellerEntity
         {
             Id = Guid.NewGuid(),
@@ -184,7 +192,8 @@ internal static class IntegrationTestsHelper
             Description = "Seller seeded for integration tests.",
             Email = $"seed-seller-{Guid.NewGuid():N}@example.com",
             PhoneNumber = "+15555550001",
-            AvatarImageUrl = "https://example.com/seed.png",
+            AvatarId = avatar.Id,
+            Avatar = avatar,
             UserId = sellerUser.Id,
             User = sellerUser,
             CreatedAt = DateTime.UtcNow,
@@ -194,6 +203,14 @@ internal static class IntegrationTestsHelper
         configure?.Invoke(seller);
 
         db.Users.Add(sellerUser);
+
+        if (seller.Avatar is not null)
+        {
+            var exists = await db.Blobs.AnyAsync(b => b.Id == seller.Avatar.Id);
+            if (!exists)
+                db.Blobs.Add(seller.Avatar);
+        }
+
         db.Sellers.Add(seller);
         await db.SaveChangesAsync();
         return seller;

@@ -11,11 +11,11 @@ namespace Marketplace.Repository.MSSql
             _db = db;
         }
 
-        // TODO: Implement keyset pagination
         public async Task<IEnumerable<Seller>> GetAll(string? search, int page, int pageSize)
         {
             var sellersQuery = _db.Sellers
                 .AsNoTracking()
+                .Include(s => s.Avatar)
                 .Where(s => !s.IsDeleted)
                 .AsQueryable();
 
@@ -24,62 +24,52 @@ namespace Marketplace.Repository.MSSql
                 sellersQuery = sellersQuery.Where(s => s.Name.Contains(search) || s.Description.Contains(search));
             }
 
-            sellersQuery = sellersQuery
+            var entities = await sellersQuery
                 .OrderByDescending(s => s.CreatedAt)
                 .Skip((page - 1) * pageSize)
-                .Take(pageSize);
+                .Take(pageSize)
+                .ToListAsync();
 
-            var entities = await sellersQuery.ToListAsync();
-
-            return entities.Select(e => new Seller(
-                e.Id,
-                e.Name,
-                e.Description,
-                e.Email,
-                e.PhoneNumber,
-                e.AvatarImageUrl,
-                e.UserId));
+            return entities.Select(MapToDomain);
         }
 
         public async Task<Seller?> GetById(Guid id)
         {
             var entity = await _db.Sellers
                 .AsNoTracking()
+                .Include(s => s.Avatar)
                 .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
 
-            return entity is null ? null : new Seller(
-                entity.Id,
-                entity.Name,
-                entity.Description,
-                entity.Email,
-                entity.PhoneNumber,
-                entity.AvatarImageUrl,
-                entity.UserId);
+            return entity is null ? null : MapToDomain(entity);
         }
 
-        public Task<Seller?> GetByUserId(Guid userId)
+        public async Task<Seller?> GetByUserId(Guid userId)
         {
-            return _db.Sellers
+            var entity = await _db.Sellers
                 .AsNoTracking()
-                .Where(s => s.UserId == userId)
-                .Select(entity => new Seller(
-                    entity.Id,
-                    entity.Name,
-                    entity.Description,
-                    entity.Email,
-                    entity.PhoneNumber,
-                    entity.AvatarImageUrl,
-                    entity.UserId))
-                .FirstOrDefaultAsync();
+                .Include(s => s.Avatar)
+                .FirstOrDefaultAsync(s => s.UserId == userId && !s.IsDeleted);
+
+            return entity is null ? null : MapToDomain(entity);
         }
 
         public async Task<Guid> Create(Seller seller)
         {
             var existingSeller = await _db.Sellers.FirstOrDefaultAsync(s => s.UserId == seller.UserId);
-            // TODO: Move to separate method and validate in service layer?
             if (existingSeller is not null)
-            {
                 throw new InvalidOperationException("Seller for this user already exists.");
+
+            BlobEntity? avatar = null;
+            if (seller.Avatar is not null)
+            {
+                avatar = new BlobEntity
+                {
+                    Id = seller.Avatar.Id,
+                    FilePath = seller.Avatar.FilePath,
+                    Key = seller.Avatar.Key,
+                    FileName = seller.Avatar.FileName
+                };
+                _db.Blobs.Add(avatar);
             }
 
             var entity = new SellerEntity
@@ -89,14 +79,13 @@ namespace Marketplace.Repository.MSSql
                 Description = seller.Description,
                 Email = seller.Email,
                 PhoneNumber = seller.PhoneNumber,
-                AvatarImageUrl = seller.AvatarImageUrl ?? string.Empty,
+                AvatarId = avatar?.Id,
                 UserId = seller.UserId,
                 CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
 
             _db.Sellers.Add(entity);
-
             await _db.SaveChangesAsync();
 
             return entity.Id;
@@ -104,35 +93,50 @@ namespace Marketplace.Repository.MSSql
 
         public async Task Update(Seller seller)
         {
-            var existing = await _db.Sellers.FirstOrDefaultAsync(e => e.Id == seller.Id);
+            var existing = await _db.Sellers
+                .Include(s => s.Avatar)
+                .FirstOrDefaultAsync(e => e.Id == seller.Id);
 
             if (existing is null || existing.IsDeleted)
-            {
                 throw new KeyNotFoundException($"Seller with id '{seller.Id}' not found.");
-            }
 
-            // Update mutable fields only
             existing.Name = seller.Name;
             existing.Description = seller.Description;
             existing.Email = seller.Email;
             existing.PhoneNumber = seller.PhoneNumber;
-            existing.AvatarImageUrl = seller.AvatarImageUrl ?? existing.AvatarImageUrl;
-            // preserve existing.UserId and CreatedAt
+
+            if (seller.Avatar is not null)
+            {
+                var avatarEntity = await _db.Blobs.FirstOrDefaultAsync(b => b.Id == seller.Avatar.Id);
+                if (avatarEntity is null)
+                {
+                    avatarEntity = new BlobEntity
+                    {
+                        Id = seller.Avatar.Id,
+                        FilePath = seller.Avatar.FilePath,
+                        Key = seller.Avatar.Key,
+                        FileName = seller.Avatar.FileName
+                    };
+                    _db.Blobs.Add(avatarEntity);
+                }
+                else
+                {
+                    avatarEntity.FilePath = seller.Avatar.FilePath;
+                    avatarEntity.Key = seller.Avatar.Key;
+                    avatarEntity.FileName = seller.Avatar.FileName;
+                }
+
+                existing.AvatarId = avatarEntity.Id;
+            }
 
             _db.Sellers.Update(existing);
-
             await _db.SaveChangesAsync();
         }
 
         public async Task Delete(Guid id)
         {
             var existing = await _db.Sellers.FirstOrDefaultAsync(e => e.Id == id);
-
-            if (existing is null)
-            {
-                // nothing to do
-                return;
-            }
+            if (existing is null) return;
 
             if (!existing.IsDeleted)
             {
@@ -141,5 +145,17 @@ namespace Marketplace.Repository.MSSql
                 await _db.SaveChangesAsync();
             }
         }
+
+        private static Seller MapToDomain(SellerEntity e) =>
+            new(
+                e.Id,
+                e.Name,
+                e.Description,
+                e.Email,
+                e.PhoneNumber,
+                e.Avatar is null
+                    ? null
+                    : new Blob(e.Avatar.Id, e.Avatar.FilePath, e.Avatar.Key, e.Avatar.FileName),
+                e.UserId);
     }
 }

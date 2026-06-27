@@ -61,5 +61,19 @@ namespace Marketplace.Server.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("avatar")]
+        public async Task<IActionResult> UploadAvatar([FromForm] IFormFile file)
+        {
+            if (file is null || file.Length == 0)
+                return BadRequest("Avatar file is required.");
+
+            if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Only image files are allowed.");
+
+            using var stream = file.OpenReadStream();
+            var blob = await _sellersService.UploadAvatar(stream, file.FileName);
+            return Ok(blob);
+        }
     }
 }

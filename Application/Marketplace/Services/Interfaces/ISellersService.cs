@@ -8,5 +8,7 @@
         Task Update(Guid id, SellerDto seller);
         Task Delete(Guid id);
         Task DeleteByUserId(Guid id);
+
+        Task<BlobDto> UploadAvatar(Stream file, string fileName);
     }
 }

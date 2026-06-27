@@ -8,13 +8,19 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var id = Guid.NewGuid();
             var userId = Guid.NewGuid();
 
+            var avatar = new Blob(
+                Guid.NewGuid(),
+                "sellers/avatars",
+                "avatar-key-123",
+                "avatar.png");
+
             var seller = new Seller(
                 id,
                 "Acme Corp",
                 "Reliable seller",
                 "seller@example.com",
                 "+12345678901",
-                "https://cdn.example.com/avatar.png",
+                avatar,
                 userId);
 
             Assert.Equal(id, seller.Id);
@@ -22,8 +28,27 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             Assert.Equal("Reliable seller", seller.Description);
             Assert.Equal("seller@example.com", seller.Email);
             Assert.Equal("+12345678901", seller.PhoneNumber);
-            Assert.Equal("https://cdn.example.com/avatar.png", seller.AvatarImageUrl);
+            Assert.NotNull(seller.Avatar);
+            Assert.Equal(avatar.Id, seller.Avatar!.Id);
+            Assert.Equal("sellers/avatars", seller.Avatar.FilePath);
+            Assert.Equal("avatar-key-123", seller.Avatar.Key);
+            Assert.Equal("avatar.png", seller.Avatar.FileName);
             Assert.Equal(userId, seller.UserId);
+        }
+
+        [Fact]
+        public void Constructor_WithNullAvatar_AllowsSellerWithoutAvatar()
+        {
+            var seller = new Seller(
+                Guid.NewGuid(),
+                "Acme Corp",
+                "Reliable seller",
+                "seller@example.com",
+                "+12345678901",
+                null,
+                Guid.NewGuid());
+
+            Assert.Null(seller.Avatar);
         }
 
         [Theory]
@@ -97,7 +122,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
                 description,
                 email,
                 phone,
-                avatarImageUrl: null,
+                avatar: null,
                 userId ?? Guid.NewGuid());
         }
     }

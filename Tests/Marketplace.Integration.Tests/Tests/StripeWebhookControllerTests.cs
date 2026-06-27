@@ -351,7 +351,13 @@ public class StripeWebhookControllerTests : IClassFixture<StripeWebhookWebApplic
             Description = "Stripe test seller",
             Email = $"stripe-{Guid.NewGuid():N}@test.com",
             PhoneNumber = "+10000000001",
-            AvatarImageUrl = string.Empty,
+            Avatar = new BlobEntity
+            {
+                Id = Guid.NewGuid(),
+                FilePath = string.Empty,
+                Key = string.Empty,
+                FileName = string.Empty
+            },
             UserId = sellerUser.Id,
             User = sellerUser,
             CreatedAt = DateTime.UtcNow,

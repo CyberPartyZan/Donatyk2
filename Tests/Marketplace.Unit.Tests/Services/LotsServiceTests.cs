@@ -364,6 +364,28 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal(3, count);
         }
 
+        [Fact]
+        public async Task GetStatistic_ReturnsAllCounters()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+            var repo = fixture.Freeze<Mock<ILotsRepository>>();
+
+            repo.Setup(r => r.GetTotalCount(It.Is<LotSearchQuery>(q => q.Stage == null && q.GetInactive == null))).ReturnsAsync(10);
+            repo.Setup(r => r.GetTotalCount(It.Is<LotSearchQuery>(q => q.Stage == LotStage.Approved))).ReturnsAsync(6);
+            repo.Setup(r => r.GetTotalCount(It.Is<LotSearchQuery>(q => q.Stage == LotStage.PendingApproval))).ReturnsAsync(3);
+            repo.Setup(r => r.GetTotalCount(It.Is<LotSearchQuery>(q => q.Stage == null && q.GetInactive == false))).ReturnsAsync(7);
+
+            var service = fixture.Create<LotsService>();
+
+            var result = await service.GetStatistic(new LotSearchQuery { SellerId = Guid.NewGuid() });
+
+            Assert.Equal(10, result.Total);
+            Assert.Equal(6, result.Approved);
+            Assert.Equal(3, result.Pending);
+            Assert.Equal(7, result.Active);
+        }
+
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 
@@ -456,7 +478,13 @@ namespace Marketplace.Unit.Tests.Services
                     Description = "Seller dto description",
                     Email = "seller@example.com",
                     PhoneNumber = "+12345678901",
-                    AvatarImageUrl = string.Empty
+                    Avatar = new BlobDto
+                    {
+                        Id = Guid.NewGuid(),
+                        FilePath = string.Empty,
+                        Key = string.Empty,
+                        FileName = string.Empty
+                    }
                 },
                 Category = new CategoryDto
                 {
@@ -482,7 +510,7 @@ namespace Marketplace.Unit.Tests.Services
                 "Seller description",
                 "seller@example.com",
                 "+1234567890",
-                string.Empty,
+                new Blob(Guid.NewGuid(), string.Empty, string.Empty, string.Empty),
                 userId ?? Guid.NewGuid());
     }
 }

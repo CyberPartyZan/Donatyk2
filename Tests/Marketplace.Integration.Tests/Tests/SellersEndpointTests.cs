@@ -1,7 +1,7 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Marketplace.Repository.MSSql;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -51,7 +51,7 @@ public class SellersEndpointTests : IntegrationTestsBase
     }
 
     [Fact]
-    public async Task Post_CreatesSeller_ForAuthenticatedUser()
+    public async Task Post_CreatesSeller_ForAuthenticatedUser_WithAvatarBlob()
     {
         var request = new SellerDto
         {
@@ -59,7 +59,13 @@ public class SellersEndpointTests : IntegrationTestsBase
             Description = "Freshly registered seller.",
             Email = "new.seller@example.com",
             PhoneNumber = "+15555550123",
-            AvatarImageUrl = "https://example.com/avatar.png"
+            Avatar = new BlobDto
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "sellers/avatars",
+                Key = Guid.NewGuid().ToString("N"),
+                FileName = "avatar.png"
+            }
         };
 
         var response = await _client.PostAsJsonAsync("/api/sellers", request);
@@ -68,17 +74,20 @@ public class SellersEndpointTests : IntegrationTestsBase
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-        var stored = await db.Sellers.SingleAsync(s => s.UserId == TestAuthHandler.UserId);
+        var stored = await db.Sellers.Include(s => s.Avatar).SingleAsync(s => s.UserId == TestAuthHandler.UserId);
 
         Assert.Equal(request.Name, stored.Name);
         Assert.Equal(request.Description, stored.Description);
         Assert.Equal(request.Email, stored.Email);
         Assert.Equal(request.PhoneNumber, stored.PhoneNumber);
-        Assert.Equal(request.AvatarImageUrl, stored.AvatarImageUrl);
+        Assert.NotNull(stored.Avatar);
+        Assert.Equal(request.Avatar!.FilePath, stored.Avatar!.FilePath);
+        Assert.Equal(request.Avatar.Key, stored.Avatar.Key);
+        Assert.Equal(request.Avatar.FileName, stored.Avatar.FileName);
     }
 
     [Fact]
-    public async Task Put_UpdatesSeller()
+    public async Task Put_UpdatesSeller_WithAvatarBlob()
     {
         var seller = await SeedSellerAsync();
 
@@ -89,7 +98,13 @@ public class SellersEndpointTests : IntegrationTestsBase
             Description = "Updated description",
             Email = "updated@example.com",
             PhoneNumber = "+15555550999",
-            AvatarImageUrl = "https://example.com/new-avatar.png"
+            Avatar = new BlobDto
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "sellers/avatars",
+                Key = Guid.NewGuid().ToString("N"),
+                FileName = "new-avatar.png"
+            }
         };
 
         var response = await _client.PutAsJsonAsync($"/api/sellers/{seller.Id}", update);
@@ -98,13 +113,36 @@ public class SellersEndpointTests : IntegrationTestsBase
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-        var updated = await db.Sellers.SingleAsync(s => s.Id == seller.Id);
+        var updated = await db.Sellers.Include(s => s.Avatar).SingleAsync(s => s.Id == seller.Id);
 
         Assert.Equal(update.Name, updated.Name);
         Assert.Equal(update.Description, updated.Description);
         Assert.Equal(update.Email, updated.Email);
         Assert.Equal(update.PhoneNumber, updated.PhoneNumber);
-        Assert.Equal(update.AvatarImageUrl, updated.AvatarImageUrl);
+        Assert.NotNull(updated.Avatar);
+        Assert.Equal(update.Avatar!.FilePath, updated.Avatar!.FilePath);
+        Assert.Equal(update.Avatar.Key, updated.Avatar.Key);
+        Assert.Equal(update.Avatar.FileName, updated.Avatar.FileName);
+    }
+
+    [Fact]
+    public async Task UploadAvatar_ReturnsBlob()
+    {
+        using var content = new MultipartFormDataContent();
+        var bytes = new byte[] { 1, 2, 3, 4 };
+        var fileContent = new ByteArrayContent(bytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        content.Add(fileContent, "file", "avatar.png");
+
+        var response = await _client.PostAsync("/api/sellers/avatar", content);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<BlobDto>();
+        Assert.NotNull(payload);
+        Assert.Equal("sellers/avatars", payload!.FilePath);
+        Assert.Equal("avatar.png", payload.FileName);
+        Assert.False(string.IsNullOrWhiteSpace(payload.Key));
     }
 
     [Fact]

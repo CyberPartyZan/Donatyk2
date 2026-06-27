@@ -141,7 +141,13 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.Description,
                         sellerEntity.Email,
                         sellerEntity.PhoneNumber,
-                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.Avatar is not null
+                            ? new Blob(
+                                sellerEntity.Avatar.Id == Guid.Empty ? Guid.NewGuid() : sellerEntity.Avatar.Id,
+                                sellerEntity.Avatar.FilePath ?? string.Empty,
+                                sellerEntity.Avatar.Key ?? string.Empty,
+                                sellerEntity.Avatar.FileName ?? string.Empty)
+                            : null,
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
@@ -164,7 +170,13 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.Description,
                         sellerEntity.Email,
                         sellerEntity.PhoneNumber,
-                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.Avatar is not null
+                            ? new Blob(
+                                sellerEntity.Avatar.Id == Guid.Empty ? Guid.NewGuid() : sellerEntity.Avatar.Id,
+                                sellerEntity.Avatar.FilePath ?? string.Empty,
+                                sellerEntity.Avatar.Key ?? string.Empty,
+                                sellerEntity.Avatar.FileName ?? string.Empty)
+                            : null,
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
@@ -189,7 +201,13 @@ namespace Marketplace.Repository.MSSql
                         sellerEntity.Description,
                         sellerEntity.Email,
                         sellerEntity.PhoneNumber,
-                        sellerEntity.AvatarImageUrl,
+                        sellerEntity.Avatar is not null
+                            ? new Blob(
+                                sellerEntity.Avatar.Id == Guid.Empty ? Guid.NewGuid() : sellerEntity.Avatar.Id,
+                                sellerEntity.Avatar.FilePath ?? string.Empty,
+                                sellerEntity.Avatar.Key ?? string.Empty,
+                                sellerEntity.Avatar.FileName ?? string.Empty)
+                            : null,
                         sellerEntity.UserId),
                     entity.IsActive,
                     entity.IsCompensationPaid,
