@@ -62,7 +62,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         public void TakeIntoProcessing_FromCreated_Succeeds()
         {
             var shipment = CreateValidShipment();
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing("TRACK-001");
 
             Assert.Equal(ShipmentStatus.Processing, shipment.Status);
         }
@@ -71,16 +71,16 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         public void TakeIntoProcessing_WhenNotCreated_Throws()
         {
             var shipment = CreateValidShipment();
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing("TRACK-001");
 
-            Assert.Throws<InvalidOperationException>(() => shipment.TakeIntoProcessing());
+            Assert.Throws<InvalidOperationException>(() => shipment.TakeIntoProcessing("TRACK-001"));
         }
 
         [Fact]
         public void MarkShipped_FromProcessing_Succeeds()
         {
             var shipment = CreateValidShipment();
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing("TRACK-001");
             shipment.MarkShipped();
 
             Assert.Equal(ShipmentStatus.Shipped, shipment.Status);
@@ -98,7 +98,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         public void MarkInTransit_FromShipped_Succeeds()
         {
             var shipment = CreateValidShipment();
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing("TRACK-001");
             shipment.MarkShipped();
             shipment.MarkInTransit();
 
@@ -109,7 +109,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         public void MarkOutForDelivery_FromInTransit_Succeeds()
         {
             var shipment = CreateValidShipment();
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing("TRACK-001");
             shipment.MarkShipped();
             shipment.MarkInTransit();
             shipment.MarkOutForDelivery();
@@ -121,7 +121,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         public void MarkDelivered_FromOutForDelivery_Succeeds()
         {
             var shipment = CreateValidShipment();
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing("TRACK-001");
             shipment.MarkShipped();
             shipment.MarkInTransit();
             shipment.MarkOutForDelivery();
@@ -142,7 +142,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         public void MarkDelivered_FromOutForDelivery_SetsDeliveredAt()
         {
             var shipment = CreateValidShipment();
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing("TRACK-001");
             shipment.MarkShipped();
             shipment.MarkInTransit();
             shipment.MarkOutForDelivery();

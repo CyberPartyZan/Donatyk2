@@ -69,10 +69,22 @@ namespace Marketplace
             var paymentInfo = ToPaymentInfo(request.Payment);
             var pricedItems = new List<PricedItem>(cartItems.Count);
 
+            // enforce one seller per order in each checkout flow before Order.Create(...)
+            Seller? orderSeller = null;
+
             foreach (var cartItem in cartItems)
             {
                 var lot = await _lotsRepository.GetLotById(cartItem.Lot.Id)
                     ?? throw new KeyNotFoundException($"Lot with id '{cartItem.Lot.Id}' not found.");
+
+                if (orderSeller is null)
+                {
+                    orderSeller = lot.Seller;
+                }
+                else if (lot.Seller.Id != orderSeller.Id)
+                {
+                    throw new InvalidOperationException("Checkout supports only one seller per order.");
+                }
 
                 if (!lot.Price.Equals(cartItem.Lot.Price))
                     throw new InvalidOperationException($"Price for lot '{lot.Name}' has changed. Please refresh your cart.");
@@ -96,7 +108,7 @@ namespace Marketplace
                 pricedItems.Add(PricedItem.FromLot(lot, cartItem.Quantity, paymentInfo.TaxRate));
             }
 
-            var order = Order.Create(userId, shippingInfo, paymentInfo, pricedItems);
+            var order = Order.Create(userId, orderSeller!, shippingInfo, paymentInfo, pricedItems);
             order.SetDeliveryCarrier(carrier);
 
             await _ordersRepository.Create(order);
@@ -144,7 +156,7 @@ namespace Marketplace
                 request.TicketsCount,
                 paymentInfo.TaxRate);
 
-            var order = Order.Create(userId, shippingInfo, paymentInfo, new[] { pricedItem });
+            var order = Order.Create(userId, drawLot.Seller, shippingInfo, paymentInfo, new[] { pricedItem });
             order.SetDeliveryCarrier(carrier);
 
             await _ordersRepository.Create(order);
@@ -188,7 +200,7 @@ namespace Marketplace
                 quantity: 1,
                 taxRate: 0m);
 
-            var order = Order.Create(userId, shippingInfo, paymentInfo, new[] { pricedItem });
+            var order = Order.Create(userId, auctionLot.Seller, shippingInfo, paymentInfo, new[] { pricedItem });
             order.SetDeliveryCarrier(carrier);
 
             await _ordersRepository.Create(order);

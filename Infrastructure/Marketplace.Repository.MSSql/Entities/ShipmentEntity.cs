@@ -4,7 +4,7 @@
     {
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
-        public string ShippingReference { get; set; } = null!;
+        public string TrackingNumber { get; set; } = null!;
         public ShipmentStatus Status { get; set; }
         public DeliveryCarrier Carrier { get; set; }
         public Guid ShippingAddressId { get; set; }

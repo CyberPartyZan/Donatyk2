@@ -272,6 +272,7 @@ namespace Marketplace.Unit.Tests.Services
             var item = PricedItem.FromCustomPrice(lotId, "Auction lot bid hold", new Money(100m, Currency.USD), 1, 0m);
             var order = Order.Create(
                 Guid.NewGuid(),
+                CreateSeller(),
                 new ShippingAddress("John", "Doe", "john@example.com", "+12345678901", "123 St", "City", "12345", "US"),
                 new PaymentInfo("TestProvider", 0m, returnUrl: null),
                 new[] { item });

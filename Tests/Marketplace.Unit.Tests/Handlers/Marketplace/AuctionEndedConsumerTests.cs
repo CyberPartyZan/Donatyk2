@@ -104,10 +104,13 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
                     0.1m)
             };
 
-            var order = Order.Create(Guid.NewGuid(), shippingInfo, paymentInfo, items);
+            var order = Order.Create(Guid.NewGuid(), CreateSeller(), shippingInfo, paymentInfo, items);
             order.MarkPaid();
             return order;
         }
+
+        private static Seller CreateSeller() =>
+            new(Guid.NewGuid(), "seller", "Test seller", "seller@test.com", "+1234567890", null, Guid.NewGuid());
 
         private static AuctionLot CreateAuctionLot(Guid id, int stockCount, DateTime endOfAuction)
         {

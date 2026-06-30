@@ -36,11 +36,11 @@ namespace Marketplace
             return shipmentId;
         }
 
-        public async Task TakeIntoProcessingAsync(Guid shipmentId)
+        public async Task TakeIntoProcessingAsync(Guid shipmentId, string trackingNumber)
         {
             var shipment = await GetShipmentAsync(shipmentId);
 
-            shipment.TakeIntoProcessing();
+            shipment.TakeIntoProcessing(trackingNumber);
 
             await _shipmentRepository.Update(shipment);
         }
@@ -91,5 +91,14 @@ namespace Marketplace
 
             return shipment;
         }
+
+        public Task<IEnumerable<ShipmentAdminDto>> GetAllAsync(string? search, int page, int pageSize, bool onlyPending, Guid? sellerId)
+            => _shipmentRepository.GetAll(search, page, pageSize, onlyPending, sellerId);
+
+        public Task<int> GetTotalCountAsync(string? search, bool onlyPending, Guid? sellerId)
+            => _shipmentRepository.GetTotalCount(search, onlyPending, sellerId);
+
+        public Task<ShipmentStatisticsDto> GetStatisticsAsync(string? search, Guid? sellerId)
+            => _shipmentRepository.GetStatistics(search, sellerId);
     }
 }

@@ -15,7 +15,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
                 PricedItem.FromLot(CreateLot("Lot B", 80m), quantity: 1, taxRate: 0.05m)
             };
 
-            var order = Order.Create(userId, shipping, payment, items);
+            var order = Order.Create(userId, CreateSeller(), shipping, payment, items);
             var after = DateTime.UtcNow;
 
             var expectedAmount = items.Sum(i => i.Total.Amount);
@@ -37,7 +37,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var payment = CreatePaymentInfo();
             var items = new[] { PricedItem.FromLot(CreateLot("Lot", 50m), 1, 0.1m) };
 
-            Assert.Throws<ArgumentException>(() => Order.Create(Guid.Empty, shipping, payment, items));
+            Assert.Throws<ArgumentException>(() => Order.Create(Guid.Empty, CreateSeller(), shipping, payment, items));
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var payment = CreatePaymentInfo();
             var items = new[] { PricedItem.FromLot(CreateLot("Lot", 50m), 1, 0.1m) };
 
-            Assert.Throws<ArgumentNullException>(() => Order.Create(Guid.NewGuid(), null!, payment, items));
+            Assert.Throws<ArgumentNullException>(() => Order.Create(Guid.NewGuid(), CreateSeller(), null!, payment, items));
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var shipping = CreateShippingInfo();
             var items = new[] { PricedItem.FromLot(CreateLot("Lot", 50m), 1, 0.1m) };
 
-            Assert.Throws<ArgumentNullException>(() => Order.Create(Guid.NewGuid(), shipping, null!, items));
+            Assert.Throws<ArgumentNullException>(() => Order.Create(Guid.NewGuid(), CreateSeller(), shipping, null!, items));
         }
 
         [Fact]
@@ -64,7 +64,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var shipping = CreateShippingInfo();
             var payment = CreatePaymentInfo();
 
-            Assert.Throws<ArgumentException>(() => Order.Create(Guid.NewGuid(), shipping, payment, null!));
+            Assert.Throws<ArgumentException>(() => Order.Create(Guid.NewGuid(), CreateSeller(), shipping, payment, null!));
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
             var shipping = CreateShippingInfo();
             var payment = CreatePaymentInfo();
 
-            Assert.Throws<ArgumentException>(() => Order.Create(Guid.NewGuid(), shipping, payment, Array.Empty<PricedItem>()));
+            Assert.Throws<ArgumentException>(() => Order.Create(Guid.NewGuid(), CreateSeller(), shipping, payment, Array.Empty<PricedItem>()));
         }
 
         [Fact]
@@ -87,7 +87,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
                 PricedItem.FromLot(CreateLot("Lot B", 90m, currency: Currency.EUR), 1, 0.05m)
             };
 
-            Assert.Throws<InvalidOperationException>(() => Order.Create(Guid.NewGuid(), shipping, payment, items));
+            Assert.Throws<InvalidOperationException>(() => Order.Create(Guid.NewGuid(), CreateSeller(), shipping, payment, items));
         }
 
         [Fact]
@@ -154,7 +154,7 @@ namespace Marketplace.Abstractions.Unit.Tests.Models
         private static Order CreateOrder()
         {
             var items = new[] { PricedItem.FromLot(CreateLot("Lot", 60m), 1, 0.05m) };
-            return Order.Create(Guid.NewGuid(), CreateShippingInfo(), CreatePaymentInfo(), items);
+            return Order.Create(Guid.NewGuid(), CreateSeller(), CreateShippingInfo(), CreatePaymentInfo(), items);
         }
 
         private static ShippingAddress CreateShippingInfo() =>

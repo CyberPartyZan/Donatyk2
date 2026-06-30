@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { mockShipments } from '@/mocks/shipments';
+import { useState, useEffect } from 'react';
 import Pagination from '@/components/base/Pagination';
+import { getShipments, getShipmentStatistics, takeShipmentIntoProcessing } from '@/api/shipments';
+import { getCurrentSeller } from '@/api/sellers';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -22,14 +23,24 @@ interface Shipment {
     notes: string;
 }
 
+interface SellerContext {
+    id: string;
+    name: string;
+}
+
 export default function ShipmentsAdmin() {
-    const [shipments, setShipments] = useState<Shipment[]>(mockShipments);
+    const [shipments, setShipments] = useState<Shipment[]>([]);
     const [activeTab, setActiveTab] = useState<'all' | 'unprocessed'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSearchQuery, setActiveSearchQuery] = useState('');
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [trackingInput, setTrackingInput] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [stats, setStats] = useState({ total: 0, pending: 0, inTransit: 0, delivered: 0 });
+
+    const [seller, setSeller] = useState<SellerContext | null>(null);
+    const [sellerLoading, setSellerLoading] = useState(true);
 
     const handleSearch = () => {
         setActiveSearchQuery(searchQuery.trim());
@@ -54,28 +65,92 @@ export default function ShipmentsAdmin() {
         setTrackingInput('');
     };
 
-    const handleProcess = (id: string) => {
+    const handleProcess = async (id: string) => {
         if (!trackingInput.trim()) return;
-        setShipments(shipments.map(s =>
-            s.id === id
-                ? { ...s, status: 'In Transit' as const, trackingNumber: trackingInput.trim(), processedAt: new Date().toISOString() }
-                : s
-        ));
-        setProcessingId(null);
-        setTrackingInput('');
+        try {
+            await takeShipmentIntoProcessing(id, trackingInput.trim());
+            setShipments(shipments.map(s =>
+                s.id === id
+                    ? { ...s, status: 'In Transit' as const, trackingNumber: trackingInput.trim(), processedAt: new Date().toISOString() }
+                    : s
+            ));
+        } catch (error) {
+            console.error('Error updating shipment:', error);
+        } finally {
+            setProcessingId(null);
+            setTrackingInput('');
+        }
     };
 
-    const statusColors: Record<string, string> = {
-        'Pending': 'bg-amber-100 text-amber-700',
-        'In Transit': 'bg-blue-100 text-blue-700',
-        'Delivered': 'bg-emerald-100 text-emerald-700',
+    const fetchShipments = async (page: number, pageSize: number, onlyPending?: boolean) => {
+        if (!seller?.id) {
+            setShipments([]);
+            setTotalCount(0);
+            return;
+        }
+
+        const { items, totalCount } = await getShipments({
+            page,
+            pageSize,
+            onlyPending,
+            search: activeSearchQuery,
+            sellerId: seller.id,
+        });
+
+        setShipments(items as Shipment[]);
+        setTotalCount(totalCount);
     };
 
-    const statusIcons: Record<string, string> = {
-        'Pending': 'ri-time-line',
-        'In Transit': 'ri-truck-line',
-        'Delivered': 'ri-check-double-line',
+    const fetchStats = async () => {
+        if (!seller?.id) {
+            setStats({ total: 0, pending: 0, inTransit: 0, delivered: 0 });
+            return;
+        }
+
+        const s = await getShipmentStatistics({
+            search: activeSearchQuery,
+            sellerId: seller.id,
+        });
+
+        setStats(s);
     };
+
+    useEffect(() => {
+        let active = true;
+
+        const loadSeller = async () => {
+            setSellerLoading(true);
+            try {
+                const currentSeller = await getCurrentSeller();
+                if (!active) return;
+
+                if (currentSeller) {
+                    setSeller({ id: currentSeller.id, name: currentSeller.name });
+                } else {
+                    setSeller(null);
+                    setShipments([]);
+                    setTotalCount(0);
+                    setStats({ total: 0, pending: 0, inTransit: 0, delivered: 0 });
+                }
+            } catch (error) {
+                if (!active) return;
+                console.error('Error loading seller:', error);
+                setSeller(null);
+            } finally {
+                if (active) setSellerLoading(false);
+            }
+        };
+
+        void loadSeller();
+        return () => { active = false; };
+    }, []);
+
+    useEffect(() => {
+        if (sellerLoading || !seller?.id) return;
+
+        void fetchShipments(currentPage, ITEMS_PER_PAGE, activeTab === 'unprocessed');
+        void fetchStats();
+    }, [currentPage, activeTab, activeSearchQuery, sellerLoading, seller?.id]);
 
     return (
         <div className="p-8">
@@ -89,19 +164,19 @@ export default function ShipmentsAdmin() {
                 <div className="grid grid-cols-4 gap-4">
                     <div className="bg-white rounded-lg border border-gray-200 p-4">
                         <p className="text-sm text-gray-600 mb-1">Total</p>
-                        <p className="text-2xl font-bold text-gray-900">{shipments.length}</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                     </div>
                     <div className="bg-amber-50 rounded-lg border border-amber-200 p-4">
                         <p className="text-sm text-amber-600 mb-1">Pending</p>
-                        <p className="text-2xl font-bold text-amber-900">{unprocessed.length}</p>
+                        <p className="text-2xl font-bold text-amber-900">{stats.pending}</p>
                     </div>
                     <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
                         <p className="text-sm text-blue-600 mb-1">In Transit</p>
-                        <p className="text-2xl font-bold text-blue-900">{shipments.filter(s => s.status === 'In Transit').length}</p>
+                        <p className="text-2xl font-bold text-blue-900">{stats.inTransit}</p>
                     </div>
                     <div className="bg-emerald-50 rounded-lg border border-emerald-200 p-4">
                         <p className="text-sm text-emerald-600 mb-1">Delivered</p>
-                        <p className="text-2xl font-bold text-emerald-900">{shipments.filter(s => s.status === 'Delivered').length}</p>
+                        <p className="text-2xl font-bold text-emerald-900">{stats.delivered}</p>
                     </div>
                 </div>
 

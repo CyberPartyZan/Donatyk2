@@ -319,7 +319,7 @@ namespace Marketplace.Unit.Tests.Services
                 .Select(i => PricedItem.FromCustomPrice(i.LotId, $"Lot-{i.LotId}", new Money(10m, Currency.USD), i.Quantity, 0m))
                 .ToList();
 
-            return Order.Create(customerId, shipping, payment, pricedItems);
+            return Order.Create(customerId, CreateSeller(), shipping, payment, pricedItems);
         }
     }
 }

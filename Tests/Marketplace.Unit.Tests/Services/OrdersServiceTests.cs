@@ -355,6 +355,7 @@ namespace Marketplace.Unit.Tests.Services
 
             var order = Order.Create(
                 userId,
+                CreateSeller(),
                 CreateShippingInfo(),
                 CreatePaymentInfo(),
                 new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), quantity, 0m) });
@@ -413,6 +414,7 @@ namespace Marketplace.Unit.Tests.Services
 
             var order = Order.Create(
                 userId,
+                CreateSeller(),
                 CreateShippingInfo(),
                 CreatePaymentInfo(),
                 new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), 1, 0m) });
@@ -461,6 +463,7 @@ namespace Marketplace.Unit.Tests.Services
 
             var order = Order.Create(
                 userId,
+                CreateSeller(),
                 CreateShippingInfo(),
                 CreatePaymentInfo(),
                 new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), 10, 0m) });
@@ -514,6 +517,7 @@ namespace Marketplace.Unit.Tests.Services
 
             var order = Order.Create(
                 userId,
+                CreateSeller(),
                 CreateShippingInfo(),
                 CreatePaymentInfo(),
                 new[] { PricedItem.FromCustomPrice(lotId, "Draw ticket", CreateMoney(10m), 2, 0m) });

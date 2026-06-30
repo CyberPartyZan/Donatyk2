@@ -29,6 +29,7 @@ namespace Marketplace.Repository.MSSql
                 .AsNoTracking()
                 .Include(o => o.ShippingAddress)
                 .Include(o => o.Items)
+                .Include(o => o.Seller)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (entity is null)
@@ -113,6 +114,15 @@ namespace Marketplace.Repository.MSSql
             return Order.Reconstruct(
                 entity.Id,
                 entity.CustomerId,
+                entity.SellerId,
+                new Seller(
+                    entity.Seller.Id,
+                    entity.Seller.Name,
+                    entity.Seller.Description,
+                    entity.Seller.Email,
+                    entity.Seller.PhoneNumber,
+                    null,
+                    entity.Seller.UserId),
                 entity.Status,
                 entity.CreatedAt,
                 shippingInfo,

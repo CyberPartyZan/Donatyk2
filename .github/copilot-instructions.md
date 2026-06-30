@@ -6,6 +6,7 @@
 - Remove redundant scoped `ClaimsPrincipal` if `IHttpContextAccessor` suffices to streamline the code.
 - Ensure that the `Category` in the model and mappings is not nullable to maintain data integrity.
 - Always fix or add appropriate unit and integration tests for every code change.
+- When fixing build issues after domain signature changes, avoid adding compatibility overloads in core models just to satisfy tests; prefer updating tests/mocks and callers to match domain contracts.
 
 ## Ticket Domain Rules
 - One user can have multiple tickets per lot.

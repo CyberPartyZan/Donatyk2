@@ -6,6 +6,8 @@
 
         public Guid Id { get; private set; }
         public Guid CustomerId { get; private set; }
+        public Guid SellerId { get; private set; }
+        public Seller Seller { get; private set; } = null!;
         public OrderStatus Status { get; private set; }
         public Money Total { get; private set; } = null!;
         public ShippingAddress ShippingAddress { get; private set; } = null!;
@@ -24,6 +26,8 @@
         public static Order Reconstruct(
             Guid id,
             Guid customerId,
+            Guid sellerId,
+            Seller seller,
             OrderStatus status,
             DateTime createdAt,
             ShippingAddress shippingInfo,
@@ -38,6 +42,15 @@
             if (customerId == Guid.Empty)
                 throw new ArgumentException("CustomerId must be provided.", nameof(customerId));
 
+            if (sellerId == Guid.Empty)
+                throw new ArgumentException("SellerId must be provided.", nameof(sellerId));
+
+            if (seller is null)
+                throw new ArgumentNullException(nameof(seller));
+
+            if (seller.Id != sellerId)
+                throw new ArgumentException("SellerId must match seller.Id.", nameof(sellerId));
+
             if (shippingInfo is null)
                 throw new ArgumentNullException(nameof(shippingInfo));
 
@@ -51,6 +64,8 @@
             {
                 Id = id,
                 CustomerId = customerId,
+                SellerId = sellerId,
+                Seller = seller,
                 Status = status,
                 ShippingAddress = shippingInfo,
                 PaymentInfo = paymentInfo,
@@ -76,10 +91,17 @@
 
         public static Order Create(
             Guid userId,
+            Seller seller,
             ShippingAddress shippingInfo,
             PaymentInfo paymentInfo,
             IReadOnlyList<PricedItem> items)
         {
+            if (seller is null)
+                throw new ArgumentNullException(nameof(seller));
+
+            if (seller.Id == Guid.Empty)
+                throw new ArgumentException("Seller id must be provided.", nameof(seller));
+
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId must be provided.", nameof(userId));
 
@@ -96,6 +118,8 @@
             {
                 Id = Guid.NewGuid(),
                 CustomerId = userId,
+                SellerId = seller.Id,
+                Seller = seller,
                 Status = OrderStatus.Created,
                 ShippingAddress = shippingInfo,
                 PaymentInfo = paymentInfo,

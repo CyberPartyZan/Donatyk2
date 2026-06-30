@@ -43,30 +43,18 @@
         public static Shipment Reconstruct(
             Guid id,
             Guid orderId,
-            string shippingReference,
+            string trackingNumber,
             ShipmentStatus status,
             ShippingAddress shippingAddress,
             DeliveryCarrier carrier,
             DateTime createdAt,
             DateTime? deliveredAt = null)
         {
-            if (id == Guid.Empty)
-                throw new ArgumentException("Id must be provided.", nameof(id));
-
-            if (orderId == Guid.Empty)
-                throw new ArgumentException("OrderId must be provided.", nameof(orderId));
-
-            if (string.IsNullOrWhiteSpace(shippingReference))
-                throw new ArgumentException("ShippingReference must be provided.", nameof(shippingReference));
-
-            if (shippingAddress is null)
-                throw new ArgumentNullException(nameof(shippingAddress));
-
             return new Shipment
             {
                 Id = id,
                 OrderId = orderId,
-                TrackingNumber = shippingReference,
+                TrackingNumber = trackingNumber,
                 ShippingAddress = shippingAddress,
                 Carrier = carrier,
                 Status = status,
@@ -75,11 +63,15 @@
             };
         }
 
-        public void TakeIntoProcessing()
+        public void TakeIntoProcessing(string trackingNumber)
         {
             if (Status != ShipmentStatus.Created)
                 throw new InvalidOperationException("Only created shipments can be taken into processing.");
 
+            if (string.IsNullOrWhiteSpace(trackingNumber))
+                throw new ArgumentException("Tracking number must be provided.", nameof(trackingNumber));
+
+            TrackingNumber = trackingNumber.Trim();
             Status = ShipmentStatus.Processing;
         }
 

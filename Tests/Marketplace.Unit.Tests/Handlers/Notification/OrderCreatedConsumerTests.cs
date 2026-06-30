@@ -44,7 +44,10 @@ namespace Marketplace.Unit.Tests.Handlers.NotificationService
                 PricedItem.FromCustomPrice(Guid.NewGuid(), "Item", new Money(10m, Currency.USD), 1, 0m)
             };
 
-            return Order.Create(customerId, shippingInfo, paymentInfo, items);
+            return Order.Create(customerId, CreateSeller(), shippingInfo, paymentInfo, items);
         }
+
+        private static Seller CreateSeller() =>
+            new(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, Guid.NewGuid());
     }
 }

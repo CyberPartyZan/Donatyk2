@@ -4,6 +4,8 @@
     {
         public Guid Id { get; set; }
         public Guid CustomerId { get; set; }
+        public Guid SellerId { get; set; }
+        public virtual SellerEntity Seller { get; set; } = null!;
         public OrderStatus Status { get; set; }
         public Money Total { get; set; }
         public DateTime CreatedAt { get; set; }

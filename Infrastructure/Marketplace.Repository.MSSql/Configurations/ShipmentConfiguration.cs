@@ -12,7 +12,7 @@ namespace Marketplace.Repository.MSSql
             builder.Property(x => x.OrderId)
                    .IsRequired();
 
-            builder.Property(x => x.ShippingReference)
+            builder.Property(x => x.TrackingNumber)
                    .IsRequired()
                    .HasMaxLength(200);
 

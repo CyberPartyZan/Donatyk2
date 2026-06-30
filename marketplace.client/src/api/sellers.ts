@@ -26,6 +26,18 @@ function getAuthHeaders(): Record<string, string> {
     return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function decodeSubFromToken(): string | null {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token) return null;
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) as { sub?: string };
+        return payload.sub ?? null;
+    } catch {
+        return null;
+    }
+}
+
 async function parseError(response: Response): Promise<string> {
     try {
         const payload = (await response.json()) as ApiErrorPayload;
@@ -33,6 +45,22 @@ async function parseError(response: Response): Promise<string> {
     } catch {
         return `Request failed (${response.status}).`;
     }
+}
+
+export async function getCurrentSeller(): Promise<SellerApiDto | null> {
+    const sub = decodeSubFromToken();
+    if (!sub) return null;
+
+    const response = await fetch(`/api/sellers/by-user/${encodeURIComponent(sub)}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { ...getAuthHeaders() },
+    });
+
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(await parseError(response));
+
+    return (await response.json()) as SellerApiDto;
 }
 
 export async function getSellers(params?: GetSellersParams): Promise<SellerApiDto[]> {

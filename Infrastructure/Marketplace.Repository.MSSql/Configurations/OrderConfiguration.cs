@@ -39,6 +39,8 @@ namespace Marketplace.Repository.MSSql
                    .HasMaxLength(50)
                    .IsRequired(false);
 
+            builder.Property(x => x.SellerId).IsRequired();
+
             builder.OwnsOne(x => x.Total, moneyBuilder =>
             {
                 moneyBuilder.Property(m => m.Amount)
@@ -61,6 +63,11 @@ namespace Marketplace.Repository.MSSql
                    .WithOne(i => i.Order)
                    .HasForeignKey(i => i.OrderId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.Seller)
+                   .WithMany(s => s.Orders)
+                   .HasForeignKey(x => x.SellerId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

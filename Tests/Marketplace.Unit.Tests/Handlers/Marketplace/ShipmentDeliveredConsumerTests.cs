@@ -54,10 +54,13 @@ namespace Marketplace.Unit.Tests.Handlers.Marketplace
                 PricedItem.FromCustomPrice(Guid.NewGuid(), "Item", new Money(10m, Currency.USD), 1, 0m)
             };
 
-            var order = Order.Create(orderId, shippingInfo, paymentInfo, items);
+            var order = Order.Create(orderId, CreateSeller(), shippingInfo, paymentInfo, items);
             order.AttachShipment(Guid.NewGuid());
             order.MarkPaid();
             return order;
         }
+
+        private static Seller CreateSeller() =>
+            new(Guid.NewGuid(), "Seller", "Description", "seller@example.com", "+12345678901", null, Guid.NewGuid());
     }
 }

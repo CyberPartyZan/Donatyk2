@@ -247,6 +247,7 @@ internal static class IntegrationTestsHelper
             Type = type,
             Stage = stage,
             Seller = trackedSeller,
+            SellerId = trackedSeller.Id,
             Category = trackedCategory,
             IsActive = true,
             IsCompensationPaid = false,
@@ -351,7 +352,7 @@ internal static class IntegrationTestsHelper
         IServiceProvider services,
         Guid orderId,
         ShipmentStatus status = ShipmentStatus.Created,
-        string? shippingReference = null)
+        string? trackingNumber = null)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
@@ -360,7 +361,7 @@ internal static class IntegrationTestsHelper
         {
             Id = Guid.NewGuid(),
             OrderId = orderId,
-            ShippingReference = shippingReference ?? $"SHIP-{orderId:N}",
+            TrackingNumber = trackingNumber ?? $"SHIP-{orderId:N}",
             Status = status,
             ShippingAddress = new ShippingAddressEntity
             {
