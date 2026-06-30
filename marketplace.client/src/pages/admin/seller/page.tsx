@@ -82,8 +82,7 @@ interface ApiSellerDto {
     description: string;
     email: string;
     phoneNumber: string;
-    avatar?: ApiBlobDto | null;
-    avatarImageUrl?: string;
+    key?: string | null;
 }
 
 interface ApiMoneyDto {
@@ -219,6 +218,10 @@ const mapLotStage = (stage: number | string): Lot['stage'] => {
     return 'Created';
 };
 
+// add near other helpers
+const buildSellerAvatarUrl = (blobKey?: string | null): string =>
+    blobKey ? `/api/seller/avatar/${encodeURIComponent(blobKey)}` : '';
+
 export default function SellerPage() {
     const [seller, setSeller] = useState<Seller | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -314,32 +317,24 @@ export default function SellerPage() {
 
         const blob = (await response.json()) as ApiBlobDto;
         setFormData(prev => ({ ...prev, avatar: blob }));
+        setImagePreview(buildSellerAvatarUrl(blob.key) || URL.createObjectURL(file));
     };
 
     const loadCurrentSeller = useCallback(async (): Promise<Seller | null> => {
         const sub = decodeSubFromToken();
         if (!sub) return null;
 
-        const userResponse = await fetch(`/api/users/${sub}`, {
+        const sellerResponse = await fetch(`/api/sellers/by-user/${encodeURIComponent(sub)}`, {
             method: 'GET',
             credentials: 'include',
             headers: { ...getAuthHeaders() }
         });
 
-        if (!userResponse.ok) return null;
-
-        const user = (await userResponse.json()) as { email: string };
-
-        const sellerResponse = await fetch(`/api/sellers?search=${encodeURIComponent(user.email)}&page=1&pageSize=200`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
+        if (sellerResponse.status === 404) return null;
         if (!sellerResponse.ok) return null;
 
-        const sellers = (await sellerResponse.json()) as ApiSellerDto[];
-        const current = sellers.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
-        if (!current) return null;
+        const current = (await sellerResponse.json()) as ApiSellerDto;
+        const avatarKey = current.key ?? null;
 
         return {
             id: current.id,
@@ -347,8 +342,8 @@ export default function SellerPage() {
             description: current.description ?? '',
             email: current.email ?? '',
             phoneNumber: current.phoneNumber ?? '',
-            avatarImage: current.avatarImageUrl ?? (current.avatar?.filePath && current.avatar?.key ? `${current.avatar.filePath}/${current.avatar.key}` : ''),
-            avatarBlob: current.avatar ?? null,
+            avatarImage: buildSellerAvatarUrl(avatarKey),
+            avatarBlob: null,
             createdAt: new Date().toISOString(),
             totalLots: 0,
             approvedLots: 0,
@@ -1050,7 +1045,7 @@ export default function SellerPage() {
                             </div>
                             <button
                                 onClick={handleOpenRequestCompensation}
-                                className="px-5 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-2"
+                                className="px-4 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-2"
                             >
                                 <i className="ri-add-line"></i>
                                 Request Compensation
@@ -1149,7 +1144,8 @@ export default function SellerPage() {
                                             className="px-5 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors cursor-pointer whitespace-nowrap"
                                         >
                                             <i className="ri-add-line mr-2"></i>Create Your First Lot
-                                        </div>
+                                        </button>
+                                    </div>
                                 ) : (
                                     <>
                                         <div className="grid gap-4">
@@ -1224,7 +1220,7 @@ export default function SellerPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
                         <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
-                            <i className="ri-money-dollar-circle-line text-orange-600 text-2xl"></i>
+                            <i className="ri-money-Dollar-circle-line text-orange-600 text-2xl"></i>
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Request Compensation</h3>
                         <p className="text-sm text-gray-600 text-center mb-6">

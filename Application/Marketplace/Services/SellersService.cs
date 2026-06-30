@@ -37,7 +37,12 @@ namespace Marketplace
 
         public async Task<Guid> Create(SellerDto seller)
         {
-            var userId = Guid.Parse(_user.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+            var userIdValue =
+                _user.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                _user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            if (!Guid.TryParse(userIdValue, out var userId))
+                throw new UnauthorizedAccessException("Authenticated user id claim is missing or invalid.");
 
             var newSeller = new Seller(
                 id: Guid.NewGuid(),
@@ -45,7 +50,7 @@ namespace Marketplace
                 description: seller.Description,
                 email: seller.Email,
                 phoneNumber: seller.PhoneNumber,
-                avatar: MapBlob(seller.Avatar),
+                avatar: MapBlobFromKey(seller.Key),
                 userId: userId);
 
             await _sellersRepository.Create(newSeller);
@@ -63,7 +68,7 @@ namespace Marketplace
                 description: seller.Description,
                 email: seller.Email,
                 phoneNumber: seller.PhoneNumber,
-                avatar: MapBlob(seller.Avatar) ?? existing.Avatar,
+                avatar: MapBlobFromKey(seller.Key, existing.Avatar) ?? existing.Avatar,
                 userId: existing.UserId);
 
             await _sellersRepository.Update(updatedSeller);
@@ -95,36 +100,45 @@ namespace Marketplace
             };
         }
 
-        private static SellerDto MapToDto(Seller s)
+        public Task<Stream> GetAvatar(string blobKey)
         {
-            var avatarDto = s.Avatar is null
-                ? null
-                : new BlobDto
-                {
-                    Id = s.Avatar.Id,
-                    FilePath = s.Avatar.FilePath,
-                    Key = s.Avatar.Key,
-                    FileName = s.Avatar.FileName
-                };
+            if (string.IsNullOrWhiteSpace(blobKey))
+                throw new ArgumentException("Avatar key is required.", nameof(blobKey));
 
-            return new SellerDto
+            return _blobStorageService.DownloadAsync(blobKey, SellerAvatarPath);
+        }
+
+        public async Task<SellerDto?> GetByUserId(Guid userId)
+        {
+            var seller = await _sellersRepository.GetByUserId(userId);
+            return seller is null ? null : MapToDto(seller);
+        }
+
+        private static SellerDto MapToDto(Seller s) =>
+            new()
             {
                 Id = s.Id,
                 Name = s.Name,
                 Description = s.Description,
                 Email = s.Email,
                 PhoneNumber = s.PhoneNumber,
-                Avatar = avatarDto
+                Key = s.Avatar?.Key
             };
-        }
 
-        private static Blob? MapBlob(BlobDto? dto)
+        private static Blob? MapBlobFromKey(string? key, Blob? existing = null)
         {
-            if (dto is null) return null;
-            if (string.IsNullOrWhiteSpace(dto.FilePath) || string.IsNullOrWhiteSpace(dto.Key) || string.IsNullOrWhiteSpace(dto.FileName))
+            if (string.IsNullOrWhiteSpace(key))
                 return null;
 
-            return new Blob(dto.Id == Guid.Empty ? Guid.NewGuid() : dto.Id, dto.FilePath!, dto.Key!, dto.FileName!);
+            var normalized = key.Trim();
+            if (existing is not null && string.Equals(existing.Key, normalized, StringComparison.Ordinal))
+                return existing;
+
+            return new Blob(
+                id: existing?.Id ?? Guid.NewGuid(),
+                filePath: SellerAvatarPath,
+                key: normalized,
+                fileName: existing?.FileName ?? $"{normalized}.img");
         }
     }
 }

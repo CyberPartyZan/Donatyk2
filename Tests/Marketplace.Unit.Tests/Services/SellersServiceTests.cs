@@ -32,8 +32,7 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal(2, result.Count);
             Assert.Equal(sellers[0].Name, result[0].Name);
             Assert.Equal(sellers[1].Email, result[1].Email);
-            Assert.NotNull(result[0].Avatar);
-            Assert.Equal("first.png", result[0].Avatar!.FileName);
+            Assert.Equal(sellers[0].Avatar?.Key, result[0].Key);
 
             repo.Verify(r => r.GetAll("abc", 2, 25), Times.Once);
         }
@@ -55,8 +54,7 @@ namespace Marketplace.Unit.Tests.Services
             Assert.NotNull(result);
             Assert.Equal(seller.Id, result!.Id);
             Assert.Equal(seller.PhoneNumber, result.PhoneNumber);
-            Assert.NotNull(result.Avatar);
-            Assert.Equal("avatar.png", result.Avatar!.FileName);
+            Assert.Equal(seller.Avatar?.Key, result.Key);
         }
 
         [Fact]
@@ -76,13 +74,14 @@ namespace Marketplace.Unit.Tests.Services
         }
 
         [Fact]
-        public async Task Create_WithValidDto_UsesCurrentUserId_AndMapsAvatar()
+        public async Task Create_WithValidDto_UsesCurrentUserId_AndMapsAvatarFromKey()
         {
             var fixture = CreateFixture();
             var userId = fixture.Create<Guid>();
             fixture.Inject(CreatePrincipal(userId));
 
-            var dto = CreateSellerDto(CreateBlobDto("create-avatar.png"));
+            var avatarKey = Guid.NewGuid().ToString("N");
+            var dto = CreateSellerDto(avatarKey);
             Seller? captured = null;
 
             var repo = fixture.Freeze<Mock<ISellersRepository>>();
@@ -99,20 +98,22 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal(dto.Name, captured.Name);
             Assert.Equal(userId, captured.UserId);
             Assert.NotNull(captured.Avatar);
-            Assert.Equal("create-avatar.png", captured.Avatar!.FileName);
+            Assert.Equal(avatarKey, captured.Avatar!.Key);
+            Assert.Equal("sellers/avatars", captured.Avatar.FilePath);
+            Assert.Equal($"{avatarKey}.img", captured.Avatar.FileName);
 
             repo.Verify(r => r.Create(It.IsAny<Seller>()), Times.Once);
         }
 
         [Fact]
-        public async Task Create_WithoutUserIdClaim_ThrowsArgumentNullException()
+        public async Task Create_WithoutUserIdClaim_ThrowsUnauthorizedAccessException()
         {
             var fixture = CreateFixture();
             fixture.Inject(new ClaimsPrincipal(new ClaimsIdentity()));
 
             var service = fixture.Create<SellersService>();
 
-            await Assert.ThrowsAsync<ArgumentNullException>(() => service.Create(CreateSellerDto()));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.Create(CreateSellerDto()));
         }
 
         [Fact]
@@ -130,7 +131,7 @@ namespace Marketplace.Unit.Tests.Services
         }
 
         [Fact]
-        public async Task Update_WithExistingSeller_PreservesUserId_AndUsesDtoAvatarWhenProvided()
+        public async Task Update_WithExistingSeller_PreservesUserId_AndUpdatesAvatarKey()
         {
             var fixture = CreateFixture();
             fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
@@ -144,7 +145,8 @@ namespace Marketplace.Unit.Tests.Services
                 .Callback<Seller>(seller => captured = seller)
                 .Returns(Task.CompletedTask);
 
-            var dto = CreateSellerDto(CreateBlobDto("new-avatar.png"));
+            var newKey = Guid.NewGuid().ToString("N");
+            var dto = CreateSellerDto(newKey);
             var service = fixture.Create<SellersService>();
 
             await service.Update(existing.Id, dto);
@@ -153,7 +155,8 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal(existing.Id, captured!.Id);
             Assert.Equal(existing.UserId, captured.UserId);
             Assert.NotNull(captured.Avatar);
-            Assert.Equal("new-avatar.png", captured.Avatar!.FileName);
+            Assert.Equal(newKey, captured.Avatar!.Key);
+            Assert.Equal("old-avatar.png", captured.Avatar.FileName);
         }
 
         [Fact]
@@ -174,6 +177,26 @@ namespace Marketplace.Unit.Tests.Services
             Assert.Equal("sellers/avatars", result.FilePath);
             Assert.Equal("uploaded-key", result.Key);
             Assert.Equal("avatar.png", result.FileName);
+        }
+
+        [Fact]
+        public async Task GetAvatar_DownloadsBlobByKey()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var blobStorage = fixture.Freeze<Mock<IBlobStorageService>>();
+            var expected = new MemoryStream([10, 20, 30]);
+
+            blobStorage.Setup(x => x.DownloadAsync("blob-key", "sellers/avatars"))
+                .ReturnsAsync(expected);
+
+            var service = fixture.Create<SellersService>();
+
+            var result = await service.GetAvatar("blob-key");
+
+            Assert.Same(expected, result);
+            blobStorage.Verify(x => x.DownloadAsync("blob-key", "sellers/avatars"), Times.Once);
         }
 
         [Fact]
@@ -224,6 +247,42 @@ namespace Marketplace.Unit.Tests.Services
             repo.Verify(r => r.Delete(It.IsAny<Guid>()), Times.Never);
         }
 
+        [Fact]
+        public async Task GetByUserId_WhenSellerExists_ReturnsDto()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var seller = CreateSeller();
+            var repo = fixture.Freeze<Mock<ISellersRepository>>();
+            repo.Setup(r => r.GetByUserId(seller.UserId)).ReturnsAsync(seller);
+
+            var service = fixture.Create<SellersService>();
+
+            var result = await service.GetByUserId(seller.UserId);
+
+            Assert.NotNull(result);
+            Assert.Equal(seller.Id, result!.Id);
+            Assert.Equal(seller.Email, result.Email);
+            repo.Verify(r => r.GetByUserId(seller.UserId), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetByUserId_WhenMissing_ReturnsNull()
+        {
+            var fixture = CreateFixture();
+            fixture.Inject(CreatePrincipal(fixture.Create<Guid>()));
+
+            var repo = fixture.Freeze<Mock<ISellersRepository>>();
+            repo.Setup(r => r.GetByUserId(It.IsAny<Guid>())).ReturnsAsync((Seller?)null);
+
+            var service = fixture.Create<SellersService>();
+
+            var result = await service.GetByUserId(Guid.NewGuid());
+
+            Assert.Null(result);
+        }
+
         private static IFixture CreateFixture() =>
             new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
 
@@ -249,16 +308,7 @@ namespace Marketplace.Unit.Tests.Services
         private static Blob CreateBlob(string fileName) =>
             new(Guid.NewGuid(), "sellers/avatars", Guid.NewGuid().ToString("N"), fileName);
 
-        private static BlobDto CreateBlobDto(string fileName) =>
-            new()
-            {
-                Id = Guid.NewGuid(),
-                FilePath = "sellers/avatars",
-                Key = Guid.NewGuid().ToString("N"),
-                FileName = fileName
-            };
-
-        private static SellerDto CreateSellerDto(BlobDto? avatar = null) =>
+        private static SellerDto CreateSellerDto(string? key = null) =>
             new()
             {
                 Id = Guid.NewGuid(),
@@ -266,7 +316,7 @@ namespace Marketplace.Unit.Tests.Services
                 Description = "DTO Description",
                 Email = "seller@example.com",
                 PhoneNumber = "+12345678901",
-                Avatar = avatar
+                Key = key
             };
     }
 }

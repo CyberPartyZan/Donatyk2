@@ -6,6 +6,7 @@ namespace Marketplace
 {
     public class LotsService : ILotsService
     {
+        private const string SellerAvatarPath = "sellers/avatars";
         private readonly ILotsRepository _lotsRepository;
         private readonly IDistributedCache _cache;
         private readonly ClaimsPrincipal _user;
@@ -73,13 +74,7 @@ namespace Marketplace
                 dto.Seller.Description,
                 dto.Seller.Email,
                 dto.Seller.PhoneNumber,
-                dto.Seller.Avatar is not null
-                    ? new Blob(
-                        dto.Seller.Avatar.Id == Guid.Empty ? Guid.NewGuid() : dto.Seller.Avatar.Id,
-                        dto.Seller.Avatar.FilePath ?? string.Empty,
-                        dto.Seller.Avatar.Key ?? string.Empty,
-                        dto.Seller.Avatar.FileName ?? string.Empty)
-                    : null,
+                MapSellerAvatar(dto.Seller.Key),
                 userId);
 
             var category = new Category(
@@ -124,13 +119,7 @@ namespace Marketplace
                 dto.Seller.Description,
                 dto.Seller.Email,
                 dto.Seller.PhoneNumber,
-                dto.Seller.Avatar is not null
-                    ? new Blob(
-                        dto.Seller.Avatar.Id == Guid.Empty ? Guid.NewGuid() : dto.Seller.Avatar.Id,
-                        dto.Seller.Avatar.FilePath ?? string.Empty,
-                        dto.Seller.Avatar.Key ?? string.Empty,
-                        dto.Seller.Avatar.FileName ?? string.Empty)
-                    : null,
+                MapSellerAvatar(dto.Seller.Key, existing.Seller?.Avatar) ?? existing.Seller?.Avatar,
                 sellerUserId);
 
             var category = new Category(
@@ -299,15 +288,7 @@ namespace Marketplace
                     Description = lot.Seller.Description,
                     Email = lot.Seller.Email,
                     PhoneNumber = lot.Seller.PhoneNumber,
-                    Avatar = lot.Seller.Avatar is not null
-                        ? new BlobDto
-                        {
-                            Id = lot.Seller.Avatar.Id,
-                            FilePath = lot.Seller.Avatar.FilePath,
-                            Key = lot.Seller.Avatar.Key,
-                            FileName = lot.Seller.Avatar.FileName
-                        }
-                        : null
+                    Key = lot.Seller.Avatar?.Key
                 },
                 Category = new CategoryDto
                 {
@@ -335,6 +316,22 @@ namespace Marketplace
                     })
                     .ToArray()
             };
+        }
+
+        private static Blob? MapSellerAvatar(string? key, Blob? existing = null)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return null;
+
+            var normalized = key.Trim();
+            if (existing is not null && string.Equals(existing.Key, normalized, StringComparison.Ordinal))
+                return existing;
+
+            return new Blob(
+                id: existing?.Id ?? Guid.NewGuid(),
+                filePath: SellerAvatarPath,
+                key: normalized,
+                fileName: existing?.FileName ?? $"{normalized}.img");
         }
     }
 }

@@ -71,13 +71,7 @@ public class LotsEndpointTests : IntegrationTestsBase
                 Description = "Updated seller description",
                 Email = "updated.seller@example.com",
                 PhoneNumber = "+15555550101",
-                Avatar = seededLot.Seller.Avatar is not null ? new BlobDto
-                {
-                    Id = seededLot.Seller.Avatar.Id,
-                    FilePath = seededLot.Seller.Avatar.FilePath,
-                    Key = seededLot.Seller.Avatar.Key,
-                    FileName = seededLot.Seller.Avatar.FileName
-                } : null
+                Key = seededLot.Seller.Avatar?.Key
             },
             Category = new CategoryDto
             {

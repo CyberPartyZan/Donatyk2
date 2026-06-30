@@ -18,7 +18,6 @@ namespace Marketplace
         [Required]
         public string PhoneNumber { get; set; } = string.Empty;
 
-        public BlobDto? Avatar { get; set; }
-
+        public string? Key { get; set; }
     }
 }

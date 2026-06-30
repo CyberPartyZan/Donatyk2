@@ -478,13 +478,7 @@ namespace Marketplace.Unit.Tests.Services
                     Description = "Seller dto description",
                     Email = "seller@example.com",
                     PhoneNumber = "+12345678901",
-                    Avatar = new BlobDto
-                    {
-                        Id = Guid.NewGuid(),
-                        FilePath = "test/folder",
-                        Key = "test",
-                        FileName = "test.file"
-                    }
+                    Key = "test"
                 },
                 Category = new CategoryDto
                 {

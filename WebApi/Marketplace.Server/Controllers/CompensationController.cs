@@ -3,6 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Marketplace.Server.Controllers
 {
+    public sealed class ProcessCompensationRequest
+    {
+        public List<Guid> Ids { get; set; } = [];
+        public IFormFile? ApprovementDocument { get; set; }
+    }
+
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
@@ -24,23 +30,22 @@ namespace Marketplace.Server.Controllers
 
         [HttpPost("process")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Process(
-            [FromForm] List<Guid> ids,
-            [FromForm] IFormFile approvementDocument)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Process([FromForm] ProcessCompensationRequest request)
         {
-            if (ids is null || ids.Count == 0)
+            if (request.Ids is null || request.Ids.Count == 0)
                 return BadRequest("At least one compensation id is required.");
 
-            if (approvementDocument is null || approvementDocument.Length == 0)
+            if (request.ApprovementDocument is null || request.ApprovementDocument.Length == 0)
                 return BadRequest("Approval document is required.");
 
-            if (!approvementDocument.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            if (!request.ApprovementDocument.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                 return BadRequest("Approval document must be a PDF file.");
 
             try
             {
-                using var stream = approvementDocument.OpenReadStream();
-                var updated = await _compensationService.Process(ids, stream, approvementDocument.FileName);
+                using var stream = request.ApprovementDocument.OpenReadStream();
+                var updated = await _compensationService.Process(request.Ids, stream, request.ApprovementDocument.FileName);
                 return Ok(new { updated });
             }
             catch (KeyNotFoundException)
